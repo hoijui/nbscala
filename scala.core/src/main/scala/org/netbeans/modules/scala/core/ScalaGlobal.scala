@@ -477,6 +477,8 @@ object ScalaGlobal {
     // ----- need to create a new global:
     
     val settings = new Settings
+    settings.YmethodInfer.value = true
+    settings.feature.value = true
     if (debug) {
       settings.Yidedebug.value = true
       settings.debug.value = true
