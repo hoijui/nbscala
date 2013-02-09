@@ -1,8 +1,10 @@
 package org.netbeans.modules.scala.sbt.console
 
 import java.awt.Color
+import java.awt.Cursor
 import java.awt.Font
 import java.awt.Insets
+import java.awt.Toolkit
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.io._
@@ -15,12 +17,20 @@ import org.netbeans.api.extexecution.ExecutionService
 import org.netbeans.api.extexecution.ExternalProcessBuilder
 import org.netbeans.api.project.Project
 import org.netbeans.api.project.ui.OpenProjects
+import org.openide.DialogDisplayer
 import org.openide.ErrorManager
+import org.openide.NotifyDescriptor
+import org.openide.cookies.EditorCookie
 import org.openide.filesystems.FileUtil
+import org.openide.loaders.DataObject
+import org.openide.loaders.DataObjectNotFoundException
 import org.openide.loaders.InstanceDataObject
+import org.openide.text.Line
 import org.openide.util.Exceptions
 import org.openide.util.ImageUtilities
 import org.openide.util.NbBundle
+import org.openide.util.RequestProcessor
+import org.openide.util.UserQuestionException
 import org.openide.windows._
 
 /**
@@ -32,13 +42,15 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
   
   private var finished: Boolean = true
   private var textPane: JTextPane = _
-  private val mimeType = "text/x-console"
+  private val mimeType = "text/x-sbt"
   private val log = Logger.getLogger(getClass.getName)
+  
 
   initComponents
   setName("SBT " + project.getProjectDirectory.getName)
   setToolTipText(NbBundle.getMessage(classOf[SBTConsoleTopComponent], "HINT_SBTConsoleTopComponent") + " for " + project.getProjectDirectory.getPath)
   setIcon(ImageUtilities.loadImage(ICON_PATH, true))
+  var console: ConsoleOutputStream = createTerminal
  
   private def initComponents() {
     setLayout(new java.awt.BorderLayout())
@@ -59,13 +71,15 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
       // Start a new one
       finished = false
       removeAll
-      createTerminal
+      console = createTerminal
     }
   }
 
   override
   def componentClosed() {
-    // Leave the terminal session running
+    if (console != null) {
+      console.exitSbt
+    }
   }
 
   override
@@ -99,7 +113,7 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
   //override
   //def writeReplace: AnyRef = new ResolvableHelper()
 
-  private def createTerminal {
+  private def createTerminal: ConsoleOutputStream = {
     val pipeIn = new PipedInputStream()
 
     textPane = new JTextPane()
@@ -171,18 +185,18 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
     validate
 
     val sbtHome = SBTExecution.getSbtHome
-    val sbtLaunchJar = SBTExecution.getSbtJar(sbtHome)
+    val sbtLaunchJar = SBTExecution.getSbtLaunchJar(sbtHome)
     if (sbtLaunchJar == null) {
-      return
+      return null
     }
 
     val (executable, args) = SBTExecution.getArgs(sbtHome)
     
-    val consoleOut = new AnsiConsoleOutputStream(new ConsoleOutputStream(
-        textPane, 
-        " " + NbBundle.getMessage(classOf[SBTConsoleTopComponent], "SBTConsoleWelcome") + " " + "sbt.home=" + sbtHome + "\n",
-        pipeIn)
-    )
+    console = new ConsoleOutputStream(
+      textPane, 
+      " " + NbBundle.getMessage(classOf[SBTConsoleTopComponent], "SBTConsoleWelcome") + " " + "sbt.home=" + sbtHome + "\n",
+      pipeIn)
+    val consoleOut = new AnsiConsoleOutputStream(console)
     
     val in = new InputStreamReader(pipeIn)
     val out = new PrintWriter(new PrintStream(consoleOut))
@@ -213,6 +227,10 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
           SwingUtilities.invokeLater(new Runnable() {
               override
               def run() {
+                if (console != null) {
+                  console.exitSbt
+                }
+                
                 SBTConsoleTopComponent.this.close
                 SBTConsoleTopComponent.this.removeAll
                 textPane = null
@@ -225,42 +243,9 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
 
     executionService.run()
 
-    // [Issue 91208]  avoid of putting cursor in IRB console on line where is not a prompt
-    textPane.addMouseListener(new MouseAdapter() {
-        override
-        def mouseClicked(ev: MouseEvent) {
-          val mouseX = ev.getX
-          val mouseY = ev.getY
-          // Ensure that this is done after the textpane's own mouse listener
-          SwingUtilities.invokeLater(new Runnable() {
-              def run() {
-                // Attempt to force the mouse click to appear on the last line of the text input
-                var pos = textPane.getDocument.getEndPosition.getOffset - 1
-                if (pos == -1) {
-                  return
-                }
-
-                try {
-                  val r = textPane.modelToView(pos)
-
-                  if (mouseY >= r.y) {
-                    // The click was on the last line; try to set the X to the position where
-                    // the user clicked since perhaps it was an attempt to edit the existing
-                    // input string. Later I could perhaps cast the text document to a StyledDocument,
-                    // then iterate through the document positions and locate the end of the
-                    // input prompt (by comparing to the promptStyle in TextAreaReadline).
-                    r.x = mouseX
-                    pos = textPane.viewToModel(r.getLocation)
-                  }
-
-                  textPane.getCaret.setDot(pos)
-                } catch {
-                  case ex: BadLocationException => Exceptions.printStackTrace(ex)
-                }
-              }
-            })
-        }
-      })
+    textPane.addMouseListener(MyMouseListener)
+    textPane.addMouseMotionListener(MyMouseListener)
+    console
   }
 
   override
@@ -277,10 +262,168 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
     } else false
   }
 
+  object MyMouseListener extends MouseAdapter {
+    private val handCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    private val defaultCursor = Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR)
+    
+    override 
+    def mouseMoved(e: MouseEvent) {
+      val offset = textPane.viewToModel(e.getPoint)
+      val element = textPane.getStyledDocument.getCharacterElement(offset)
+      element.getAttributes.getAttribute("file") match {
+        case x: String => textPane.setCursor(handCursor)
+        case _ => textPane.setCursor(defaultCursor)
+      }
+    }
+        
+    override
+    def mouseClicked(e: MouseEvent) {
+      val offset = textPane.viewToModel(e.getPoint)
+      val element = textPane.getStyledDocument.getCharacterElement(offset)
+      element.getAttributes.getAttribute("file") match {
+        case filePath: String => 
+          val file = new File(filePath.trim)
+          if (file == null || !file.exists) {
+            Toolkit.getDefaultToolkit.beep
+            return
+          }
+          val lineNo = try {
+            element.getAttributes.getAttribute("line") match {
+              case line: String => line.toInt
+              case _ => -1
+            }
+          } catch {
+            case _: Exception => -1
+          }
+          
+          openFile(file, lineNo)
+        case _ =>
+      }
+          
+      // [Issue 91208]  avoid of putting cursor in console on line where is not a prompt
+      val mouseX = e.getX
+      val mouseY = e.getY
+      // Ensure that this is done after the textpane's own mouse listener
+      SwingUtilities.invokeLater(new Runnable() {
+          def run() {
+            // Attempt to force the mouse click to appear on the last line of the text input
+            var pos = textPane.getDocument.getEndPosition.getOffset - 1
+            if (pos == -1) {
+              return
+            }
+
+            try {
+              val r = textPane.modelToView(pos)
+              if (mouseY >= r.y) {
+                // The click was on the last line; try to set the X to the position where
+                // the user clicked since perhaps it was an attempt to edit the existing
+                // input string. Later I could perhaps cast the text document to a StyledDocument,
+                // then iterate through the document positions and locate the end of the
+                // input prompt (by comparing to the promptStyle in TextAreaReadline).
+                r.x = mouseX
+                pos = textPane.viewToModel(r.getLocation)
+              }
+
+              textPane.getCaret.setDot(pos)
+            } catch {
+              case ex: BadLocationException => Exceptions.printStackTrace(ex)
+            }
+          }
+        }
+      )
+    }
+    
+    private def openFile(file: File, lineNo: Int) {
+      RP.post(new Runnable() {
+          override 
+          def run() {
+            try {
+              val fileObj = FileUtil.toFileObject(file)
+              val dob = DataObject.find(fileObj)
+              val ed = dob.getLookup.lookup(classOf[EditorCookie])
+              if (ed != null && /* not true e.g. for *_ja.properties */ (fileObj eq dob.getPrimaryFile)) {
+                if (lineNo == -1) {
+                  // OK, just open it.
+                  ed.open
+                } else {
+                  // Fix for IZ#97727 - warning dialogue for opening large files is meaningless if opened via a hyperlink
+                  try {
+                    ed.openDocument // XXX getLineSet does not do it for you!
+                  } catch {
+                    case exc: UserQuestionException =>
+                      if (!askUserAndDoOpen(exc , ed)) {
+                        return
+                      }
+                  }
+                
+                  try {
+                    val lineSet = ed.getLineSet
+                    val line = lineSet.getOriginal(lineNo - 1) // the lineSet is indiced from 0
+                    if (!line.isDeleted) {
+                      SwingUtilities.invokeLater(new Runnable() {
+                          override
+                          def run() {
+                            line.show(Line.ShowOpenType.REUSE, Line.ShowVisibilityType.FOCUS, -1)
+                          }
+                        })
+                    }
+                  } catch {
+                    case ex: IndexOutOfBoundsException => ed.open // Probably harmless. Bogus line number.
+                  }
+                }
+              } else {
+                Toolkit.getDefaultToolkit.beep
+              }
+            } catch {
+              case ex: DataObjectNotFoundException => ErrorManager.getDefault.notify(ErrorManager.WARNING, ex)
+              case ex: IOException =>
+                // XXX see above, should not be necessary to call openDocument at all
+                ErrorManager.getDefault.notify(ErrorManager.WARNING, ex)
+            }
+          }
+        }
+      )
+    }
+        
+    // Fix for IZ#97727 - warning dialogue for opening large files is meaningless if opened via a hyperlink
+    private def askUserAndDoOpen(e$: UserQuestionException, cookie: EditorCookie ): Boolean = {
+      var e = e$
+      while (e != null) {
+        val nd = new NotifyDescriptor.Confirmation(e.getLocalizedMessage, NotifyDescriptor.YES_NO_OPTION)
+        nd.setOptions(Array[AnyRef](NotifyDescriptor.YES_OPTION, NotifyDescriptor.NO_OPTION ))
+
+        val res = DialogDisplayer.getDefault.notify(nd)
+
+        if (NotifyDescriptor.OK_OPTION.equals(res)) {
+          try {
+            e.confirmed
+          } catch {
+            case ex: IOException => Exceptions.printStackTrace(ex); return true
+          }
+        } else {
+          return false
+        }
+
+        e = null
+
+        try {
+          cookie.openDocument
+        } catch {
+          case ex: UserQuestionException => e = ex
+          case ex: IOException => 
+          case ex: Exception => 
+        }
+      }
+    
+      false
+    }
+  } // end of MouseListener
+  
 }
 
 object SBTConsoleTopComponent {
   private val log = Logger.getLogger(this.getClass.getName)
+  private val RP = new RequestProcessor(classOf[SBTConsoleTopComponent])
   
   /**
    * path to the icon used by the component and its open action
@@ -353,30 +496,69 @@ object SBTConsoleTopComponent {
   /**
    * Obtain the SBTConsoleTopComponent instance by project
    */
-  def findInstance(project: Project) = {
+  def openInstance(project: Project, background: Boolean, command: String = null)(postAction: String => Unit = null) {
     val id = toEscapedPreferredId(project)
-    WindowManager.getDefault.findTopComponent(id) match {
-      case null => 
-        val tc = new SBTConsoleTopComponent(project)
-        SwingUtilities.invokeLater(new Runnable() {
-            def run {
-              val mode = WindowManager.getDefault.findMode("output")
-              if (mode != null) {
-                mode.dockInto(tc)
+    SwingUtilities.invokeLater(new Runnable() {
+        def run {
+          WindowManager.getDefault.findTopComponent(id) match {
+            case null => 
+              val tc = new SBTConsoleTopComponent(project)
+              if (!background) {
+                val mode = WindowManager.getDefault.findMode("output")
+                if (mode != null) {
+                  mode.dockInto(tc)
+                }
+                tc.open
+                tc.requestActive
               }
-            }
-          }
-        )
-        tc
-      case x: SBTConsoleTopComponent => x
-      case _ =>
-        ErrorManager.getDefault.log(ErrorManager.WARNING,
-                                    "There seem to be multiple components with the '" + id + 
-                                    "' ID. That is a potential source of errors and unexpected behavior.")
-        null
-    } 
+              
+              val result = if (command != null) {
+                val ret = tc.console.runSbtCommand(command)
+                if (background) {
+                  tc.console.exitSbt
+                  tc.close
+                }
+                ret
+              } else {
+                null
+              }
+              
+              if (postAction != null) {
+                postAction(result)
+              }
+              
+            case tc: SBTConsoleTopComponent =>
+              if (!background) {
+                val mode = WindowManager.getDefault.findMode("output")
+                if (mode != null) {
+                  mode.dockInto(tc)
+                }
+                tc.open
+                tc.requestActive
+              }
+              
+              val result = if (command != null) {
+                tc.console.runSbtCommand(command)
+              } else {
+                null
+              }
+            
+              if (postAction != null) {
+                postAction(result)
+              }
+              
+            case _ =>
+              ErrorManager.getDefault.log(ErrorManager.WARNING,
+                                          "There seem to be multiple components with the '" + id + 
+                                          "' ID. That is a potential source of errors and unexpected behavior.")
+              
+              if (postAction != null) {
+                postAction(null)
+              }
+          } 
+        }
+      })
   }
-  
   
   private def getMainProjectWorkPath: File = {
     var pwd: File = null
