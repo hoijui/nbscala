@@ -15,6 +15,7 @@ import javax.swing.text.BadLocationException
 import org.netbeans.api.extexecution.ExecutionDescriptor
 import org.netbeans.api.extexecution.ExecutionService
 import org.netbeans.api.extexecution.ExternalProcessBuilder
+import org.netbeans.api.progress.ProgressHandleFactory
 import org.netbeans.api.project.Project
 import org.netbeans.api.project.ui.OpenProjects
 import org.openide.DialogDisplayer
@@ -26,10 +27,13 @@ import org.openide.loaders.DataObject
 import org.openide.loaders.DataObjectNotFoundException
 import org.openide.loaders.InstanceDataObject
 import org.openide.text.Line
+import org.openide.util.Cancellable
 import org.openide.util.Exceptions
 import org.openide.util.ImageUtilities
 import org.openide.util.NbBundle
 import org.openide.util.RequestProcessor
+import org.openide.util.Task
+import org.openide.util.TaskListener
 import org.openide.util.UserQuestionException
 import org.openide.windows._
 
@@ -65,25 +69,42 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
   override
   def getPersistenceType = TopComponent.PERSISTENCE_NEVER
 
+  override 
+  def open() {
+    /**
+     * @Note
+     * mode.dockInto(this) seems will close this first if this.isOpened()
+     * So, when call open(), try to check if it was already opened, if true,
+     * no need to call open() again
+     */
+    val mode = WindowManager.getDefault.findMode("output")
+    if (mode != null) {
+      mode.dockInto(this)
+    }
+    super.open
+  }
+  
   override
-  def componentOpened() {
+  protected def componentOpened() {
     if (finished) {
       // Start a new one
       finished = false
       removeAll
       console = createTerminal
     }
+    super.componentOpened
   }
 
   override
-  def componentClosed() {
+  protected def componentClosed() {
     if (console != null) {
       console.exitSbt
     }
+    super.componentClosed
   }
 
   override
-  def componentActivated() {
+  protected def componentActivated() {
     // Make the caret visible. See comment under componentDeactivated.
     if (textPane != null) {
       val caret = textPane.getCaret
@@ -91,10 +112,11 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
         caret.setVisible(true)
       }
     }
+    super.componentActivated
   }
 
   override
-  def componentDeactivated() {
+  protected def componentDeactivated() {
     // I have to turn off the caret when the window loses focus. Text components
     // normally do this by themselves, but the TextAreaReadline component seems
     // to mess around with the editable property of the text pane, and
@@ -104,6 +126,23 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
       if (caret != null) {
         caret.setVisible(false)
       }
+    }
+    super.componentDeactivated
+  }
+  
+  override
+  def requestFocus() {
+    if (textPane != null) {
+      textPane.requestFocus
+    }
+  }
+
+  override
+  def requestFocusInWindow: Boolean = {
+    if (textPane != null) {
+      textPane.requestFocusInWindow
+    } else {
+      false
     }
   }
 
@@ -248,20 +287,6 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
     console
   }
 
-  override
-  def requestFocus() {
-    if (textPane != null) {
-      textPane.requestFocus
-    }
-  }
-
-  override
-  def requestFocusInWindow: Boolean = {
-    if (textPane != null) {
-      textPane.requestFocusInWindow
-    } else false
-  }
-
   object MyMouseListener extends MouseAdapter {
     private val handCursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
     private val defaultCursor = Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR)
@@ -334,7 +359,7 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
     }
     
     private def openFile(file: File, lineNo: Int) {
-      RP.post(new Runnable() {
+      FileOpenRP.post(new Runnable() {
           override 
           def run() {
             try {
@@ -423,7 +448,7 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
 
 object SBTConsoleTopComponent {
   private val log = Logger.getLogger(this.getClass.getName)
-  private val RP = new RequestProcessor(classOf[SBTConsoleTopComponent])
+  private val FileOpenRP = new RequestProcessor(classOf[SBTConsoleTopComponent])
   
   /**
    * path to the icon used by the component and its open action
@@ -431,21 +456,6 @@ object SBTConsoleTopComponent {
   val ICON_PATH = "org/netbeans/modules/scala/sbt/resources/sbt.png" 
   
   private val compName = "SBTConsole"
-  private val idEscape = try {
-    val x = classOf[InstanceDataObject].getDeclaredMethod("escapeAndCut", classOf[String])
-    x.setAccessible(true)
-    x
-  } catch {
-    case ex: Exception => null
-  }
-  private val idUnescape = try {
-    val x = classOf[InstanceDataObject].getDeclaredMethod("unescape", classOf[String])
-    x.setAccessible(true)
-    x
-  } catch {
-    case ex: Exception => null
-  }
-
   /**
    * @see org.netbeans.core.windows.persistence.PersistenceManager
    */
@@ -457,107 +467,60 @@ object SBTConsoleTopComponent {
    * @see org.netbeans.core.windows.persistence.PersistenceManager
    */
   private def toEscapedPreferredId(project: Project) = {
-    escape(compName + project.getProjectDirectory.getPath)
+    TopComponentId.escape(compName + project.getProjectDirectory.getPath)
   }
   
-  /** 
-   * compute filename in the same manner as InstanceDataObject.create
-   * [PENDING] in next version this should be replaced by public support
-   * likely from FileUtil
-   * @see issue #17142
-   * 
-   */
-  private def escape(name: String) = {
-    if (idEscape != null) {
-      try {
-        idEscape.invoke(null, name).asInstanceOf[String]
-      } catch {
-        case ex: Exception => log.log(Level.INFO, "Escape support failed", ex); name
-      }
-    } else name
-  }
-    
-  /** 
-   * compute filename in the same manner as InstanceDataObject.create
-   * [PENDING] in next version this should be replaced by public support
-   * likely from FileUtil
-   * @see issue #17142
-   */
-  private def unescape(name: String) = {
-    if (idUnescape != null) {
-      try {
-        idUnescape.invoke(null, name).asInstanceOf[String]
-      } catch {
-        case ex: Exception => log.log(Level.INFO, "Escape support failed", ex); name
-      }
-    } else name
-  }
-  
+
   /**
    * Obtain the SBTConsoleTopComponent instance by project
    */
-  def openInstance(project: Project, background: Boolean, command: String = null)(postAction: String => Unit = null) {
-    val id = toEscapedPreferredId(project)
-    SwingUtilities.invokeLater(new Runnable() {
+  def openInstance(project: Project, background: Boolean, commands: List[String], message: String = null)(postAction: String => Unit = null) {
+    var task: RequestProcessor#Task = null
+    val progressHandle = ProgressHandleFactory.createHandle(message, new Cancellable() {
+        def cancel(): Boolean = if (task != null) task.cancel else false
+      })
+    
+    task = RequestProcessor.getDefault.create(new Runnable() {
         def run {
-          WindowManager.getDefault.findTopComponent(id) match {
+          progressHandle.start
+          
+          val tcId = toEscapedPreferredId(project)
+          val (tc, isNewCreated) = WindowManager.getDefault.findTopComponent(tcId) match {
             case null => 
-              val tc = new SBTConsoleTopComponent(project)
-              if (!background) {
-                val mode = WindowManager.getDefault.findMode("output")
-                if (mode != null) {
-                  mode.dockInto(tc)
-                }
-                tc.open
-                tc.requestActive
-              }
-              
-              val result = if (command != null) {
-                val ret = tc.console.runSbtCommand(command)
-                if (background) {
-                  tc.console.exitSbt
-                  tc.close
-                }
-                ret
-              } else {
-                null
-              }
-              
-              if (postAction != null) {
-                postAction(result)
-              }
-              
-            case tc: SBTConsoleTopComponent =>
-              if (!background) {
-                val mode = WindowManager.getDefault.findMode("output")
-                if (mode != null) {
-                  mode.dockInto(tc)
-                }
-                tc.open
-                tc.requestActive
-              }
-              
-              val result = if (command != null) {
-                tc.console.runSbtCommand(command)
-              } else {
-                null
-              }
-            
-              if (postAction != null) {
-                postAction(result)
-              }
-              
+              (new SBTConsoleTopComponent(project), true)
+            case tc: SBTConsoleTopComponent => 
+              (tc, false)
             case _ =>
               ErrorManager.getDefault.log(ErrorManager.WARNING,
-                                          "There seem to be multiple components with the '" + id + 
+                                          "There seem to be multiple components with the '" + tcId + 
                                           "' ID. That is a potential source of errors and unexpected behavior.")
+              (null, false)
+          }
+          
+          if (!tc.isOpened) tc.open
+          if (!background)  tc.requestActive
               
-              if (postAction != null) {
-                postAction(null)
-              }
-          } 
+          val results = commands map tc.console.runSbtCommand
+
+          if (background && !isNewCreated) {
+            tc.console.exitSbt
+            tc.close
+          }
+              
+          if (postAction != null) {
+            postAction(results.lastOption getOrElse null)
+          }
         }
       })
+    
+    task.addTaskListener(new TaskListener() {
+        def taskFinished(task: Task) {
+          progressHandle.finish
+        }
+      })
+    
+    // XXX when used task.schedule(0), I got Window System API is required to be called from AWT thread only
+    task.run
   }
   
   private def getMainProjectWorkPath: File = {
@@ -647,6 +610,60 @@ object SBTConsoleTopComponent {
     @throws(classOf[IOException])
     override
     def reset() {}
+  }
+
+}
+
+object TopComponentId {
+  private val log = Logger.getLogger(getClass.getName)
+  
+  private val idEscape = try {
+    val x = classOf[InstanceDataObject].getDeclaredMethod("escapeAndCut", classOf[String])
+    x.setAccessible(true)
+    x
+  } catch {
+    case ex: Exception => null
+  }
+  
+  private val idUnescape = try {
+    val x = classOf[InstanceDataObject].getDeclaredMethod("unescape", classOf[String])
+    x.setAccessible(true)
+    x
+  } catch {
+    case ex: Exception => null
+  }
+
+  /** 
+   * compute filename in the same manner as InstanceDataObject.create
+   * [PENDING] in next version this should be replaced by public support
+   * likely from FileUtil
+   * @see issue #17142
+   * 
+   */
+  def escape(name: String) = {
+    if (idEscape != null) {
+      try {
+        idEscape.invoke(null, name).asInstanceOf[String]
+      } catch {
+        case ex: Exception => log.log(Level.INFO, "Escape support failed", ex); name
+      }
+    } else name
+  }
+    
+  /** 
+   * compute filename in the same manner as InstanceDataObject.create
+   * [PENDING] in next version this should be replaced by public support
+   * likely from FileUtil
+   * @see issue #17142
+   */
+  def unescape(name: String) = {
+    if (idUnescape != null) {
+      try {
+        idUnescape.invoke(null, name).asInstanceOf[String]
+      } catch {
+        case ex: Exception => log.log(Level.INFO, "Escape support failed", ex); name
+      }
+    } else name
   }
 
 }

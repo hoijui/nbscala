@@ -1,6 +1,5 @@
 package org.netbeans.modules.scala.sbt.classpath
 
-import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 import java.io.File
@@ -8,9 +7,9 @@ import java.io.IOException
 import java.net.MalformedURLException
 import org.netbeans.api.java.classpath.ClassPath
 import org.netbeans.api.progress.ProgressHandleFactory
-import org.netbeans.api.project.Project
 import org.netbeans.modules.scala.sbt.console.SBTConsoleTopComponent
 import org.netbeans.modules.scala.sbt.project.ProjectConstants
+import org.netbeans.modules.scala.sbt.project.SBTProject
 import org.openide.ErrorManager
 import org.openide.filesystems.FileChangeAdapter
 import org.openide.filesystems.FileEvent
@@ -22,24 +21,23 @@ import org.openide.util.RequestProcessor
 import scala.collection.mutable.ArrayBuffer
 
 case class LibraryEntry(
-  mainJavaSrcs:  Array[File], 
-  testJavaSrcs:  Array[File], 
-  mainScalaSrcs: Array[File], 
-  testScalaSrcs: Array[File], 
-  mainCps: Array[File], 
-  testCps: Array[File],
-  depPrjs: Array[File]
+  mainJavaSrcs:   Array[File], 
+  testJavaSrcs:   Array[File], 
+  mainScalaSrcs:  Array[File], 
+  testScalaSrcs:  Array[File], 
+  mainCps:        Array[File], 
+  testCps:        Array[File],
+  depPrjs:        Array[File]
 )
 
 /**
  *
  * @author Caoyuan Deng
  */
-class SBTController(project: Project, isEnabled$: Boolean) {
-  import SBTController._
+class SBTResolver(project: SBTProject, isEnabled$: Boolean) {
+  import SBTResolver._
 
   private var _sbtConsoleEnabled = false
-  private val sbtResolver = new SBTResolver()
   private final val pcs = new PropertyChangeSupport(this)
   private final val descriptorFileListener = new DescriptorFileListener
   private val lock = new Object()
@@ -47,15 +45,42 @@ class SBTController(project: Project, isEnabled$: Boolean) {
   private var _libraryEntry: LibraryEntry = _
   @volatile private var isUnderResolving = false
 
-  isEnabled = isEnabled$
-  addPropertyChangeListener(sbtResolver)
+  private lazy val resolverTask = RequestProcessor.getDefault.create(new Runnable() {
+      def run() {
+        val progressHandle = ProgressHandleFactory.createHandle(NbBundle.getMessage(classOf[SBTResolver], "LBL_Resolving_Progress"))
+        progressHandle.start
+        val rootProject = project.getRootProject
+        SBTConsoleTopComponent.openInstance(rootProject, true, List("eclipse gen-netbeans=true skip-parents=false")){result =>
+          isUnderResolving = false
+          pcs.firePropertyChange(SBT_LIBRARY_RESOLVED, null, null)
+          progressHandle.finish
+          println(result)
+        }
+      }
+    }
+  )
 
+  isEnabled = isEnabled$
+  
   def isEnabled = _sbtConsoleEnabled
   def isEnabled_=(enableState: Boolean) {
     val oldEnableState = _sbtConsoleEnabled
     _sbtConsoleEnabled = enableState
     if (oldEnableState != _sbtConsoleEnabled) {
       pcs.firePropertyChange(SBT_ENABLE_STATE_CHANGE, oldEnableState, _sbtConsoleEnabled)
+    }
+  }
+
+  def triggerSbtResolution {
+    if (!isUnderResolving) {
+      isUnderResolving = true
+      val rootProject = project.getRootProject
+      val commands = List("eclipse gen-netbeans=true skip-parents=false")
+      val showMessage = NbBundle.getMessage(classOf[SBTResolver], "LBL_Resolving_Progress")
+      SBTConsoleTopComponent.openInstance(rootProject, true, commands, showMessage){result =>
+        isUnderResolving = false
+        pcs.firePropertyChange(SBT_LIBRARY_RESOLVED, null, null)
+      }
     }
   }
 
@@ -98,13 +123,9 @@ class SBTController(project: Project, isEnabled$: Boolean) {
     }
   }
 
-  def triggerSbtResolution {
-    sbtResolver.triggerResolution
-  }
-  
   private def parseClasspathXml(file: File): LibraryEntry = {
-    val mainJavaSrcs = new ArrayBuffer[File]()
-    val testJavaSrcs = new ArrayBuffer[File]()
+    val mainJavaSrcs  = new ArrayBuffer[File]()
+    val testJavaSrcs  = new ArrayBuffer[File]()
     val mainScalaSrcs = new ArrayBuffer[File]()
     val testScalaSrcs = new ArrayBuffer[File]()
     val mainCps = new ArrayBuffer[File]()
@@ -113,69 +134,73 @@ class SBTController(project: Project, isEnabled$: Boolean) {
 
     val projectFo = project.getProjectDirectory
     val projectDir = FileUtil.toFile(projectFo)
-    val classpath = scala.xml.XML.loadFile(file)
-    classpath match {
-      case <classpath>{ entries @ _* }</classpath> =>
-        for (entry @ <classpathentry>{ _* }</classpathentry> <- entries) {
-          (entry \ "@kind").text match {
-            case "src" =>
-              val path = (entry \ "@path").text.trim
-              val isTest = (entry \ "@scope").text.trim.equalsIgnoreCase("test")
-              val isProject = !((entry \ "@exported") isEmpty)
-              val srcFo = projectFo.getFileObject(path)
-              if (srcFo != null && !isProject) {
-                val isJava = srcFo.getPath.split("/") find (_ == "java") isDefined
-                val srcDir = FileUtil.toFile(srcFo)
-                if (isTest) {
-                  if (isJava) {
-                    testJavaSrcs += srcDir
+    try {
+      val classpath = scala.xml.XML.loadFile(file)
+      classpath match {
+        case <classpath>{ entries @ _* }</classpath> =>
+          for (entry @ <classpathentry>{ _* }</classpathentry> <- entries) {
+            (entry \ "@kind").text match {
+              case "src" =>
+                val path = (entry \ "@path").text.trim
+                val isTest = (entry \ "@scope").text.trim.equalsIgnoreCase("test")
+                val isProject = !((entry \ "@exported") isEmpty)
+                val srcFo = projectFo.getFileObject(path)
+                if (srcFo != null && !isProject) {
+                  val isJava = srcFo.getPath.split("/") find (_ == "java") isDefined
+                  val srcDir = FileUtil.toFile(srcFo)
+                  if (isTest) {
+                    if (isJava) {
+                      testJavaSrcs += srcDir
+                    } else {
+                      testScalaSrcs += srcDir
+                    }
                   } else {
-                    testScalaSrcs += srcDir
+                    if (isJava) {
+                      mainJavaSrcs += srcDir
+                    } else {
+                      mainScalaSrcs += srcDir
+                    }
                   }
+                }
+              
+                val output = (entry \ "@output").text.trim // classes folder
+                val outputDir = if (isProject) {
+                  new File(output)
                 } else {
-                  if (isJava) {
-                    mainJavaSrcs += srcDir
-                  } else {
-                    mainScalaSrcs += srcDir
-                  }
+                  new File(projectDir, output)
                 }
-              }
-              
-              val output = (entry \ "@output").text.trim // classes folder
-              val outputDir = if (isProject) {
-                new File(output)
-              } else {
-                new File(projectDir, output)
-              }
-              if (isTest) {
-                testCps += outputDir
-              } else {
-                mainCps += outputDir
-              }
-              
-              if (isProject) {
-                val base = (entry \ "@base").text.trim
-                val baseDir = new File(base)
-                if (baseDir.exists) {
-                  depPrjs += baseDir
-                }
-              }
-              
-            case "lib" =>
-              val path = (entry \ "@path").text.trim
-              val isTest = (entry \ "@scope").text.trim.equalsIgnoreCase("test")
-              val libFile = new File(path)
-              if (libFile.exists) {
                 if (isTest) {
-                  testCps += libFile
+                  testCps += outputDir
                 } else {
-                  mainCps += libFile
+                  mainCps += outputDir
                 }
-              }
               
-            case _ =>
+                if (isProject) {
+                  val base = (entry \ "@base").text.trim
+                  val baseDir = new File(base)
+                  if (baseDir.exists) {
+                    depPrjs += baseDir
+                  }
+                }
+              
+              case "lib" =>
+                val path = (entry \ "@path").text.trim
+                val isTest = (entry \ "@scope").text.trim.equalsIgnoreCase("test")
+                val libFile = new File(path)
+                if (libFile.exists) {
+                  if (isTest) {
+                    testCps += libFile
+                  } else {
+                    mainCps += libFile
+                  }
+                }
+              
+              case _ =>
+            }
           }
-        }
+      }
+    } catch {
+      case ex: Exception => 
     }
     
     LibraryEntry(mainJavaSrcs  map FileUtil.normalizeFile toArray,
@@ -238,38 +263,6 @@ class SBTController(project: Project, isEnabled$: Boolean) {
     }
   }
 
-  private class SBTResolver extends PropertyChangeListener {
-
-    private val resolverTask = RequestProcessor.getDefault().create(new Runnable() {
-        def run() {
-          val progressHandle = ProgressHandleFactory.createHandle(NbBundle.getMessage(classOf[SBTController], "LBL_Resolving_Progress"))
-          progressHandle.start
-          SBTConsoleTopComponent.openInstance(project, true, "eclipse gen-netbeans=true"){result =>
-            isUnderResolving = false
-            pcs.firePropertyChange(SBT_LIBRARY_RESOLVED, null, null)
-            progressHandle.finish
-            println(result)
-          }
-        }
-      }
-    )
-
-    def propertyChange(evt: PropertyChangeEvent) {
-      evt.getPropertyName match {
-        case DESCRIPTOR_CHANGE | DESCRIPTOR_CONTENT_CHANGE =>
-          //triggerResolution
-        case _ =>
-      }
-    }
-
-    def triggerResolution {
-      if (!isUnderResolving) {
-        isUnderResolving = true
-        resolverTask.run
-      }
-    }
-  }
-
   private class DescriptorFileListener extends FileChangeAdapter {
 
     override
@@ -300,7 +293,7 @@ class SBTController(project: Project, isEnabled$: Boolean) {
   }
 }
 
-object SBTController {
+object SBTResolver {
   val DescriptorFileName = ".classpath_nb"
   
   val DESCRIPTOR_CHANGE = "sbtDescriptorChange"
