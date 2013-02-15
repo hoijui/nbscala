@@ -32,8 +32,6 @@ import org.openide.util.Exceptions
 import org.openide.util.ImageUtilities
 import org.openide.util.NbBundle
 import org.openide.util.RequestProcessor
-import org.openide.util.Task
-import org.openide.util.TaskListener
 import org.openide.util.UserQuestionException
 import org.openide.windows._
 
@@ -44,17 +42,15 @@ import org.openide.windows._
 final class SBTConsoleTopComponent private (project: Project) extends TopComponent {
   import SBTConsoleTopComponent._
   
-  private var finished: Boolean = true
   private var textPane: JTextPane = _
   private val mimeType = "text/x-sbt"
   private val log = Logger.getLogger(getClass.getName)
   
-
   initComponents
   setName("SBT " + project.getProjectDirectory.getName)
   setToolTipText(NbBundle.getMessage(classOf[SBTConsoleTopComponent], "HINT_SBTConsoleTopComponent") + " for " + project.getProjectDirectory.getPath)
   setIcon(ImageUtilities.loadImage(ICON_PATH, true))
-  var console: ConsoleOutputStream = createTerminal
+  val console: ConsoleOutputStream = createTerminal
  
   private def initComponents() {
     setLayout(new java.awt.BorderLayout())
@@ -86,12 +82,6 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
   
   override
   protected def componentOpened() {
-    if (finished) {
-      // Start a new one
-      finished = false
-      removeAll
-      console = createTerminal
-    }
     super.componentOpened
   }
 
@@ -231,11 +221,11 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
 
     val (executable, args) = SBTExecution.getArgs(sbtHome)
     
-    console = new ConsoleOutputStream(
+    val consoleOs = new ConsoleOutputStream(
       textPane, 
       " " + NbBundle.getMessage(classOf[SBTConsoleTopComponent], "SBTConsoleWelcome") + " " + "sbt.home=" + sbtHome + "\n",
       pipeIn)
-    val consoleOut = new AnsiConsoleOutputStream(console)
+    val consoleOut = new AnsiConsoleOutputStream(consoleOs)
     
     val in = new InputStreamReader(pipeIn)
     val out = new PrintWriter(new PrintStream(consoleOut))
@@ -250,7 +240,9 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
     }
     log.info("==== End of Sbt console args ====")
 
-    builder = builder.addEnvironmentVariable("JAVA_HOME", SBTExecution.getJavaHome)
+    // XXX under Mac OS jdk7, the java.home is point to /Library/Java/JavaVirtualMachines/jdk1.7.0_xx.jdk/Contents/Home/jre
+    // instead of /Library/Java/JavaVirtualMachines/jdk1.7.0_xx.jdk/Contents/Home/, which cause the lack of javac
+    //builder = builder.addEnvironmentVariable("JAVA_HOME", SBTExecution.getJavaHome)
     val pwd = FileUtil.toFile(project.getProjectDirectory)
     builder = builder.workingDirectory(pwd)
 
@@ -261,13 +253,12 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
     execDescriptor = execDescriptor.postExecution(new Runnable() {
         override
         def run() {
-          finished = true
           textPane.setEditable(false)
           SwingUtilities.invokeLater(new Runnable() {
               override
               def run() {
-                if (console != null) {
-                  console.exitSbt
+                if (consoleOs != null) {
+                  consoleOs.exitSbt
                 }
                 
                 SBTConsoleTopComponent.this.close
@@ -284,7 +275,7 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
 
     textPane.addMouseListener(MyMouseListener)
     textPane.addMouseMotionListener(MyMouseListener)
-    console
+    consoleOs
   }
 
   object MyMouseListener extends MouseAdapter {
@@ -475,52 +466,47 @@ object SBTConsoleTopComponent {
    * Obtain the SBTConsoleTopComponent instance by project
    */
   def openInstance(project: Project, background: Boolean, commands: List[String], message: String = null)(postAction: String => Unit = null) {
-    var task: RequestProcessor#Task = null
     val progressHandle = ProgressHandleFactory.createHandle(message, new Cancellable() {
-        def cancel(): Boolean = if (task != null) task.cancel else false
-      })
+        def cancel: Boolean = false // XXX todo possible for a AWT Event dispatch thread?
+      }
+    )
     
-    task = RequestProcessor.getDefault.create(new Runnable() {
-        def run {
-          progressHandle.start
+    val runnableTask = new Runnable() {
+      def run {
+        progressHandle.start
           
-          val tcId = toEscapedPreferredId(project)
-          val (tc, isNewCreated) = WindowManager.getDefault.findTopComponent(tcId) match {
-            case null => 
-              (new SBTConsoleTopComponent(project), true)
-            case tc: SBTConsoleTopComponent => 
-              (tc, false)
-            case _ =>
-              ErrorManager.getDefault.log(ErrorManager.WARNING,
-                                          "There seem to be multiple components with the '" + tcId + 
-                                          "' ID. That is a potential source of errors and unexpected behavior.")
-              (null, false)
-          }
+        val tcId = toEscapedPreferredId(project)
+        val (tc, isNewCreated) = WindowManager.getDefault.findTopComponent(tcId) match {
+          case null => 
+            (new SBTConsoleTopComponent(project), true)
+          case tc: SBTConsoleTopComponent => 
+            (tc, false)
+          case _ =>
+            ErrorManager.getDefault.log(ErrorManager.WARNING,
+                                        "There seem to be multiple components with the '" + tcId + 
+                                        "' ID. That is a potential source of errors and unexpected behavior.")
+            (null, false)
+        }
           
-          if (!tc.isOpened) tc.open
-          if (!background)  tc.requestActive
+        if (!tc.isOpened) tc.open
+        if (!background)  tc.requestActive
               
-          val results = commands map tc.console.runSbtCommand
+        val results = commands map tc.console.runSbtCommand
 
-          if (background && !isNewCreated) {
-            tc.console.exitSbt
-            tc.close
-          }
+        if (background && !isNewCreated) {
+          tc.console.exitSbt
+          tc.close
+        }
               
-          if (postAction != null) {
-            postAction(results.lastOption getOrElse null)
-          }
+        if (postAction != null) {
+          postAction(results.lastOption getOrElse null)
         }
-      })
-    
-    task.addTaskListener(new TaskListener() {
-        def taskFinished(task: Task) {
-          progressHandle.finish
-        }
-      })
-    
-    // XXX when used task.schedule(0), I got Window System API is required to be called from AWT thread only
-    task.run
+          
+        progressHandle.finish
+      }
+    }
+      
+    SwingUtilities.invokeLater(runnableTask)
   }
   
   private def getMainProjectWorkPath: File = {

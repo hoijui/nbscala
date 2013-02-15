@@ -1,8 +1,5 @@
 package org.netbeans.modules.scala.sbt.nodes
 
-import java.beans.PropertyChangeEvent
-import java.beans.PropertyChangeListener
-import javax.swing.SwingUtilities
 import javax.swing.event.ChangeListener
 import org.netbeans.api.project.Project
 import org.netbeans.modules.scala.sbt.project.ProjectConstants
@@ -15,32 +12,24 @@ import org.openide.nodes.FilterNode
 import org.openide.nodes.Node
 import org.openide.util.ChangeSupport
 import org.openide.util.Exceptions
+import org.openide.util.NbBundle
 
 class ProjectFolderNodeFactory extends NodeFactory {
-  import ProjectFolderNodeFactory._
-  
-  def createNodes(project: Project): NodeList[_] = new ProjectFolderNodeList(project)
+  def createNodes(project: Project): NodeList[_] = new ProjectFolderNodeFactory.ProjectFolderNodeList(project)
 }
 
 object ProjectFolderNodeFactory {
   private val PROJECT_FOLDER = "project-folder"
   private val PROJECT_FOLDER_NAME = "project"
+  private val DISPLAY_NAME = NbBundle.getMessage(classOf[ProjectFolderNodeFactory], "CTL_ProjectFolder")
     
-  private class ProjectFolderNodeList(project: Project) extends NodeList[String] with PropertyChangeListener {
-    private val changeSupport = new ChangeSupport(this)
+  private class ProjectFolderNodeList(project: Project) extends NodeList[String] {
+    private val cs = new ChangeSupport(this)
 
     def keys: java.util.List[String] = {
       val theKeys = new java.util.ArrayList[String]()
       theKeys.add(PROJECT_FOLDER)
       theKeys
-    }
-
-    def addChangeListener(l: ChangeListener) {
-      changeSupport.addChangeListener(l)
-    }
-
-    def removeChangeListener(l: ChangeListener) {
-      changeSupport.removeChangeListener(l)
     }
 
     /**
@@ -52,7 +41,10 @@ object ProjectFolderNodeFactory {
           try {
             DataObject.find(projectFolder) match {
               case null => null
-              case dobj => new FilterNode(dobj.getNodeDelegate)
+              case dobj => 
+                new FilterNode(dobj.getNodeDelegate) {
+                  override def getDisplayName = DISPLAY_NAME
+                }
             }
           } catch {
             case ex: DataObjectNotFoundException => Exceptions.printStackTrace(ex); null
@@ -61,17 +53,20 @@ object ProjectFolderNodeFactory {
       }
     }
 
-    def addNotify() {}
+    def addNotify() {
+      
+    }
 
-    def removeNotify() {}
+    def removeNotify() {
+      
+    }
+    
+    def addChangeListener(l: ChangeListener) {
+      cs.addChangeListener(l)
+    }
 
-    def propertyChange(evt: PropertyChangeEvent) {
-      // The caller holds ProjectManager.mutex() read lock
-      SwingUtilities.invokeLater(new Runnable() {
-          def run() {
-            changeSupport.fireChange
-          }
-        })
+    def removeChangeListener(l: ChangeListener) {
+      cs.removeChangeListener(l)
     }
   }
   

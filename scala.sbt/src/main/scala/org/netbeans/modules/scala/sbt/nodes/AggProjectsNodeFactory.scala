@@ -22,21 +22,21 @@ import org.openide.util.Exceptions
 import org.openide.util.ImageUtilities
 import org.openide.util.NbBundle
 
-class DepProjectsNodeFactory extends NodeFactory {
-  def createNodes(project: Project): NodeList[_] = new DepProjectsNodeFactory.ProjectsNodeList(project)
+class AggProjectsNodeFactory extends NodeFactory {
+  def createNodes(project: Project): NodeList[_] = new AggProjectsNodeFactory.ProjectsNodeList(project)
 }
 
-object DepProjectsNodeFactory {
-  private val DEP_PROJECTS = "dep-projects"
+object AggProjectsNodeFactory {
+  private val AGG_PROJECTS = "agg-projects"
   private val ICON_LIB_BADGE = ImageUtilities.loadImage("org/netbeans/modules/java/j2seproject/ui/resources/libraries-badge.png")    //NOI18N
     
   private class ProjectsNodeList(project: Project) extends NodeList[String] {
     private val cs = new ChangeSupport(this)
     private lazy val sbtResolver = project.getLookup.lookup(classOf[SBTResolver])
-    
+
     def keys: java.util.List[String] = {
       val theKeys = new java.util.ArrayList[String]()
-      theKeys.add(DEP_PROJECTS)
+      theKeys.add(AGG_PROJECTS)
       theKeys
     }
 
@@ -44,8 +44,8 @@ object DepProjectsNodeFactory {
      * return null if node for this key doesn't exist currently
      */
     def node(key: String): Node = {
-      if (sbtResolver.getDependenciesProjects.length == 0) {
-        null
+      if (sbtResolver.getAggregateProjects.length == 0) {
+        null 
       } else {
         try {
           new ProjectNode(project)
@@ -62,7 +62,7 @@ object DepProjectsNodeFactory {
     def removeNotify() {
 
     }
-    
+
     def addChangeListener(l: ChangeListener) {
       cs.addChangeListener(l)
     }
@@ -73,7 +73,7 @@ object DepProjectsNodeFactory {
   }
   
   private class ProjectNode(project: Project) extends AbstractNode(Children.create(new ProjectsChildFactory(project), true)) {
-    private val DISPLAY_NAME = NbBundle.getMessage(classOf[DepProjectsNodeFactory], "CTL_DepProjectsNode")
+    private val DISPLAY_NAME = NbBundle.getMessage(classOf[AggProjectsNodeFactory], "CTL_AggProjectsNode")
 
     override
     def getDisplayName: String = DISPLAY_NAME
@@ -101,7 +101,7 @@ object DepProjectsNodeFactory {
     protected def createKeys(toPopulate: java.util.List[Project]): Boolean = {
       val toSort = new java.util.TreeMap[String, Project]()
       try {
-        val projectFos = sbtResolver.getDependenciesProjects map FileUtil.toFileObject
+        val projectFos = sbtResolver.getAggregateProjects map FileUtil.toFileObject
         for (projectFo <- projectFos) {
           ProjectManager.getDefault.findProject(projectFo) match {
             case x: SBTProject => toSort.put(x.getName, x)

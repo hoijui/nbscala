@@ -7,7 +7,6 @@ import org.netbeans.api.project.Project
 import org.netbeans.api.project.ProjectInformation
 import org.netbeans.api.project.ProjectManager
 import org.netbeans.modules.scala.sbt.classpath.SBTClassPathProvider
-import org.netbeans.modules.scala.sbt.classpath.SBTResolver
 import org.netbeans.modules.scala.sbt.classpath.SBTSources
 import org.netbeans.modules.scala.sbt.queries.SBTSourceForBinaryQuery
 import org.netbeans.spi.project.ProjectState
@@ -24,16 +23,15 @@ class SBTProject(projectDir: FileObject, state: ProjectState) extends Project {
   private lazy val lookup: Lookup = Lookups.fixed(
     this,
     new Info(),
-    new SBTResolver(this, true),
+    new SBTResolver(this),
     new SBTProjectLogicalView(this),
     new SBTClassPathProvider(this),
     new SBTSources(this),
     new SBTProjectOpenedHook(this),
     new SBTActionProvider(this),
-    new SBTDepProjectProvider(this),
     new SBTSourceForBinaryQuery(this)
   )
-
+  
   override
   def getProjectDirectory = projectDir
 
@@ -62,13 +60,22 @@ class SBTProject(projectDir: FileObject, state: ProjectState) extends Project {
   
   def getProjectChain: List[SBTProject] = getProjectChain(this, List(this))
   
-  // @todo the project's real name in sbt
-  def getName = getLookup.lookup(classOf[ProjectInformation]).getName
-  
-  private def getProjectChain(project: SBTProject, lastFound: List[SBTProject]): List[SBTProject] = {
+  private def getProjectChain(project: SBTProject, chain: List[SBTProject]): List[SBTProject] = {
     project.getMasterProject match {
-      case None => lastFound
-      case Some(x) => getProjectChain(x, x :: lastFound)
+      case None => chain
+      case Some(x) => getProjectChain(x, x :: chain)
+    }
+  }
+  
+  def getName = {
+    val resolvedName = getLookup.lookup(classOf[SBTResolver]) match {
+      case null => null
+      case resolver => resolver.getName 
+    }
+    if (resolvedName != null) {
+      resolvedName
+    } else {
+      getLookup.lookup(classOf[ProjectInformation]).getName
     }
   }
   
