@@ -50,7 +50,7 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
   setName("SBT " + project.getProjectDirectory.getName)
   setToolTipText(NbBundle.getMessage(classOf[SBTConsoleTopComponent], "HINT_SBTConsoleTopComponent") + " for " + project.getProjectDirectory.getPath)
   setIcon(ImageUtilities.loadImage(ICON_PATH, true))
-  val console: ConsoleOutputStream = createTerminal
+  var console: ConsoleOutputStream = _
  
   private def initComponents() {
     setLayout(new java.awt.BorderLayout())
@@ -82,6 +82,8 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
   
   override
   protected def componentOpened() {
+    // always create a new terminal when is opened/reopend
+    console = createTerminal
     super.componentOpened
   }
 
@@ -89,7 +91,14 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
   protected def componentClosed() {
     if (console != null) {
       console.exitSbt
+      try {
+        console.close
+      } catch {
+        case ex: Exception => // ignore
+      }
+      console == null
     }
+    textPane = null
     super.componentClosed
   }
 
@@ -143,16 +152,8 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
   //def writeReplace: AnyRef = new ResolvableHelper()
 
   private def createTerminal: ConsoleOutputStream = {
-    val pipeIn = new PipedInputStream()
-
-    textPane = new JTextPane()
-    textPane.getDocument.putProperty("mimeType", mimeType)
-    textPane.setMargin(new Insets(8, 8, 8, 8))
-    textPane.setBackground(new Color(0xf2, 0xf2, 0xf2))
-    textPane.setForeground(new Color(0xa4, 0x00, 0x00))
-
     // From core/output2/**/AbstractOutputPane
-    val size = UIManager.get("customFontSize") match { //NOI18N
+    val fontSize = UIManager.get("customFontSize") match { //NOI18N
       case null =>
         UIManager.get("controlFont") match { // NOI18N
           case null => 11
@@ -161,13 +162,17 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
       case i: java.lang.Integer => i.intValue
     }
 
-    val font = new Font("Monospaced", Font.PLAIN, size) match { 
-      case null => new Font("Lucida Sans Typewriter", Font.PLAIN, size)
-      case f => f
+    val font = new Font("Monospaced", Font.PLAIN, fontSize) match { 
+      case null => new Font("Lucida Sans Typewriter", Font.PLAIN, fontSize)
+      case x => x
     } 
-    textPane.setFont(font)
 
-    setBorder(BorderFactory.createEmptyBorder)
+    textPane = new JTextPane()
+    textPane.getDocument.putProperty("mimeType", mimeType)
+    textPane.setMargin(new Insets(8, 8, 8, 8))
+    textPane.setBackground(new Color(0xf2, 0xf2, 0xf2))
+    textPane.setForeground(new Color(0xa4, 0x00, 0x00))
+    textPane.setFont(font)
 
     // Try to initialize colors from NetBeans properties, see core/output2
     UIManager.getColor("nb.output.selectionBackground") match {
@@ -206,6 +211,7 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
     //    unselectedErr = selectedErr;
     //}
 
+    setBorder(BorderFactory.createEmptyBorder)
 
     val pane = new JScrollPane()
     pane.setViewportView(textPane)
@@ -220,62 +226,49 @@ final class SBTConsoleTopComponent private (project: Project) extends TopCompone
     }
 
     val (executable, args) = SBTExecution.getArgs(sbtHome)
-    
-    val consoleOs = new ConsoleOutputStream(
-      textPane, 
-      " " + NbBundle.getMessage(classOf[SBTConsoleTopComponent], "SBTConsoleWelcome") + " " + "sbt.home=" + sbtHome + "\n",
-      pipeIn)
-    val consoleOut = new AnsiConsoleOutputStream(consoleOs)
-    
-    val in = new InputStreamReader(pipeIn)
-    val out = new PrintWriter(new PrintStream(consoleOut))
-    val err = new PrintWriter(new PrintStream(consoleOut))
-
-    var builder = new ExternalProcessBuilder(executable)
-    log.info("==== Sbt console args ====")
-    log.info(executable)
-    for (arg <- args) {
-      log.info(arg)
-      builder = builder.addArgument(arg)
-    }
-    log.info("==== End of Sbt console args ====")
+    var builder = args.foldLeft(new ExternalProcessBuilder(executable))(_ addArgument _)
+    log.info(args.mkString("==== Sbt console args ====\n" + executable + "\n", "\n", "\n==== End of Sbt console args ===="))
 
     // XXX under Mac OS jdk7, the java.home is point to /Library/Java/JavaVirtualMachines/jdk1.7.0_xx.jdk/Contents/Home/jre
     // instead of /Library/Java/JavaVirtualMachines/jdk1.7.0_xx.jdk/Contents/Home/, which cause the lack of javac
     //builder = builder.addEnvironmentVariable("JAVA_HOME", SBTExecution.getJavaHome)
     val pwd = FileUtil.toFile(project.getProjectDirectory)
     builder = builder.workingDirectory(pwd)
-
-    var execDescriptor = new ExecutionDescriptor()
-    .frontWindow(true).inputVisible(true)
-    .inputOutput(new CustomInputOutput(in, out, err))
-
-    execDescriptor = execDescriptor.postExecution(new Runnable() {
+    
+    val pipedIn = new PipedInputStream()
+    val console = new ConsoleOutputStream(
+      textPane, 
+      " " + NbBundle.getMessage(classOf[SBTConsoleTopComponent], "SBTConsoleWelcome") + " " + "sbt.home=" + sbtHome + "\n",
+      pipedIn)
+    val consoleOut = new AnsiConsoleOutputStream(console)
+    
+    val in = new InputStreamReader(pipedIn)
+    val out = new PrintWriter(new PrintStream(consoleOut))
+    val err = new PrintWriter(new PrintStream(consoleOut))
+    val inputOutput = new CustomInputOutput(in, out, err)
+    
+    val execDescriptor = new ExecutionDescriptor().frontWindow(true).inputVisible(true)
+    .inputOutput(inputOutput).postExecution(new Runnable() {
         override
         def run() {
           textPane.setEditable(false)
           SwingUtilities.invokeLater(new Runnable() {
               override
               def run() {
-                if (consoleOs != null) {
-                  consoleOs.exitSbt
-                }
-                
                 SBTConsoleTopComponent.this.close
                 SBTConsoleTopComponent.this.removeAll
-                textPane = null
               }
             })
         }
       })
 
     val executionService = ExecutionService.newService(builder, execDescriptor, "Sbt Shell")
-
     executionService.run()
-
+    
     textPane.addMouseListener(MyMouseListener)
     textPane.addMouseMotionListener(MyMouseListener)
-    consoleOs
+
+    console
   }
 
   object MyMouseListener extends MouseAdapter {
@@ -488,8 +481,13 @@ object SBTConsoleTopComponent {
             (null, false)
         }
           
-        if (!tc.isOpened) tc.open
-        if (!background)  tc.requestActive
+        if (!tc.isOpened) {
+          tc.open
+        }
+        
+        if (!background) {
+          tc.requestActive
+        }
               
         val results = commands map tc.console.runSbtCommand
 
@@ -532,11 +530,6 @@ object SBTConsoleTopComponent {
     pwd
   }
 
-  //@SerialVersionUID(1L)
-  //class ResolvableHelper extends Serializable {
-  //  def readResolve: AnyRef = getDefault
-  //}
-  
   private class CustomInputOutput(input: Reader, out: PrintWriter, err: PrintWriter) extends InputOutput {
     private var closed: Boolean = false
 
@@ -552,7 +545,7 @@ object SBTConsoleTopComponent {
     def getErr: OutputWriter = new CustomOutputWriter(err)
 
     override
-    def getIn: Reader = return input
+    def getIn: Reader = input
 
     override
     def getOut: OutputWriter = new CustomOutputWriter(out)

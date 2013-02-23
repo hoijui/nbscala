@@ -9,11 +9,10 @@ class AnsiOutputStream(os: OutputStream) extends FilterOutputStream(os) {
   import Ansi._
   import AnsiOutputStream._
   
+  private val options = new ArrayBuffer[Any]()
   private val buffer = Array.ofDim[Byte](MAX_ESCAPE_SEQUENCE_LENGTH)
   private var pos = 0
   private var startOfValue = 0
-  private val options = new ArrayBuffer[Any]()
-
   private var state = LOOKING_FOR_FIRST_ESC_CHAR
 
   // TODO: implement to get perf boost: public void write(byte[] b, Int off, Int len)
@@ -167,9 +166,9 @@ class AnsiOutputStream(os: OutputStream) extends FilterOutputStream(os) {
     if (!skipBuffer) {
       out.write(buffer, 0, pos)
     }
+    options.clear
     pos = 0
     startOfValue = 0
-    options.clear
     state = LOOKING_FOR_FIRST_ESC_CHAR
   }
   
@@ -222,26 +221,27 @@ class AnsiOutputStream(os: OutputStream) extends FilterOutputStream(os) {
         case 'm' =>				
           // all options should be ints...
           var count = 0
-          for (next <- options if next != null) {
-            next match {
-              case value: Int =>
-                count += 1
-                value match {
-                  case _ if 30 <= value && value <= 37 =>
-                    processSetForegroundColor(value - 30)
-                  case _ if 40 <= value && value <= 47 =>
-                    processSetBackgroundColor(value - 40)
-                  case 39 =>
-                    processDefaultTextColor
-                  case 49 =>
-                    processDefaultBackgroundColor
-                  case 0 =>
-                    processAttributeRest
-                  case _ =>
-                    processSetAttribute(value)
-                }
-              case _ => throw new IllegalArgumentException()
-            }
+          options foreach {
+            case value: Int =>
+              count += 1
+              value match {
+                case _ if 30 <= value && value <= 37 =>
+                  processSetForegroundColor(value - 30)
+                case _ if 40 <= value && value <= 47 =>
+                  processSetBackgroundColor(value - 40)
+                case 39 =>
+                  processDefaultTextColor
+                case 49 =>
+                  processDefaultBackgroundColor
+                case 0 =>
+                  processAttributeRest
+                case _ =>
+                  processSetAttribute(value)
+              }
+            case null => 
+              // ginore
+            case _ => 
+              throw new IllegalArgumentException()
           }
 
           if (count == 0) {
@@ -254,7 +254,6 @@ class AnsiOutputStream(os: OutputStream) extends FilterOutputStream(os) {
         case 'u' =>
           processRestoreCursorPosition
           true
-				
         case _ =>
           if ('a' <= command && 'z' <= command) {
             processUnknownExtension(options, command)
@@ -389,13 +388,13 @@ class AnsiOutputStream(os: OutputStream) extends FilterOutputStream(os) {
   protected def processUnknownOperatingSystemCommand(command: Int, param: String) {}
 
   private def optionInt(options: ArrayBuffer[Any], index: Int): Int = {
-    if (options.size <= index)
+    if (options.size > index) {
+      options(index) match {
+        case value: Int => value
+        case _ => throw new IllegalArgumentException()
+      }
+    } else {
       throw new IllegalArgumentException()
-    
-    options(index) match {
-      case value: Int => value
-      case null => throw new IllegalArgumentException()
-      case _ => throw new IllegalArgumentException()
     }
   }
 
@@ -403,7 +402,6 @@ class AnsiOutputStream(os: OutputStream) extends FilterOutputStream(os) {
     if (options.size > index) {
       options(index) match {
         case value: Int => value
-        case null => defaultValue
         case _ => defaultValue
       }
     } else {
