@@ -37,9 +37,6 @@ import org.netbeans.api.java.classpath.GlobalPathRegistry
 import org.netbeans.api.java.queries.SourceForBinaryQuery
 import org.netbeans.api.java.source.ClasspathInfo
 import org.netbeans.api.lexer.TokenHierarchy
-import org.netbeans.api.project.Project
-import org.netbeans.api.project.ProjectUtils
-import org.netbeans.api.project.SourceGroup
 import org.netbeans.editor.BaseDocument
 import org.netbeans.modules.classfile.ClassFile
 import org.netbeans.modules.csl.api.{ElementKind, OffsetRange}
@@ -67,13 +64,7 @@ import scala.reflect.internal.{Flags, Symbols}
  * @author Caoyuan Deng
  */
 object ScalaSourceUtil {
-
-  val logger = Logger.getLogger(getClass.getName)
-
-  /** @see org.netbeans.api.java.project.JavaProjectConstants */
-  val SOURCES_TYPE_JAVA = "java" // NOI18N
-  /** a source group type for separate scala source roots, as seen in maven projects for example */
-  val SOURCES_TYPE_SCALA = "scala" //NOI18N
+  private val logger = Logger.getLogger(getClass.getName)
 
   def isScalaFile(f: FileObject): Boolean = {
     ScalaMimeResolver.MIME_TYPE.equals(f.getMIMEType)
@@ -395,7 +386,7 @@ object ScalaSourceUtil {
     // * The safer way is using ProjectUtils.getSources(project). See ScalaGlobal#findDirResources
     // *     val srcCp = ClassPath.getClassPath(fo, ClassPath.SOURCE)
 
-    val srcRootsMine = ScalaGlobal.getSrcFileObjects(fo, true)
+    val srcRootsMine = ProjectResources.getSrcFileObjects(fo, true)
     val srcCpMine = ClassPathSupport.createClassPath(srcRootsMine: _*)
 
     val cp = getClassPath(fo)
@@ -403,7 +394,7 @@ object ScalaSourceUtil {
     val root  = cp.findOwnerRoot(clzFo)
 
     val srcCpTarget = if (root ne null) {
-      val srcRoots1 = ScalaGlobal.getSrcFileObjects(root, true)
+      val srcRoots1 = ProjectResources.getSrcFileObjects(root, true)
       val srcRoots2 = SourceForBinaryQuery.findSourceRoots(root.toURL).getRoots
       ClassPathSupport.createClassPath(srcRoots1 ++ srcRoots2: _*)
     } else null
@@ -452,13 +443,6 @@ object ScalaSourceUtil {
       case x => return Some(x)
     }
     
-  }
-
-  def getScalaJavaSourceGroups(p: Project): Array[SourceGroup] = {
-    val sources = ProjectUtils.getSources(p)
-    val scalaSgs = sources.getSourceGroups(ScalaSourceUtil.SOURCES_TYPE_SCALA)
-    val javaSgs  = sources.getSourceGroups(ScalaSourceUtil.SOURCES_TYPE_JAVA)
-    scalaSgs ++ javaSgs
   }
 
   /** @see org.netbeans.api.java.source.SourceUtils#getDependentRoots */
@@ -521,9 +505,6 @@ object ScalaSourceUtil {
   private val TMPL_KINDS = Set(ElementKind.CLASS, ElementKind.MODULE)
 
   def getBinaryClassName(pr: ScalaParserResult, lineNumber: Int): String = {
-    val global = pr.global
-    import global._
-
     val root = pr.rootScope
     val fo = pr.getSnapshot.getSource.getFileObject
     val doc = pr.getSnapshot.getSource.getDocument(false).asInstanceOf[StyledDocument]
@@ -531,31 +512,40 @@ object ScalaSourceUtil {
     val offset = NbDocument.findLineOffset(doc, lineNumber - 1)
 
     var clazzName = ""
-    root.enclosingDfn(TMPL_KINDS, th, offset) foreach {case enclDfn: ScalaDfn =>
-        val sym = enclDfn.symbol
-        // "scalarun.Dog.$talk$1"
-        val fqn = new StringBuilder(sym.fullName('.'))
+    
+    val global = pr.global
+    import global._
+    askForResponse {() =>
+      root.enclosingDfn(TMPL_KINDS, th, offset) foreach {case enclDfn: ScalaDfn =>
+          val sym = enclDfn.symbol
+          // "scalarun.Dog.$talk$1"
+          val fqn = new StringBuilder(sym.fullName('.'))
 
-        // * getTopLevelClassName "scalarun.Dog"
-        val topSym = sym.enclosingTopLevelClass
-        val topClzName = topSym.fullName('.')
+          // * getTopLevelClassName "scalarun.Dog"
+          val topSym = sym.enclosingTopLevelClass
+          val topClzName = topSym.fullName('.')
 
-        // "scalarun.Dog$$talk$1"
-        for (i <- topClzName.length until fqn.length if fqn.charAt(i) == '.') {
-          fqn.setCharAt(i, '$')
-        }
+          // "scalarun.Dog$$talk$1"
+          for (i <- topClzName.length until fqn.length if fqn.charAt(i) == '.') {
+            fqn.setCharAt(i, '$')
+          }
 
-        // * According to Symbol#kindString, an object template isModuleClass()
-        // * trait's symbol name has been added "$class" by compiler
-        if (topSym.isModuleClass) {
-          fqn.append("$")
-        }
-        clazzName = fqn.toString
+          // * According to Symbol#kindString, an object template isModuleClass()
+          // * trait's symbol name has been added "$class" by compiler
+          if (topSym.isModuleClass) {
+            fqn.append("$")
+          }
+          clazzName = fqn.toString
+      }
+      
+    } get match {
+      case Left(_) =>
+      case Right(_) =>
     }
 
     if (clazzName.length == 0) return null
 
-    val out = ScalaGlobal.getOutFileObject(fo, true) getOrElse {return clazzName}
+    val out = ProjectResources.getOutFileObject(fo, true) getOrElse {return clazzName}
 
     def findAllClassFilesWith(prefix: String, dirFo: FileObject, result: ArrayBuffer[FileObject]): Unit = {
       dirFo.getChildren foreach {
@@ -600,7 +590,7 @@ object ScalaSourceUtil {
     clazzName
   }
 
-  @deprecated
+  @deprecated("For reference only", "1.6.0")
   def getBinaryClassName_old(pr: ScalaParserResult, offset: Int): String = {
     val root = pr.rootScopeForDebug
     val th = pr.getSnapshot.getTokenHierarchy
@@ -835,24 +825,21 @@ object ScalaSourceUtil {
   def getClasspathInfo(fo: FileObject): Option[ClasspathInfo] = {
     val bootCp = ClassPath.getClassPath(fo, ClassPath.BOOT)
     val compCp = ClassPath.getClassPath(fo, ClassPath.COMPILE)
-    val srcCp = ClassPath.getClassPath(fo, ClassPath.SOURCE)
+    val srcCp  = ClassPath.getClassPath(fo, ClassPath.SOURCE)
 
-    if ((bootCp eq null) || (compCp eq null) || (srcCp eq null)) {
+    if (bootCp == null || compCp == null || srcCp == null) {
       /** @todo why? at least I saw this happens on "Scala project created from existing sources" */
       logger.warning("No classpath for " + fo)
       None
     } else {
-      ClasspathInfo.create(bootCp, compCp, srcCp) match {
-        case null => None
-        case x => Some(x)
-      }
+      Option(ClasspathInfo.create(bootCp, compCp, srcCp))
     }
   }
 
   def getClassPath(fo: FileObject) = {
     val bootCp = ClassPath.getClassPath(fo, ClassPath.BOOT)
     val compCp = ClassPath.getClassPath(fo, ClassPath.COMPILE)
-    val srcCp = ClassPath.getClassPath(fo, ClassPath.SOURCE)
+    val srcCp  = ClassPath.getClassPath(fo, ClassPath.SOURCE)
     ClassPathSupport.createProxyClassPath(Array(bootCp, compCp, srcCp): _*)
   }
 

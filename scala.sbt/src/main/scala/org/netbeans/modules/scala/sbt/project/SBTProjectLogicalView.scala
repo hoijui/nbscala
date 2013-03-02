@@ -27,7 +27,7 @@ import org.openide.util.lookup.ProxyLookup
  * 
  * @author Caoyuan Deng
  */
-class SBTProjectLogicalView(project: Project) extends LogicalViewProvider {
+class SBTProjectLogicalView(project: SBTProject) extends LogicalViewProvider {
   import SBTProjectLogicalView._
   
   private lazy val sbtResolver = project.getLookup.lookup(classOf[SBTResolver])
@@ -50,7 +50,7 @@ class SBTProjectLogicalView(project: Project) extends LogicalViewProvider {
     }
   }
 
-  private final class ProjectNode(node: Node, project: Project) extends AbstractNode(
+  private final class ProjectNode(node: Node, project: SBTProject) extends AbstractNode(
     NodeFactorySupport.createCompositeChildren(project, NODE_FACTORY_FOLDER_PATH),
     new ProxyLookup(Lookups.singleton(project), node.getLookup)
   ) with PropertyChangeListener {
@@ -61,9 +61,12 @@ class SBTProjectLogicalView(project: Project) extends LogicalViewProvider {
     def getActions(arg0: Boolean): Array[Action] = Array(
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_SBT_CONSOLE, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_OpenSbtAction"), null),
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_SBT_RELOAD,  NbBundle.getMessage(classOf[SBTActionProvider], "CTL_ReloadSbtAction"), null),
+      null,
+      ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_SCALA_CONSOLE, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_OpenScalaAction"), null),
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_BUILD, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_BuildAction"), null),
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_CLEAN,  NbBundle.getMessage(classOf[SBTActionProvider], "CTL_CleanAction"), null),
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_REBUILD, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_RebuildAction"), null),
+      null,
       CommonProjectActions.newFileAction,
       CommonProjectActions.copyProjectAction,
       CommonProjectActions.deleteProjectAction,
@@ -77,9 +80,7 @@ class SBTProjectLogicalView(project: Project) extends LogicalViewProvider {
     def getOpenedIcon(tpe: Int): Image = getIcon(tpe)
 
     override
-    def getDisplayName: String = {
-      project.getProjectDirectory.getName
-    }
+    def getDisplayName = project.getDisplayName
     
     override
     def getShortDescription = project.getProjectDirectory.getPath

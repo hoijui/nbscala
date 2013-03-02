@@ -15,6 +15,7 @@ import scala.collection.mutable.ArrayBuffer
 
 case class ProjectContext(
   name: String,
+  id: String,
   mainJavaSrcs:   Array[(File, File)], 
   testJavaSrcs:   Array[(File, File)], 
   mainScalaSrcs:  Array[(File, File)], 
@@ -101,6 +102,7 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
 
   private def parseClasspathXml(file: File): ProjectContext = {
     var name: String = null
+    var id: String = null
     val mainJavaSrcs  = new ArrayBuffer[(File, File)]()
     val testJavaSrcs  = new ArrayBuffer[(File, File)]()
     val mainScalaSrcs = new ArrayBuffer[(File, File)]()
@@ -117,16 +119,17 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
       classpath match {
         case context @ <classpath>{ entries @ _* }</classpath> =>
           name = (context \ "@name").text.trim
+          id = (context \ "@id").text.trim
           for (entry @ <classpathentry>{ _* }</classpathentry> <- entries) {
             (entry \ "@kind").text match {
               case "src" =>
-                val path = (entry \ "@path").text.trim
+                val path = (entry \ "@path").text.trim.replace("\\", "/")
                 val isTest = (entry \ "@scope").text.trim.equalsIgnoreCase("test")
                 val isDepProject = !((entry \ "@exported") isEmpty)
                 
                 val srcFo = projectFo.getFileObject(path)
 
-                val output = (entry \ "@output").text.trim // classes folder
+                val output = (entry \ "@output").text.trim.replace("\\", "/") // classes folder
                 val outDir = if (isDepProject) {
                   new File(output)
                 } else {
@@ -151,7 +154,7 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
                 }
               
                 if (isDepProject) {
-                  val base = (entry \ "@base").text.trim
+                  val base = (entry \ "@base").text.trim.replace("\\", "/")
                   val baseDir = new File(base)
                   if (baseDir.exists) {
                     depPrjs += baseDir
@@ -159,7 +162,7 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
                 }
               
               case "lib" =>
-                val path = (entry \ "@path").text.trim
+                val path = (entry \ "@path").text.trim.replace("\\", "/")
                 val isTest = (entry \ "@scope").text.trim.equalsIgnoreCase("test")
                 val libFile = new File(path)
                 if (libFile.exists) {
@@ -171,7 +174,7 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
                 }
                 
               case "agg" =>
-                val base = (entry \ "@base").text.trim
+                val base = (entry \ "@base").text.trim.replace("\\", "/")
                 val baseFile = new File(base)
                 if (baseFile.exists) {
                   aggPrjs += baseFile
@@ -186,6 +189,7 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
     }
     
     ProjectContext(name,
+                   id,
                    mainJavaSrcs  map {case (s, o) => FileUtil.normalizeFile(s) -> FileUtil.normalizeFile(o)} toArray,
                    testJavaSrcs  map {case (s, o) => FileUtil.normalizeFile(s) -> FileUtil.normalizeFile(o)} toArray,
                    mainScalaSrcs map {case (s, o) => FileUtil.normalizeFile(s) -> FileUtil.normalizeFile(o)} toArray,
@@ -212,11 +216,24 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
     }
   }
   
-  def getResolvedLibraries(scope: String): Array[File] = {
+  def getId: String = {
+    if (projectContext != null) {
+      projectContext.id 
+    } else {
+      null
+    }
+  }
+
+  def getResolvedLibraries(scope: String, isTest: Boolean): Array[File] = {
     scope match {
-      case ClassPath.COMPILE => projectContext.mainCps //++ libraryEntry.testCps
-      case ClassPath.EXECUTE => projectContext.mainCps //++ libraryEntry.testCps
-      case ClassPath.SOURCE => projectContext.mainJavaSrcs ++ projectContext.testJavaSrcs ++ projectContext.mainScalaSrcs ++ projectContext.mainScalaSrcs map (_._1)
+      case ClassPath.COMPILE => if (isTest) projectContext.testCps else projectContext.mainCps
+      case ClassPath.EXECUTE => if (isTest) projectContext.testCps else projectContext.mainCps
+      case ClassPath.SOURCE => 
+        if (isTest) {
+          projectContext.testJavaSrcs ++ projectContext.testScalaSrcs map (_._1)
+        } else {
+          projectContext.mainJavaSrcs ++ projectContext.mainScalaSrcs map (_._1)
+        }
       case ClassPath.BOOT => projectContext.mainCps filter {cp =>
           val name = cp.getName
           name.endsWith(".jar") && (name.startsWith("scala-library")  ||
@@ -228,12 +245,12 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
     }
   }
 
-  def getSources(tpe: String, test: Boolean): Array[(File, File)] = {
+  def getSources(tpe: String, isTest: Boolean): Array[(File, File)] = {
     tpe match {
       case ProjectConstants.SOURCES_TYPE_JAVA =>
-        if (test) projectContext.testJavaSrcs else projectContext.mainJavaSrcs
+        if (isTest) projectContext.testJavaSrcs else projectContext.mainJavaSrcs
       case ProjectConstants.SOURCES_TYPE_SCALA =>
-        if (test) projectContext.testScalaSrcs else projectContext.mainScalaSrcs
+        if (isTest) projectContext.testScalaSrcs else projectContext.mainScalaSrcs
       case _ => Array()
     }
   }
@@ -249,7 +266,8 @@ object SBTResolver {
   val SBT_RESOLVED_STATE_CHANGE = "sbtResolvedStateChange"
   val SBT_RESOLVED = "sbtResolved" 
   
-  val EmptyContext = ProjectContext(null, 
+  val EmptyContext = ProjectContext(null,
+                                    null,
                                     Array[(File, File)](), 
                                     Array[(File, File)](), 
                                     Array[(File, File)](), 

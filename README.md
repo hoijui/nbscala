@@ -29,10 +29,10 @@ Make sure you don't have an old version installed. (Check your netbeans installa
 3. Start Netbeans.
 4. Select Tools -> Plugins -> Downloaded -> Add Plugins...
 5. Select all extracted files.
-6. Accept the licence and the installation of unsigned plugins. 
+6. Accept the license and the installation of unsigned plugins. 
 
 ## Build Instructions
-Cause of the smale group of people involved in the project we only supply updates for the latest netbeans version (7.2 at the moment).
+Cause of the small group of people involved in the project we only supply updates for the latest netbeans version (7.2 at the moment).
 
 ### Requirement - Run:
 * Java 1.6+
@@ -44,12 +44,12 @@ Cause of the smale group of people involved in the project we only supply update
 * Maven 2.x/3.x 
 * NetBeans 7.2
 
-### Branchs:
+### Branches:
 * master -- tracking Scala 2.10.x currently
 * 2.9.x  -- for Scala 2.9.x
 
 ### Setting nb.installation property for maven
-Hint: This is going to be removed in the future. There is allready a nbm-application based subproject which can be used to run all modules of the plugin. See the scala.app/pom.xml for more information, what is still missing.
+Hint: This is going to be removed in the future. There is already a nbm-application based subproject which can be used to run all modules of the plugin. See the scala.app/pom.xml for more information, what is still missing.
 
 Make a new copy of your installed NetBeans (which will be used to run 'mvn nbm:run-ide' goal), check if there is a directory 'nbscala' under this copy, if yes, delete it. Then set 'nb.installation' property in your maven settings.xml (.m2/settings.xml) to point to this copy:
 
@@ -65,18 +65,28 @@ Make a new copy of your installed NetBeans (which will be used to run 'mvn nbm:r
         </profile>
     </profiles>
 
+### Set system environment variable for building.
+
+    MAVEN_OPTS=-Xss8M
+
+or even more:
+
+    MAVEN_OPTS=-Xss8M -Xmx1024M
+
 ### Build all nbms
 
     cd nbscala
     mvn clean install
 
 ### Generate auto-update site:
+
     cd nbscala
     mvn nbm:autoupdate
 
 the nbms and update site can be found at nbscala/target/netbeans_site
 
 ### Run/Debug ide:
+
     cd nbscala
     mvn nbm:cluster
 
@@ -100,6 +110,95 @@ Build-Debug-Cycle: (after changed module was successfuly built)
 
 The Project targets version 2.10.x of the scala release.
 
+
+
+## Scala Console Integration
+
+### A new Scala shell console is developed recently (since Feb 27, 2013)
+
+### To open it, right click on project, and choose "Open Scala Console"
+
+### Features:
+
+* Be aware of project's classpath that could be imported, new, run under console
+* Popup auto-completion when press \<tab\>
+* Applied also to Java SE projects and Maven projects
+
+
+
 ## Sbt Integration
 
-See [https://github.com/dcaoyuan/nbscala/wiki/SbtIntegrationInNetBeans](https://github.com/dcaoyuan/nbscala/wiki/SbtIntegrationInNetBeans)
+### Only Scala-2.10+ is supported under NetBeans
+
+* That is, always try to set your project's Scala version to 2.10+ in Build.scala or build.sbt: 
+
+        scalaVersion := "2.10.0"
+
+### Supported features
+
+* Recognize sbt project and open in NetBeans
+* Open sbt console in NetBeans (Right click on sbt project, choose "Open Sbt")
+* Jump to/Open compile error lines
+
+### How to
+
+* Install the newest nbscala plugins, [download directly](https://sourceforge.net/projects/erlybird/files/nb-scala/7.x_2.10.x/) or [build by yourself](https://github.com/dcaoyuan/nbscala) on NetBeans 7.2+.
+* Git clone, build and publish-local a NetBeans special sbt plugin <https://github.com/dcaoyuan/nbsbt>:
+
+        git clone git@github.com:dcaoyuan/nbsbt.git
+        cd nbsbt
+        sbt clean compile publish-local
+
+* Add nbsbt to your plugin definition file. You can use either the global one at  **~/.sbt/plugins/plugins.sbt** or the project-specific one at **PROJECT_DIR/project/plugins.sbt**
+
+        addSbtPlugin("org.netbeans.nbsbt" % "nbsbt-plugin" % "1.0.1")
+
+
+## FAQ
+
+**Q**: NetBeans' response becomes slower after a while.
+
+**A**: Edit your NetBeans configuration file (NetBeansInstallationPlace/etc/netbeans.conf), add -J-Xmx1024M (or bigger)
+
+
+**Q**: I got:
+
+    [error] sbt.IncompatiblePluginsException: Binary incompatibility in plugins detected.
+
+**A**: Try to remove published nbsbt plugin from your local .ivy2 repository:
+
+    rm -r ~/.ivy2/local/org.netbeans.nbsbt
+
+and publish-local a NetBeans special sbt plugin <https://github.com/dcaoyuan/nbsbt> again.
+
+
+**Q**: I got:
+
+    [error] Not a valid command: netbeans
+    [error] Expected '/'
+    [error] Expected ':'
+    [error] Not a valid key: netbeans (similar: test, tags, streams)
+    [error] netbeans
+    [error]         ^
+
+**A**: Try to remove the project/target folder under your project base directory, there may be something cached here, and was not reflected to the newest condition.
+
+
+**Q**: What will this plugin do upon my project?
+
+**A**: It will generate a NetBeans project definition file ".classpath_nb" for each project.
+
+
+**Q**: It seems there are some suspicious error hints displayed on the edited source file, how can I do?
+
+**A**: There may be varies causes, you can try open another source file, then switch back to this one, the error hints may have disappeared. If not, right click in editing window, choose 'Reset Scala Parser', and try the steps mentioned previous again.
+
+
+**Q**: My project's definition was changed, how to reflect these changes to NetBeans.
+
+**A**: Right click on the root project, choose "Reload Project".
+
+
+**Q**: Exiting from Scala console leaves terminal unusable.
+
+**A**: Under some unix-like environment, scala interactive console started with some stty setting, but not for NetBeans's integrated one. You can try 'reset' after quit from NetBeans.

@@ -1,6 +1,7 @@
 package org.netbeans.modules.scala.sbt.project
 
 import org.netbeans.modules.scala.sbt.console.SBTConsoleTopComponent
+import org.netbeans.modules.scala.console.shell.ScalaConsoleTopComponent
 import org.netbeans.spi.project.ActionProvider
 import org.openide.util.Lookup
 
@@ -19,6 +20,7 @@ class SBTActionProvider(project: SBTProject) extends ActionProvider {
    */
   def getSupportedActions() = Array(
     COMMAND_SBT_CONSOLE,
+    COMMAND_SCALA_CONSOLE,
     COMMAND_SBT_RELOAD,
     COMMAND_BUILD,
     COMMAND_REBUILD,
@@ -34,9 +36,16 @@ class SBTActionProvider(project: SBTProject) extends ActionProvider {
     command match {
       case COMMAND_SBT_CONSOLE => 
         val rootProject = project.getRootProject
-        val commands = List("project " + project.getName)
+        val id = project.getId
+        val commands = project.getId match {
+          case null => Nil
+          case id   => List("project " + id)
+        }
         SBTConsoleTopComponent.openInstance(rootProject, false, commands)()
         
+      case COMMAND_SCALA_CONSOLE => 
+        ScalaConsoleTopComponent.openInstance(project, false, Nil)()
+
       case COMMAND_SBT_RELOAD => 
         val sbtResolver = project.getLookup.lookup(classOf[SBTResolver])
         sbtResolver.isResolvedOrResolving = false
@@ -44,21 +53,30 @@ class SBTActionProvider(project: SBTProject) extends ActionProvider {
         
       case COMMAND_BUILD =>
         val rootProject = project.getRootProject
-        val commands = List("project " + project.getName,
+        val commands = project.getId match {
+          case null => List("compile")
+          case id   => List("project " + id, 
                             "compile")
+        }
         SBTConsoleTopComponent.openInstance(rootProject, false, commands)()
         
       case COMMAND_REBUILD =>
         val rootProject = project.getRootProject
-        val commands = List("project " + project.getName,
+        val commands = project.getId match {
+          case null => List("compile")
+          case id   => List("project " + id,
                             "clean",
                             "compile")
+        }
         SBTConsoleTopComponent.openInstance(rootProject, false, commands)()
         
       case COMMAND_CLEAN =>
         val rootProject = project.getRootProject
-        val commands = List("project " + project.getName,
+        val commands = project.getId match {
+          case null => List("compile")
+          case id   => List("project " + id, 
                             "clean")
+        }
         SBTConsoleTopComponent.openInstance(rootProject, false, commands)()
         
       case _ =>
@@ -68,6 +86,7 @@ class SBTActionProvider(project: SBTProject) extends ActionProvider {
 
 object SBTActionProvider {
   val COMMAND_SBT_CONSOLE = "sbt-console"
+  val COMMAND_SCALA_CONSOLE = "scala-console"
   val COMMAND_SBT_RELOAD  = "sbt-reload"
   
   val COMMAND_BUILD   = ActionProvider.COMMAND_BUILD    // compile
