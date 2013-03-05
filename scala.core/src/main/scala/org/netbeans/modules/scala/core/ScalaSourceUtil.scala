@@ -27,7 +27,7 @@
  */
 package org.netbeans.modules.scala.core
 
-import java.io.{File}
+import java.io.File
 import java.net.URL
 import java.util.logging.Logger
 import javax.swing.text.BadLocationException
@@ -36,6 +36,7 @@ import org.netbeans.api.java.classpath.ClassPath
 import org.netbeans.api.java.classpath.GlobalPathRegistry
 import org.netbeans.api.java.queries.SourceForBinaryQuery
 import org.netbeans.api.java.source.ClasspathInfo
+import org.netbeans.api.language.util.ast.{AstDfn, AstScope}
 import org.netbeans.api.lexer.TokenHierarchy
 import org.netbeans.editor.BaseDocument
 import org.netbeans.modules.classfile.ClassFile
@@ -44,16 +45,13 @@ import org.netbeans.modules.csl.spi.ParserResult
 import org.netbeans.modules.parsing.api.{ParserManager, ResultIterator, Source, UserTask}
 import org.netbeans.modules.parsing.impl.indexing.friendapi.IndexingController
 import org.netbeans.modules.parsing.spi.{ParseException, Parser}
+import org.netbeans.modules.scala.core.ast.{ScalaDfns}
+import org.netbeans.modules.scala.core.element.{JavaElements}
+import org.netbeans.modules.scala.core.lexer.ScalaLexUtil
 import org.netbeans.spi.java.classpath.support.ClassPathSupport
 import org.openide.filesystems.{FileObject, FileUtil}
 import org.openide.text.NbDocument
 import org.openide.util.{Exceptions}
-
-import org.netbeans.api.language.util.ast.{AstDfn, AstScope}
-import org.netbeans.modules.scala.core.ast.{ScalaDfns}
-import org.netbeans.modules.scala.core.element.{JavaElements}
-import org.netbeans.modules.scala.core.lexer.ScalaLexUtil
-
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
@@ -289,10 +287,8 @@ object ScalaSourceUtil {
 
     val th = pr.getSnapshot.getTokenHierarchy
 
-    //doc.readLock // Read-lock due to token hierarchy use
     val offset = 0//element.getBoundsOffset(th)
-    val range = ScalaLexUtil.getDocumentationRange(th, offset)
-    //doc.readUnlock
+    val range = ScalaLexUtil.getDocumentationRange(doc, th, offset)
 
     if (range.getEnd < doc.getLength) {
       try {
@@ -309,9 +305,7 @@ object ScalaSourceUtil {
       case x => x
     }
 
-    //doc.readLock // Read-lock due to token hierarchy use
-    val range = ScalaLexUtil.getDocCommentRangeBefore(th, symbolOffset)
-    //doc.readUnlock
+    val range = ScalaLexUtil.getDocCommentRangeBefore(doc, th, symbolOffset)
 
     if (range != OffsetRange.NONE && range.getEnd < doc.getLength) {
       try {
@@ -669,11 +663,10 @@ object ScalaSourceUtil {
             val pr = ri.getParserResult.asInstanceOf[ScalaParserResult]
             val root = pr.rootScope
             val global = pr.global
-            import global._
             
-            def getAllDfns(scope: AstScope, kind: ElementKind, result: ArrayBuffer[ScalaDfn]): Seq[ScalaDfn] = {
+            def getAllDfns(scope: AstScope, kind: ElementKind, result: ArrayBuffer[global.ScalaDfn]): Seq[global.ScalaDfn] = {
               scope.dfns foreach {dfn =>
-                if (dfn.getKind == kind)  result += dfn.asInstanceOf[ScalaDfn]
+                if (dfn.getKind == kind)  result += dfn.asInstanceOf[global.ScalaDfn]
               }
               scope.subScopes foreach {
                 childScope => getAllDfns(childScope, kind, result)
@@ -682,17 +675,17 @@ object ScalaSourceUtil {
             }
 
             // * get all dfns will return all visible packages from the root and down
-            getAllDfns(root, ElementKind.PACKAGE, new ArrayBuffer[ScalaDfn]) foreach {packaging => 
+            getAllDfns(root, ElementKind.PACKAGE, new ArrayBuffer[global.ScalaDfn]) foreach {packaging => 
               // * only go through the defs for each package scope.
               // * Sub-packages are handled by the fact that
               // * getAllDefs will find them.
               packaging.bindingScope.dfns foreach {dfn =>
-                if (isMainMethodExists(dfn.asInstanceOf[ScalaDfn])) result += dfn.asInstanceOf[ScalaDfn]
+                if (isMainMethodExists(dfn.asInstanceOf[global.ScalaDfn])) result += dfn.asInstanceOf[global.ScalaDfn]
               }
             }
             
             root.visibleDfns(ElementKind.MODULE) foreach {dfn =>
-              if (isMainMethodExists(dfn.asInstanceOf[ScalaDfn])) result += dfn.asInstanceOf[ScalaDfn]
+              if (isMainMethodExists(dfn.asInstanceOf[global.ScalaDfn])) result += dfn.asInstanceOf[global.ScalaDfn]
             }
           }
 
@@ -857,4 +850,21 @@ object ScalaSourceUtil {
    val PathKind_COMPILE = ClasspathInfo.PathKind.COMPILE
    val PathKind_SOURCE = ClasspathInfo.PathKind.SOURCE */
 
+  /**
+   * Utility method to get the raw end in doc, reserved here for reference
+   */
+  private def getRawEnd(doc: org.netbeans.editor.BaseDocument, offset: Int) = {
+    val end = try {
+      org.netbeans.editor.Utilities.getRowLastNonWhite(doc, offset) + 1 // * @Note row should plus 1 to equal NetBeans' doc offset
+    } catch {
+      case ex: javax.swing.text.BadLocationException => -1
+    }
+
+    if (end != -1 && end <= offset) {
+      end + 1
+    } else end
+  }
+  
+  
+  
 }
