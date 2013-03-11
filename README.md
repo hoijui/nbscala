@@ -10,7 +10,7 @@ NetBeans Plugin for Scala
 3. Project Details
 
 ## Common Informations
-This is a plugin of the Netbeans Platform for the [scala language](http://http://www.scala-lang.org/). It targets version 2.9.x. In the case of a maven scala project, no local installation of scala is needed. It enables syntax checking, syntax highlighting, auto-completion, pretty formatter, occurrences mark, brace matching, indentation, code folding, function navigator, go to declaration, project management and a shell console. It's is specially useful if you are a maven user.
+This is a plugin of the Netbeans Platform for the [scala language](http://http://www.scala-lang.org/). In the case of a maven scala project, no local installation of scala is needed. It enables syntax checking, syntax highlighting, auto-completion, pretty formatter, occurrences mark, brace matching, indentation, code folding, function navigator, go to declaration, project management and a shell console. It's is specially useful if you are a maven user.
 
 ### Where to start ?
 The project central point is [https://github.com/dcaoyuan/nbscala](). There are some other places, where the project was hosted before, but they are abandoned now.
@@ -106,6 +106,13 @@ Build-Debug-Cycle: (after changed module was successfuly built)
 
     mvn nbm:cluster nbm:run-ide -Pdebug-ide
 
+### Installation Notes:
+
+ * After installation, it's always better to restart NetBeans
+ * You may need to delete NetBeans' old cache to get improved features working. To find the cache location, read the netbeans.conf at:
+
+    ${NetBeansInstallation}/etc/netbeans.conf
+
 ## Project Details
 
 The Project targets version 2.10.x of the scala release.
@@ -165,11 +172,12 @@ The Project targets version 2.10.x of the scala release.
 
     [error] sbt.IncompatiblePluginsException: Binary incompatibility in plugins detected.
 
-**A**: Try to remove published nbsbt plugin from your local .ivy2 repository:
+**A**: Try to remove published nbsbt plugin from your local .ivy2 repository and sbt plugins cache:
 
     rm -r ~/.ivy2/local/org.netbeans.nbsbt
+    rm -r ~/.sbt/plugins/target
 
-and redo 'publish-local' the NetBeans sbt plugin <https://github.com/dcaoyuan/nbsbt>.
+and redo 'publish-local' for the NetBeans sbt plugin <https://github.com/dcaoyuan/nbsbt>.
 
 
 **Q**: I got:

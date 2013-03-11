@@ -76,12 +76,12 @@ class ScalaParser extends Parser {
     reason match {
       case Parser.CancelReason.SOURCE_MODIFICATION_EVENT => 
         val fo = event.getModifiedSource.getFileObject
-        log.info("Get cancel request from event for: " + fo.getNameExt + ", sourceChanged=" + event.sourceChanged)
+        log.info("Get cancel request for " + fo.getNameExt + ", sourceChanged=" + event.sourceChanged)
         // We'll cancelSemantic only when the event is saying sourceChanged, since only in this case, we can expect a
         // followed parse(..) call. Under other cases there may be no followed parse(..) call.
         // Or even worse, in this case, there may still no followed parse(..) call, anyway, 
         // we have to make strict condition to cancel 
-        if (event.sourceChanged && _result != null) _result.cancelSemantic
+        if (event.sourceChanged && _result != null) _result.tryCancelSemantic
       case _ =>
     }
   }

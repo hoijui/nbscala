@@ -59,7 +59,6 @@ import org.netbeans.modules.scala.core.element.ScalaElements
 import org.netbeans.modules.scala.core.element.JavaElements
 import org.netbeans.modules.scala.core.interactive.Global
 import scala.collection.mutable
-import scala.collection.mutable.{ WeakHashMap, ListBuffer}
 import scala.tools.nsc.Settings
 import scala.tools.nsc.reporters.Reporter
 import scala.reflect.internal.util.{Position, SourceFile}
@@ -108,7 +107,6 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
 
   private val log1 = Logger.getLogger(this.getClass.getName)
   
-  @volatile private var workingSource: Option[SourceFile] = None
   private val sourceToResponse = new java.util.concurrent.ConcurrentHashMap[SourceFile, Response[_]]
   
   protected def isCancelled(srcFile: SourceFile) = {
@@ -139,31 +137,19 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
     
     resp.get match {
       case Left(_) =>
-      case Right(ex) => ex match {
-          case _: AssertionError =>
-            /**
-             * @Note: avoid scala nsc's assert error. Since global's
-             * symbol table may have been broken, we have to reset ScalaGlobal
-             * to clean this global
-             */
-            ScalaGlobal.resetLate(this, ex)
-          case _: java.lang.Error => // avoid scala nsc's Error error
-          case _: Throwable => // just ignore all ex
-        }
+      case Right(ex) => processGlobalException(ex)
     }
   }
 
   /**
-   * We should carefully design askForSemantic(.) and cancelSemantic(.) to make them thread safe,
-   * so cancelSemantic could be called during askForSemantic and the rootScope is always which we want.
+   * We should carefully design askForSemantic(.) and tryCancelSemantic(.) to make them thread safe,
+   * so tryCancelSemantic could be called during askForSemantic and the rootScope is always which we want.
    * @return    Some root when everything goes smooth
    *            Empty root when exception happens
    *            None when cancelled
    */
   def askForSemantic(srcFile: ScalaSourceFile): Option[ScalaRootScope] = {
-    workingSource = Some(srcFile)
-
-    resetReporter
+    resetReporter // is reporter thread safe? or, since it's a global report, do not need to care.
     qualToRecoveredType.clear
 
     try {
@@ -182,52 +168,37 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
               if (isCancelled(srcFile)) return None
               rootResp get match {
                 case Left(x) => x
-                case Right(ex) => ex match {
-                    case _: AssertionError =>
-                      /**
-                       * @Note: avoid scala nsc's assert error. Since global's
-                       * symbol table may have been broken, we have to reset ScalaGlobal
-                       * to clean this global
-                       */
-                      ScalaGlobal.resetLate(this, ex)
-                      Some(ScalaRootScope.EMPTY)
-                    case _: java.lang.Error => Some(ScalaRootScope.EMPTY) // avoid scala nsc's Error error
-                    case _: Throwable => Some(ScalaRootScope.EMPTY) // just ignore all ex
-                  }
+                case Right(ex) => processGlobalException(ex, Some(ScalaRootScope.EMPTY))
               }
           
-            case Right(ex) => ex match { 
-                case _: AssertionError =>
-                  /**
-                   * @Note: avoid scala nsc's assert error. Since global's
-                   * symbol table may have been broken, we have to reset ScalaGlobal
-                   * to clean this global
-                   */
-                  ScalaGlobal.resetLate(this, ex)
-                  Some(ScalaRootScope.EMPTY)
-                case _: java.lang.Error => Some(ScalaRootScope.EMPTY) // avoid scala nsc's Error error
-                case _: Throwable => Some(ScalaRootScope.EMPTY) // just ignore all ex
-              }
+            case Right(ex) => processGlobalException(ex, Some(ScalaRootScope.EMPTY))
           }
 
-        case Right(ex) => ex match {
-            case _: AssertionError =>
-              /**
-               * @Note: avoid scala nsc's assert error. Since global's
-               * symbol table may have been broken, we have to reset ScalaGlobal
-               * to clean this global
-               */
-              ScalaGlobal.resetLate(this, ex)
-              return Some(ScalaRootScope.EMPTY)
-            case _: java.lang.Error => return Some(ScalaRootScope.EMPTY) // avoid scala nsc's Error error
-            case _: Throwable => return Some(ScalaRootScope.EMPTY) // just ignore all ex
-          }
+        case Right(ex) => processGlobalException(ex, Some(ScalaRootScope.EMPTY))
       }
 
     } finally {
       sourceToResponse.remove(srcFile)
-      workingSource = None
     }
+  }
+  
+  protected def processGlobalException[T](ex: Throwable, toReturn: T = ()): T = {
+    log1.log(Level.WARNING, ex.getMessage, ex)
+    ex match {
+      case _: AssertionError =>
+        /**
+         * @Note: avoid scala nsc's assert error. Since global's
+         * symbol table may have been broken, we have to reset ScalaGlobal
+         * to clean this global
+         */
+        ScalaGlobal.resetLate(this, ex)
+      case _: java.lang.Error => // avoid scala nsc's Error error
+        log1.log(Level.WARNING, ex.getMessage, ex)
+      case _: Throwable => // just ignore all ex
+        log1.log(Level.WARNING, ex.getMessage, ex)
+    }
+    
+    toReturn
   }
     
   private def askSemanticRoot(source: ScalaSourceFile, rootTree: Tree, resp: Response[Option[ScalaRootScope]]) {
@@ -261,20 +232,14 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
   /**
    * @return will cancel or not
    */
-  def cancelSemantic(srcFile: SourceFile): Boolean = {
-    workingSource match {
-      case Some(x) =>
-        val fileA = x.file.file
-        val fileB = srcFile.file.file
-        if ((fileA ne null) && (fileB ne null) && fileA.getAbsolutePath == fileB.getAbsolutePath) {
-          log1.info("Cancel semantic " + fileA.getName)
-          // do not try to call resp.cancel, which seems not consistent yet.
-          sourceToResponse.remove(srcFile)
-          true
-        } else {
-          false
-        }
-      case _ => false
+  private[core] def tryCancelSemantic(srcFile: SourceFile): Boolean = {
+    if (srcFile != null && sourceToResponse.containsKey(srcFile)) {
+      sourceToResponse.remove(srcFile)
+      log1.info("Will cancel semantic " + srcFile.file.file.getName)
+      true
+    } else {
+      log1.info("Won't cancel semantic " + srcFile.file.file.getName + ", since it's not under semantic.")
+      false
     }
   }
 
@@ -296,15 +261,7 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
     try {
       run.compileSources(srcFiles)
     } catch {
-      case ex: AssertionError =>
-        /**
-         * @Note: avoid scala nsc's assert error. Since global's
-         * symbol table may have been broken, we have to reset ScalaGlobal
-         * to clean this global
-         */
-        ScalaGlobal.resetLate(this, ex)
-      case ex: java.lang.Error => // avoid scala nsc's Error error
-      case ex: Throwable => // just ignore all ex
+      case ex: Throwable => processGlobalException(ex)
     }
 
     //println("selectTypeErrors:" + selectTypeErrors)
@@ -337,7 +294,7 @@ object ScalaGlobal {
 
   private val debug = false
 
-  private val projectToGlobals = new WeakHashMap[Project, Array[ScalaGlobal]]
+  private val projectToGlobals = new mutable.WeakHashMap[Project, Array[ScalaGlobal]]
   private var globalToListeners = Map[ScalaGlobal, List[FileChangeListener]]()
   private var globalForStdLib: Option[ScalaGlobal] = None
   private var toResetGlobals = Map[ScalaGlobal, Project]()
@@ -363,11 +320,7 @@ object ScalaGlobal {
             if (globals(i) == global) {
               globals(i) = null
               toResetGlobals += (global -> project)
-              globalToListeners.get(global) foreach {xs =>
-                xs foreach {x =>
-                  project.getProjectDirectory.getFileSystem.removeFileChangeListener(x)
-                }
-              }
+              for (xs <- globalToListeners.get(global); x <- xs) project.getProjectDirectory.getFileSystem.removeFileChangeListener(x)
               globalToListeners -= global
               found = true
             }
@@ -386,18 +339,18 @@ object ScalaGlobal {
     for ((global, project) <- toResetGlobals) {
       log.info("Reset global: " + global)
 
-      // * this will cause global create a new TypeRun so as to release all unitbuf and filebuf.
-      // * But, it seems askReset will only reset current unit, when exception is throw inside
-      // * for example, typeCheck, the dependent units may have been damaged, and the symbols in
-      // * global may need to be reset too. So the best way is to drop this gloal, use a new
-      // * created one instead.
+      // this will cause global create a new TypeRun so as to release all unitbuf and filebuf.
+      // But, it seems askReset will only reset current unit, when exception is throw inside
+      // for example, typeCheck, the dependent units may have been damaged, and the symbols in
+      // global may need to be reset too. So the best way is to drop this gloal, use a new
+      // created one instead.
       //global.askReset
       
       //global.analyzer.resetTyper
       //global.firsts = Nil
       //global.unitOfFile.clear
 
-      // * stop compiler daemon thread
+      // stop compiler daemon thread
       global.askShutdown
     }
 
@@ -460,12 +413,8 @@ object ScalaGlobal {
     val compCp = ClassPath.getClassPath(fo, ClassPath.COMPILE)
     val srcCp  = ClassPath.getClassPath(fo, ClassPath.SOURCE)
 
-    val inStdLib =
-      if (bootCp == null || compCp == null) {
-        true // * in case of `fo` in standard libaray
-      } else {
-        false
-      }
+    // in case of `fo` is in standard libaray jar
+    val inStdLib = bootCp == null || compCp == null
 
     log.info("scala.home: " + System.getProperty("scala.home"))
 
@@ -473,13 +422,11 @@ object ScalaGlobal {
     
     val bootCpStr = ProjectResources.toClassPathString(bootCp)
     settings.bootclasspath.value = bootCpStr
-    log.info("Project's bootclasspath: " + settings.bootclasspath.value)
 
     val compCpStr = ProjectResources.toClassPathString(compCp)
     settings.classpath.value = compCpStr
-    log.info("Project's classpath: " + settings.classpath.value)
 
-    // Should set extdirs to empty, otherwise all jars under scala.home/lib will be added
+    // Should override extdirs to empty, otherwise all jars under scala.home/lib will be added
     // which brings unwanted scala runtime (scala runtime should be set in compCpStr).
     // @see scala.tools.nsc.Settings#extdirsDefault
     settings.extdirs.value = ""
@@ -493,46 +440,20 @@ object ScalaGlobal {
     settings.plugin.value = Nil
 
     // ----- set sourcepath, outpath
-    
-    var outPath = ""
-    var srcPaths: List[String] = Nil
-    for ((src, out) <- if (isForTest) resource.testSrcOutDirsPath else resource.mianSrcOutDirsPath) {
-      srcPaths ::= src
 
-      // we only need one out path
-      if (outPath == "") {
-        outPath = out
-
-        // Did out path dir be deleted? (a clean task etc), if so, create it, since scalac
-        // can't parse anything correctly without an exist out dir (sounds a bit strange)
-        try {
-          val file = new File(outPath)
-          if (!file.exists) file.mkdirs
-        } catch {
-          case _: Throwable =>
-        }
-      }
+    // @Note: do not add src path to global for test?, since the corresponding build/classes has been added to compCp
+    val srcOutDirsPath = (if (isForTest) resource.testSrcOutDirsPath else resource.mainSrcOutDirsPath)
+    // @Note: settings.outputDirs.add(src, out) seems cannot resolve symbols in other source files, why?\
+    // since Scala 2.10.0, this seems working. if not, we should global askForReload srcFiles later
+    srcOutDirsPath foreach {case (src, out) => 
+        settings.outputDirs.add(src, out)
+        log.info("settings.outputDirs.add" + (src -> out))
     }
-
-    // @Note: do not add src path to global for test, since the corresponding build/classes has been added to compCp
-
-    settings.sourcepath.tryToSet(srcPaths.reverse)
-    settings.outdir.value = outPath
-
-    log.info("Project's source paths set for global: " + srcPaths)
-    log.info("Project's output paths set for global: " + outPath)
-    if (srcCp ne null){
-      log.info(srcCp.getRoots.map(_.getPath).mkString("Project's srcCp: [", ", ", "]"))
-    } else {
-      log.info("Project's srcCp is null !")
-    }
+    settings.sourcepath.value = srcOutDirsPath.toList map (_._1) mkString ("", File.pathSeparator, "")
     
-    // @Note: settings.outputDirs.add(src, out) seems cannot resolve symbols in other source files, why?
-    /*_
-     for ((src, out) <- if (forTest) dirs.scalaTestSrcOutDirs else dirs.scalaSrcOutDirs) {
-     settings.outputDirs.add(src, out)
-     }
-     */
+    // we need at least one existed out path
+    // if we do not set outdir explicitly, it will now point to ".", that's ok for presentation compiler
+    //settings.outdir.value = srcOutDirsPath find {x => try {new File(x._2).exists} catch {case _: Throwable => false}} getOrElse "."
 
     // ----- now, the new global
 
@@ -542,38 +463,37 @@ object ScalaGlobal {
     val global = new ScalaGlobal(settings, ErrorReporter())
     globals(idx) = global
 
-    // * listen to compCp's change
-    if (compCp ne null) {
-      val compCpListener = new CompCpListener(global, compCp)
-      globalToListeners += (global -> (compCpListener :: globalToListeners.getOrElse(global, Nil)))
-      project.getProjectDirectory.getFileSystem.addFileChangeListener(compCpListener)
+    // listen to compCp's change
+    if (compCp != null) {
+      if (!isForDebug) {
+        val compCpListener = new CompCpListener(global, compCp)
+        globalToListeners += (global -> (compCpListener :: globalToListeners.getOrElse(global, Nil)))
+        project.getProjectDirectory.getFileSystem.addFileChangeListener(compCpListener)
+      }
     }
    
-    if (!isForDebug) {
-      // we have to do following step to get mixed java sources visible to scala sources
-      if (srcCp ne null) {
+    if (srcCp != null) {
+      log.info(srcCp.getRoots.map(_.getPath).mkString("Project's srcCp: [", ", ", "]"))
+      if (!isForDebug) {
         val srcCpListener = new SrcCpListener(global, srcCp)
         globalToListeners += (global -> (srcCpListener :: globalToListeners.getOrElse(global, Nil)))
         project.getProjectDirectory.getFileSystem.addFileChangeListener(srcCpListener)
 
+        // we have to do following step to get mixed java sources visible to scala sources
+        // since scala 2.10.0, this does not seem to be necessary.
+
         // should push java srcs before scala srcs
-        val javaSrcs = new ListBuffer[FileObject]
-        srcCp.getRoots foreach ProjectResources.findAllSourcesOf("text/x-java", javaSrcs)
-
-        val scalaSrcs = new ListBuffer[FileObject]
         // push scala src files to get classes that with different name from file name to be recognized properly
-        srcCp.getRoots foreach ProjectResources.findAllSourcesOf("text/x-scala", scalaSrcs)
-
         // the reporter should be set previous, otherwise, no java source is resolved, may throw exception already.
-        
-        val srcFiles = (javaSrcs ++= scalaSrcs).toList map toSourceFile
-
-        global askForReload srcFiles
+        //val (javaSrcs, scalaSrcs) = ProjectResources.findAllSources(srcCp)
+        //val srcFiles = (javaSrcs ++ scalaSrcs).toList map toSourceFile
+        //global askForReload srcFiles
       }
+    } else {
+      log.warning("Project's srcCp is null !")
     }
-
-    log.info("Project's global.settings: " + global.settings)
     
+    log.info("Project's global.settings: " + global.settings)
     global
   }
 
@@ -584,17 +504,23 @@ object ScalaGlobal {
   }
 
   private class SrcCpListener(global: ScalaGlobal, srcCp: ClassPath) extends FileChangeAdapter {
-    val javaMimeType = "text/x-java"
+    val JavaMimeType  = "text/x-java"
+    val ScalaMimeType = "text/x-scala"
     val srcRoots = srcCp.getRoots
 
     private def isUnderSrcDir(fo: FileObject) = {
       srcRoots exists {x => FileUtil.isParentOf(x, fo)}
     }
+    
+    private def isInterestedMime(mimeType: String) = mimeType match {
+      case JavaMimeType | ScalaMimeType => true
+      case _ => false
+    }
 
     override
     def fileDataCreated(fe: FileEvent) {
       val fo = fe.getFile
-      if (fo.getMIMEType == javaMimeType && isUnderSrcDir(fo) && (global ne null)) {
+      if (isInterestedMime(fo.getMIMEType) && isUnderSrcDir(fo) && global != null) {
         global askForReload List(toSourceFile(fo))
       }
     }
@@ -602,7 +528,7 @@ object ScalaGlobal {
     override
     def fileChanged(fe: FileEvent) {
       val fo = fe.getFile
-      if (fo.getMIMEType == javaMimeType && isUnderSrcDir(fo) && (global ne null)) {
+      if (isInterestedMime(fo.getMIMEType) && isUnderSrcDir(fo) && global != null) {
         global askForReload List(toSourceFile(fo))
       }
     }
@@ -610,14 +536,22 @@ object ScalaGlobal {
     override 
     def fileRenamed(fe: FileRenameEvent) {
       val fo = fe.getFile
-      if (fo.getMIMEType == javaMimeType && isUnderSrcDir(fo) && (global ne null)) {
+      if (isInterestedMime(fo.getMIMEType) && isUnderSrcDir(fo) && global != null) {
         global askForReload List(toSourceFile(fo))
       }
     }
 
     override 
-    def fileDeleted(fe: FileEvent): Unit = {
-      // @todo get the dependency or just recompile all?
+    def fileDeleted(fe: FileEvent) {
+      val fo = fe.getFile
+      if (isInterestedMime(fo.getMIMEType) && isUnderSrcDir(fo) && global != null) {
+        val resp = new global.Response[Unit]
+        global askFilesDeleted(List(toSourceFile(fo)), resp)
+        resp.get match {
+          case Left(_) =>
+          case Right(ex) => global.processGlobalException(ex)
+        }
+      }
     }
   }
 
