@@ -150,7 +150,7 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
    */
   def askForSemantic(srcFile: ScalaSourceFile): Option[ScalaRootScope] = {
     resetReporter // is reporter thread safe? or, since it's a global report, do not need to care.
-    qualToRecoveredType.clear
+//    qualToRecoveredType.clear
 
     try {
       val loadResp = newResponse[Unit](srcFile)
@@ -166,7 +166,7 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
               val rootResp = newResponse[Option[ScalaRootScope]](srcFile)
               askSemanticRoot(srcFile, rootTree, rootResp)
               if (isCancelled(srcFile)) return None
-              rootResp get match {
+              rootResp.get match {
                 case Left(x) => x
                 case Right(ex) => processGlobalException(ex, Some(ScalaRootScope.EMPTY))
               }
@@ -254,7 +254,7 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
     
     settings.stop.value = Nil
     settings.stop.tryToSetColon(List(stopPhase))
-    qualToRecoveredType.clear
+//    qualToRecoveredType.clear
 
     val run = new this.Run
     val srcFiles = List(source)
@@ -562,7 +562,7 @@ object ScalaGlobal {
       // * when there are series of folder/file created, only top created folder can be listener
       val found = compRoots find {x => FileUtil.isParentOf(fo, x) || x == fo}
       if (found.isDefined) log.finest("under compCp: fo=" + fo + ", found=" + found)
-      found isDefined
+      found.isDefined
     }
 
     override 
