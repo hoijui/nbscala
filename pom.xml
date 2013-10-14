@@ -60,7 +60,7 @@
         -->
         <netbeans.version>RELEASE72</netbeans.version>
 
-        <scala.version>2.10.1-nbscala</scala.version> <!-- use nbscala patched scala runtime @see libs.local-->
+        <scala.version>2.10.3-nbscala</scala.version> <!-- use nbscala patched scala runtime @see libs.local-->
         <sbt.version>0.12.2</sbt.version>
         
         <!-- module versions -->
