@@ -58,13 +58,13 @@
              we should build it using lower version NetBeans to get it can be installed both
              on lower and higher version, unless we use un-compatible features of higher version.
         -->
-        <netbeans.version>RELEASE72</netbeans.version>
+        <netbeans.version>RELEASE74</netbeans.version>
 
-        <scala.version>2.10.3-nbscala</scala.version> <!-- use nbscala patched scala runtime @see libs.local-->
+        <scala.version>2.10.3</scala.version> <!-- use nbscala patched scala runtime @see libs.local-->
         <sbt.version>0.12.2</sbt.version>
         
         <!-- module versions -->
-        <libs.scala.version>2.10.1.0</libs.scala.version>
+        <libs.scala.version>2.10.3.0</libs.scala.version>
         <libs.sbt.version>0.12.2.1</libs.sbt.version>
         <libs.xtc.version>1.15.1</libs.xtc.version>
         <languages.execution.version>1.6.1</languages.execution.version>
@@ -168,7 +168,7 @@
                 <plugin>                    
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <version>3.1.6</version>
                     <executions>  
                         <execution>
                             <phase>process-resources</phase> <!-- to support mix java/scala -->
@@ -181,9 +181,10 @@
                     </executions> 
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
-                        <!--recompileMode>incremental</recompileMode-->
+                        <recompileMode>incremental</recompileMode>
+                        <useZincServer>true</useZincServer>
                         <jvmArgs>
-                            <jvmArg>-Xbootclasspath/p:${settings.localRepository}/org/scala-lang/scala-reflect/${scala.version}/scala-reflect-${scala.version}.jar</jvmArg>
+                            <!--<jvmArg>-Xbootclasspath/p:${settings.localRepository}/org/scala-lang/scala-reflect/${scala.version}/scala-reflect-${scala.version}.jar</jvmArg>-->
                             <jvmArg>-Xms64m</jvmArg>
                             <jvmArg>-Xmx512m</jvmArg>
                             <jvmArg>-Xss64m</jvmArg> <!-- to avoid StackOverFlowError -->
@@ -191,8 +192,8 @@
                         <args>
                             <arg>-target:jvm-1.6</arg>
                             <arg>-deprecation</arg>
-                            <arg>-dependencyfile</arg>
-                            <arg>${project.build.directory}/.scala_dependencies</arg>
+<!--                            <arg>-dependencyfile</arg>
+                            <arg>${project.build.directory}/.scala_dependencies</arg>-->
                             <arg>-Xmax-classfile-name</arg>
                             <arg>143</arg> <!-- to avoid 'error: File name too long' in Linux/ecryptfs -->
                         </args>

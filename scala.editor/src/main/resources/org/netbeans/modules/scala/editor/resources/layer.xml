@@ -120,9 +120,13 @@
                         <attr name="originalFile" stringvalue="Actions/Scala/org-netbeans-modules-scala-editor-ui-actions-ResetGlobalAction.instance"/>
                         <attr name="position" intvalue="800"/>
                     </file>
+                    <file name="org-netbeans-modules-scala-editor-ui-actions-ShowTypeAction.shadow">
+                        <attr name="originalFile" stringvalue="Actions/Scala/org-netbeans-modules-scala-editor-ui-actions-ShowTypeAction.instance"/>
+                        <attr name="position" intvalue="800"/>
+                    </file>
                     <file name="org-netbeans-modules-scala-editor-imports-FixImportsAction.shadow">
                         <attr name="originalFile" stringvalue="Actions/Scala/org-netbeans-modules-scala-editor-imports-FixImportsAction.instance"/>
-                        <attr name="position" intvalue="801"/>
+                        <attr name="position" intvalue="802"/>
                     </file>
                     
                 </folder>
@@ -152,6 +156,9 @@
             </file>
             <file name="org-netbeans-modules-scala-editor-ui-actions-ResetGlobalAction.instance">
                 <attr name="instanceClass" stringvalue="org.netbeans.modules.scala.editor.ui.actions.ResetGlobalAction"/>
+            </file>
+            <file name="org-netbeans-modules-scala-editor-ui-actions-ShowTypeAction.instance">
+                <attr name="instanceClass" stringvalue="org.netbeans.modules.scala.editor.ui.actions.ShowTypeAction"/>
             </file>
         </folder>
     </folder>
