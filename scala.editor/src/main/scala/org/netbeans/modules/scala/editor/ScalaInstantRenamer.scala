@@ -39,7 +39,7 @@
 
 package org.netbeans.modules.scala.editor
 
-import org.netbeans.modules.csl.api.{InstantRenamer, ElementKind, OffsetRange}
+import org.netbeans.modules.csl.api.{ InstantRenamer, ElementKind, OffsetRange }
 import org.netbeans.modules.csl.spi.ParserResult
 
 import org.netbeans.modules.scala.core.ScalaParserResult
@@ -52,8 +52,7 @@ import org.netbeans.modules.scala.core.lexer.ScalaLexUtil
  */
 class ScalaInstantRenamer extends InstantRenamer {
 
-  override 
-  def isRenameAllowed(info: ParserResult, caretOffset: Int, explanationRetValue: Array[String]): Boolean = {
+  override def isRenameAllowed(info: ParserResult, caretOffset: Int, explanationRetValue: Array[String]): Boolean = {
     val pResult = info.asInstanceOf[ScalaParserResult]
     val rootScope = pResult.rootScope
 
@@ -71,14 +70,14 @@ class ScalaInstantRenamer extends InstantRenamer {
 
     val closest = rootScope.findItemsAt(th, caretOffset) match {
       case Nil => return false
-      case xs => xs.reverse.head
+      case xs  => xs.reverse.head
     }
 
     val dfn = rootScope.findDfnOf(closest).getOrElse(return false)
 
     dfn.getName match {
       case "this" | "super" => return false
-      case _ =>
+      case _                =>
     }
 
     dfn.getKind match {
@@ -87,12 +86,11 @@ class ScalaInstantRenamer extends InstantRenamer {
     }
   }
 
-  override 
-  def getRenameRegions(info: ParserResult, caretOffset: Int): java.util.Set[OffsetRange] = {
+  override def getRenameRegions(info: ParserResult, caretOffset: Int): java.util.Set[OffsetRange] = {
     if (info eq null) {
       return java.util.Collections.emptySet[OffsetRange]
     }
-    
+
     val pResult = info.asInstanceOf[ScalaParserResult]
 
     val document = pResult.getSnapshot.getSource.getDocument(true)
@@ -111,7 +109,7 @@ class ScalaInstantRenamer extends InstantRenamer {
 
     val occurrences = rootScope.findItemsAt(th, caretOffset) match {
       case Nil => return java.util.Collections.emptySet[OffsetRange]
-      case xs => rootScope.findOccurrences(xs.reverse.head)
+      case xs  => rootScope.findOccurrences(xs.reverse.head)
     }
 
     val regions = new java.util.HashSet[OffsetRange]
@@ -129,7 +127,7 @@ class ScalaInstantRenamer extends InstantRenamer {
         val astRange = itr.next
         ScalaLexUtil.getLexerOffsets(info, astRange) match {
           case OffsetRange.NONE =>
-          case lexRange => translated.add(lexRange)
+          case lexRange         => translated.add(lexRange)
         }
       }
 

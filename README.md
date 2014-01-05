@@ -36,13 +36,13 @@ Cause of the small group of people involved in the project we only supply update
 
 ### Requirement - Run:
 * Java 1.6+
-* NetBeans 7.2
+* NetBeans 7.4
 
 ### Requirement - Build:
 * Java 1.7 (for master branch)
 * Java 1.6 (for 2.9.x branch)
 * Maven 2.x/3.x 
-* NetBeans 7.2
+* NetBeans 7.4
 
 ### Branches:
 * master -- tracking Scala 2.10.x currently
@@ -60,7 +60,7 @@ Make a new copy of your installed NetBeans (which will be used to run 'mvn nbm:r
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
-                <nb.installation>${user.home}/myapps/netbeans-71</nb.installation>
+                <nb.installation>${user.home}/myapps/netbeans-7.4-fordev</nb.installation>
             </properties>
         </profile>
     </profiles>
@@ -106,12 +106,43 @@ Build-Debug-Cycle: (after changed module was successfuly built)
 
     mvn nbm:cluster nbm:run-ide -Pdebug-ide
 
+### Publish to plugins.netbeans.org
+
+Generate keys/keystore (note: The keystore and key password needs to be the same):
+
+    keytool -genkey -dname "CN=Caoyuan Deng, OU=nbscala, O=inloop.io, L=Richmond, S=BC, C=CA" -alias nbscala -validity 1800
+    keytool -list -v
+              
+Enable signing modules by adding all three keystore related parameters in ~/m2/settings.xml as:
+
+                 <profiles>
+                     <profile>
+                         <id>sign-nbscala-nbms</id>
+                         <activation>
+                             <activeByDefault>true</activeByDefault>
+                         </activation>
+                         <properties>
+                             <nbm.sign.keystore>${user.home}/.keystore</nbm.sign.keystore>
+                             <nbm.sign.keystorealias>nbscala</nbm.sign.keystorealias>
+                             <nbm.sign.keystorepassword>thepassword</nbm.sign.keystorepassword>
+                         </properties>
+                     </profile>
+                 </profiles>
+
+Pack a zip file for plugins.netbeans.org:
+
+    mvn nbm:autoupdate
+    cd target/netbeans_site
+    zip nbscala-version.zip *.nbm
+
+
+
 ### Installation Notes:
 
  * After installation, it's always better to restart NetBeans
  * You may need to delete NetBeans' old cache to get improved features working. To find the cache location, read the netbeans.conf at:
 
-        NetBeansInstallationPlace/etc/netbeans.conf
+        $NetBeansInstallationPlace/etc/netbeans.conf
 
 ## Project Details
 
@@ -150,15 +181,15 @@ The Project targets version 2.10.x of the scala release.
 ### How to
 
 * Install the newest nbscala plugins, [download directly](https://sourceforge.net/projects/erlybird/files/nb-scala) or [build by yourself](https://github.com/dcaoyuan/nbscala) on NetBeans 7.2+.
-* Git clone, build and publish-local a NetBeans special sbt plugin <https://github.com/dcaoyuan/nbsbt>:
+* Git clone, build and publish-local a NetBeans special sbt plugin <https://github.com/dcaoyuan/nbsbt> (nbsbt-plugin 1.1.0+ has been deployed to repo.scala-sbt.org, that means it will be automatilly resolved when you run sbt):
 
         git clone git@github.com:dcaoyuan/nbsbt.git
         cd nbsbt
         sbt clean compile publish-local
 
-* Add nbsbt to your plugin definition file. You can use either the global one at  **~/.sbt/plugins/plugins.sbt** or the project-specific one at **PROJECT_DIR/project/plugins.sbt**
+* Add nbsbt to your plugin definition file. You can use either the global one at  **~/.sbt/0.13/plugins/plugins.sbt** or the project-specific one at **PROJECT_DIR/project/plugins.sbt**
 
-        addSbtPlugin("org.netbeans.nbsbt" % "nbsbt-plugin" % "1.0.2")
+        addSbtPlugin("org.netbeans.nbsbt" % "nbsbt-plugin" % "1.1.0")
 
 
 ## FAQ

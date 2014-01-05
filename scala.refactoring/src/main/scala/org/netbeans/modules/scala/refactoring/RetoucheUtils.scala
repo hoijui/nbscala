@@ -59,7 +59,7 @@ import org.netbeans.api.java.classpath.ClassPath
 import org.netbeans.api.java.classpath.GlobalPathRegistry
 import org.netbeans.api.java.queries.SourceForBinaryQuery
 import org.netbeans.api.java.source.ClasspathInfo
-import org.netbeans.api.language.util.ast.{AstDfn, AstScope}
+import org.netbeans.api.language.util.ast.{ AstDfn, AstScope }
 import org.netbeans.api.lexer.Token;
 import org.netbeans.api.lexer.TokenHierarchy;
 import org.netbeans.api.lexer.TokenId;
@@ -114,9 +114,10 @@ object RetoucheUtils {
     } else null
   }
 
-
-  /** Compute the names (full and simple, e.g. Foo::Bar and Bar) for the given node, if any, and return as
-   * a String[2] = {name,simpleName} */
+  /**
+   * Compute the names (full and simple, e.g. Foo::Bar and Bar) for the given node, if any, and return as
+   * a String[2] = {name,simpleName}
+   */
   /* def String[] getNodeNames(Node node) {
    String name = null;
    String simpleName = null;
@@ -147,32 +148,32 @@ object RetoucheUtils {
     try {
       val dob = DataObject.find(pr.getSnapshot.getSource.getFileObject)
       findCloneableEditorSupport(dob)
-    } catch {case ex: DataObjectNotFoundException => Exceptions.printStackTrace(ex); null}
+    } catch { case ex: DataObjectNotFoundException => Exceptions.printStackTrace(ex); null }
   }
 
   def findCloneableEditorSupport(dob: DataObject): CloneableEditorSupport = {
     dob.getCookie(classOf[org.openide.cookies.OpenCookie]) match {
       case x: CloneableEditorSupport => x
       case _ => dob.getCookie(classOf[org.openide.cookies.EditorCookie]) match {
-          case x: CloneableEditorSupport => x
-          case _ => null
-        }
+        case x: CloneableEditorSupport => x
+        case _                         => null
+      }
     }
   }
 
   def htmlize(input: String): String = {
     try {
       XMLUtil.toElementContent(input)
-    } catch {case cce: CharConversionException => Exceptions.printStackTrace(cce); input}
+    } catch { case cce: CharConversionException => Exceptions.printStackTrace(cce); input }
   }
 
-//    /** Return the most distant method in the hierarchy that is overriding the given method, or null */
-//    def IndexedMethod getOverridingMethod(JsElementCtx element, CompilationInfo info) {
-//        JsIndex index = JsIndex.get(info.getIndex());
-//        String fqn = AstUtilities.getFqnName(element.getPath());
-//
-//        return index.getOverridingMethod(fqn, element.getName());
-//    }
+  //    /** Return the most distant method in the hierarchy that is overriding the given method, or null */
+  //    def IndexedMethod getOverridingMethod(JsElementCtx element, CompilationInfo info) {
+  //        JsIndex index = JsIndex.get(info.getIndex());
+  //        String fqn = AstUtilities.getFqnName(element.getPath());
+  //
+  //        return index.getOverridingMethod(fqn, element.getName());
+  //    }
 
   def getHtml(text: String): String = {
     val sb = new StringBuilder
@@ -188,7 +189,7 @@ object RetoucheUtils {
         case null =>
           category = token.id.primaryCategory match {
             case null => "whitespace" //NOI18N
-            case x => x
+            case x    => x
           }
           settings.getTokenFontColors(category)
         case x => x
@@ -209,30 +210,30 @@ object RetoucheUtils {
     val sb = new StringBuilder(string)
     if (StyleConstants.isBold(set)) {
       sb.insert(0, "<b>") //NOI18N
-      sb.append("</b>")   //NOI18N
+      sb.append("</b>") //NOI18N
     }
     if (StyleConstants.isItalic(set)) {
       sb.insert(0, "<i>") //NOI18N
-      sb.append("</i>")   //NOI18N
+      sb.append("</i>") //NOI18N
     }
     if (StyleConstants.isStrikeThrough(set)) {
       sb.insert(0, "<s>") //NOI18N
-      sb.append("</s>")   //NOI18N
+      sb.append("</s>") //NOI18N
     }
     sb.insert(0, "<font color=" + getHTMLColor(StyleConstants.getForeground(set)) + ">") //NOI18N
-    sb.append("</font>")  //NOI18N
+    sb.append("</font>") //NOI18N
 
     sb.toString
   }
 
   private def getHTMLColor(c: Color): String = {
-    var colorR = "0" + Integer.toHexString(c.getRed)   //NOI18N
+    var colorR = "0" + Integer.toHexString(c.getRed) //NOI18N
     colorR = colorR.substring(colorR.length - 2)
 
     var colorG = "0" + Integer.toHexString(c.getGreen) //NOI18N
     colorG = colorG.substring(colorG.length - 2)
 
-    var colorB = "0" + Integer.toHexString(c.getBlue)  //NOI18N
+    var colorB = "0" + Integer.toHexString(c.getBlue) //NOI18N
     colorB = colorB.substring(colorB.length - 2)
 
     "#" + colorR + colorG + colorB //NOI18N
@@ -240,11 +241,10 @@ object RetoucheUtils {
 
   def isElementInOpenProject(f: FileObject): Boolean = {
     if (f eq null) return false
-    
+
     val p = FileOwnerQuery.getOwner(f)
     OpenProjects.getDefault.isProjectOpen(p)
   }
-
 
   def isFileInOpenProject(file: FileObject): Boolean = {
     assert(file ne null)
@@ -255,7 +255,7 @@ object RetoucheUtils {
   def isValidPackageName(name: String): Boolean = {
     if (name.endsWith(".")) //NOI18N
       return false
-    if (name.startsWith("."))  //NOI18N
+    if (name.startsWith(".")) //NOI18N
       return false
     val tokenizer = new StringTokenizer(name, ".") // NOI18N
     while (tokenizer.hasMoreTokens) {
@@ -265,8 +265,6 @@ object RetoucheUtils {
     }
     true
   }
-
-
 
   def isOnSourceClasspath(fo: FileObject): Boolean = {
     val p = FileOwnerQuery.getOwner(fo)
@@ -316,10 +314,10 @@ object RetoucheUtils {
   } */
 
   def getPackageName(url: URL): String = {
-    var f =  try {
+    var f = try {
       val path = URLDecoder.decode(url.getPath, "utf-8") // NOI18N
       FileUtil.normalizeFile(new File(path))
-    } catch {case ex: UnsupportedEncodingException => throw new IllegalArgumentException("Cannot create package name for url " + url)} // NOI18N
+    } catch { case ex: UnsupportedEncodingException => throw new IllegalArgumentException("Cannot create package name for url " + url) } // NOI18N
 
     var suffix = ""
     do {
@@ -335,40 +333,40 @@ object RetoucheUtils {
       }
       try {
         suffix = URLDecoder.decode(f.getPath().substring(f.getPath().lastIndexOf(File.separatorChar) + 1), "utf-8") + suffix; // NOI18N
-      } catch {case ex: UnsupportedEncodingException => throw new IllegalArgumentException("Cannot create package name for url " + url)} // NOI18N
+      } catch { case ex: UnsupportedEncodingException => throw new IllegalArgumentException("Cannot create package name for url " + url) } // NOI18N
 
       f = f.getParentFile
-    } while (f !=null )
+    } while (f != null)
     throw new IllegalArgumentException("Cannot create package name for url " + url) // NOI18N
   }
 
-
-// XXX: parsingapi
-//    def boolean isClasspathRoot(FileObject fo) {
-//        ClassPath cp = ClassPath.getClassPath(fo, ClassPath.SOURCE);
-//        if (cp ne null) {
-//            FileObject f = cp.findOwnerRoot(fo);
-//            if (f ne null) {
-//                return fo.equals(f);
-//            }
-//        }
-//
-//        return false;
-//    }
+  // XXX: parsingapi
+  //    def boolean isClasspathRoot(FileObject fo) {
+  //        ClassPath cp = ClassPath.getClassPath(fo, ClassPath.SOURCE);
+  //        if (cp ne null) {
+  //            FileObject f = cp.findOwnerRoot(fo);
+  //            if (f ne null) {
+  //                return fo.equals(f);
+  //            }
+  //        }
+  //
+  //        return false;
+  //    }
 
   def getPackageName(folder: FileObject): String = {
     assert(folder.isFolder, "argument must be folder") //NOI18N
     val p = FileOwnerQuery.getOwner(folder)
     if (p ne null) {
       val s = ProjectUtils.getSources(p)
-      for {g <- s.getSourceGroups(Sources.TYPE_GENERIC)
-           relativePath = FileUtil.getRelativePath(g.getRootFolder, folder)
-           if relativePath ne null
+      for {
+        g <- s.getSourceGroups(Sources.TYPE_GENERIC)
+        relativePath = FileUtil.getRelativePath(g.getRootFolder, folder)
+        if relativePath ne null
       } {
         return relativePath.replace('/', '.') //NOI18N
       }
     }
-    
+
     ""
   }
 
@@ -453,7 +451,7 @@ object RetoucheUtils {
     // * if no cp found at all log the file and use nullPath since the ClasspathInfo.create
     // * doesn't accept null compile or boot cp.
     if (compCp eq null) {
-      Log.warning ("No classpath for: " + FileUtil.getFileDisplayName(files(0)) + " " + FileOwnerQuery.getOwner(files(0)))
+      Log.warning("No classpath for: " + FileUtil.getFileDisplayName(files(0)) + " " + FileOwnerQuery.getOwner(files(0)))
       compCp = nullPath
     }
 
@@ -470,9 +468,9 @@ object RetoucheUtils {
         // skip read only source roots
       } else {
         val name = root.getName match {
-          case "vendor"| "script" => // NOI18N
-            // skip non-refactorable parts in renaming
-          case _ => addScalaFiles(files, root)
+          case "vendor" | "script" => // NOI18N
+          // skip non-refactorable parts in renaming
+          case _                   => addScalaFiles(files, root)
         }
       }
     }
@@ -480,13 +478,12 @@ object RetoucheUtils {
     files.toSet
   }
 
-
   def getScalaFilesInProject(fileInProject: FileObject, excludeReadOnlySourceRoots: Boolean = false): Set[FileObject] = {
     val files = new HashSet[FileObject] // 100
     val sourceRoots = QuerySupport.findRoots(fileInProject,
-                                             null,
-                                             java.util.Collections.singleton(ClassPath.BOOT),
-                                             java.util.Collections.emptySet[String])
+      null,
+      java.util.Collections.singleton(ClassPath.BOOT),
+      java.util.Collections.emptySet[String])
     val itr = sourceRoots.iterator
     while (itr.hasNext) {
       val root = itr.next
@@ -494,9 +491,9 @@ object RetoucheUtils {
         // skip read only source roots
       } else {
         val name = root.getName match {
-          case "vendor"| "script" => // NOI18N
-            // skip non-refactorable parts in renaming
-          case _ => addScalaFiles(files, root)
+          case "vendor" | "script" => // NOI18N
+          // skip non-refactorable parts in renaming
+          case _                   => addScalaFiles(files, root)
         }
       }
     }
@@ -506,7 +503,7 @@ object RetoucheUtils {
 
   private def addScalaFiles(files: HashSet[FileObject], f: FileObject) {
     if (f.isFolder) {
-      f.getChildren foreach {addScalaFiles(files, _)}
+      f.getChildren foreach { addScalaFiles(files, _) }
     } else if (isScalaFile(f)) {
       files.add(f)
     }
@@ -514,11 +511,12 @@ object RetoucheUtils {
 
   def getTopTemplates(scopes: Seq[AstScope], result: ArrayBuffer[AstDfn]) {
     for (scope <- scopes) {
-      result ++= (scope.dfns filter {_.kind match {
-            case ElementKind.CLASS | ElementKind.MODULE => true
-            case _ => false
-          }
-        })
+      result ++= (scope.dfns filter {
+        _.kind match {
+          case ElementKind.CLASS | ElementKind.MODULE => true
+          case _                                      => false
+        }
+      })
 
       for (x <- scope.bindingDfn if x.kind == ElementKind.PACKAGE) {
         getTopTemplates(scope.subScopes, result)

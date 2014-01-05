@@ -1,8 +1,8 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
+ *
  * Copyright 2008 Sun Microsystems, Inc. All rights reserved.
- * 
+ *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common
  * Development and Distribution License("CDDL") (collectively, the
@@ -20,7 +20,7 @@
  * License Header, with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * 
+ *
  * If you wish your version of this file to be governed by only the CDDL
  * or only the GPL Version 2, indicate your decision by adding
  * "[Contributor] elects to include this software in this distribution
@@ -31,58 +31,53 @@
  * However, if you add GPL Version 2 code and therefore, elected the GPL
  * Version 2 license, then the option applies only if the new code is
  * made subject to such option by the copyright holder.
- * 
+ *
  * Contributor(s):
- * 
+ *
  * Portions Copyrighted 2009 Sun Microsystems, Inc.
  */
 package org.netbeans.modules.scala.core.ast
 
-import org.netbeans.api.lexer.{Token, TokenId, TokenHierarchy}
-import org.netbeans.modules.csl.api.{ElementKind, HtmlFormatter, Modifier}
+import org.netbeans.api.lexer.{ Token, TokenId, TokenHierarchy }
+import org.netbeans.modules.csl.api.{ ElementKind, HtmlFormatter, Modifier }
 import org.openide.filesystems.FileObject
 
-import org.netbeans.api.language.util.ast.{AstDfn, AstRef, AstScope}
-import org.netbeans.modules.scala.core.{ScalaGlobal, ScalaMimeResolver, ScalaSourceUtil}
+import org.netbeans.api.language.util.ast.{ AstDfn, AstRef, AstScope }
+import org.netbeans.modules.scala.core.{ ScalaGlobal, ScalaMimeResolver, ScalaSourceUtil }
 
 /**
  * Scala AstDfn special functions, which will be enabled in ScalaGlobal
  */
-trait ScalaDfns {self: ScalaGlobal =>
+trait ScalaDfns { self: ScalaGlobal =>
 
   object ScalaDfn {
     def apply(symbol: Symbol,
               idToken: Token[TokenId],
               kind: ElementKind,
               bindingScope: AstScope,
-              fo: Option[FileObject]
-    ) = new ScalaDfn(symbol, idToken, kind, bindingScope, fo)
+              fo: Option[FileObject]) = new ScalaDfn(symbol, idToken, kind, bindingScope, fo)
   }
-  
+
   class ScalaDfn(asymbol: Symbol,
                  aidToken: Token[TokenId],
                  akind: ElementKind,
                  abindingScope: AstScope,
-                 afo: Option[FileObject]
-  ) extends ScalaItem with AstDfn {
-    
+                 afo: Option[FileObject]) extends ScalaItem with AstDfn {
+
     make(aidToken, akind, abindingScope, afo)
 
     symbol = asymbol
 
-    override 
-    def getMimeType: String = ScalaMimeResolver.MIME_TYPE
+    override def getMimeType: String = ScalaMimeResolver.MIME_TYPE
 
-    override 
-    def getModifiers: java.util.Set[Modifier] = {
+    override def getModifiers: java.util.Set[Modifier] = {
       if (!_modifiers.isDefined) {
-        _modifiers = Some(ScalaUtil.getModifiers(symbol))
+        _modifiers = Some(ScalaUtil.askForModifiers(symbol))
       }
       _modifiers.get
     }
 
-    override 
-    def qualifiedName: String = symbol.fullName
+    override def qualifiedName: String = symbol.fullName
 
     /** @Note: do not call ref.getKind here, which will recursively call this function, use ref.kind ! */
     def isReferredBy(ref: AstRef): Boolean = {
@@ -93,7 +88,7 @@ trait ScalaDfns {self: ScalaGlobal =>
         if (ref.symbol == symbol) true else {
           symbol match {
             case me: TermSymbol => me.referenced == ref.symbol
-            case _ => false
+            case _              => false
           }
         }
       } else false
@@ -103,7 +98,7 @@ trait ScalaDfns {self: ScalaGlobal =>
       val srcDoc = getDoc.getOrElse(return "")
       TokenHierarchy.get(srcDoc) match {
         case null => return ""
-        case th => ScalaSourceUtil.getDocComment(srcDoc, idOffset(th))
+        case th   => ScalaSourceUtil.getDocComment(srcDoc, idOffset(th))
       }
     }
 

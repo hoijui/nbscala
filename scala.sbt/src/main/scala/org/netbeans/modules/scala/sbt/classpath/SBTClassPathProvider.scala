@@ -16,13 +16,13 @@ import scala.collection.mutable
 
 /**
  * Defines the various class paths for a sbt project.
- * 
+ *
  * @author Caoyuan Deng
  */
 class SBTClassPathProvider(project: Project) extends ClassPathProvider with PropertyChangeListener {
   import ProjectConstants._
 
-  private trait FileType 
+  private trait FileType
   private case object MAIN_SOURCE extends FileType
   private case object TEST_SOURCE extends FileType
   private case object UNKNOWN extends FileType
@@ -32,37 +32,36 @@ class SBTClassPathProvider(project: Project) extends ClassPathProvider with Prop
   private var testSrcRoots: Set[FileObject] = _
   private val cache = new mutable.HashMap[String, ClassPath]()
 
-  def findClassPath(fileObject: FileObject, scope: String): ClassPath = {
+  def findClassPath(fileObject: FileObject, tpe: String): ClassPath = {
     getFileType(fileObject) match {
-      case MAIN_SOURCE => getClassPath(scope, isTest = false)
-      case TEST_SOURCE => getClassPath(scope, isTest = true)
-      case _ => null
+      case MAIN_SOURCE => getClassPath(tpe, isTest = false)
+      case TEST_SOURCE => getClassPath(tpe, isTest = true)
+      case _           => null
     }
   }
 
-  def getClassPath(scope: String, isTest: Boolean): ClassPath = cache synchronized {
-    val cacheKey = scope + (if (isTest) "/main" else "/test")
+  def getClassPath(tpe: String, isTest: Boolean): ClassPath = cache synchronized {
+    val cacheKey = tpe + (if (isTest) "/main" else "/test")
     cache.getOrElseUpdate(cacheKey, {
-        val cpi = new SBTClassPath(project, scope, isTest)
-        val cp = ClassPathFactory.createClassPath(cpi)
-        cpi.addPropertyChangeListener(this)
-        cache += cacheKey -> cp
-        cp
-      }
-    )
+      val cpi = new SBTClassPath(project, tpe, isTest)
+      val cp = ClassPathFactory.createClassPath(cpi)
+      cpi.addPropertyChangeListener(this)
+      cache += cacheKey -> cp
+      cp
+    })
   }
 
   def propertyChange(evt: PropertyChangeEvent) {
     evt.getPropertyName match {
       case ClassPathImplementation.PROP_RESOURCES => cache synchronized {
-          clearCache
-          mainSrcRoots = null
-          testSrcRoots = null
-        }
+        clearCache
+        mainSrcRoots = null
+        testSrcRoots = null
+      }
       case _ =>
     }
   }
-  
+
   private def getFileType(fo: FileObject): FileType = {
     rock.readLock.lock
     try {
@@ -84,7 +83,7 @@ class SBTClassPathProvider(project: Project) extends ClassPathProvider with Prop
         case None =>
           testSrcRoots find contains(fo) match {
             case None => UNKNOWN
-            case _ => TEST_SOURCE
+            case _    => TEST_SOURCE
           }
         case _ => MAIN_SOURCE
       }
@@ -94,7 +93,7 @@ class SBTClassPathProvider(project: Project) extends ClassPathProvider with Prop
   }
 
   private def contains(fo: FileObject)(root: FileObject) = root.equals(fo) || FileUtil.isParentOf(root, fo)
-  
+
   private def clearCache {
     cache.clear
   }

@@ -8,28 +8,28 @@ import scala.tools.nsc.ast._
 
 // ======= Modifed by Caoyuan
 
-/** The main class of the presentation compiler in an interactive environment such as an IDE
+/**
+ * The main class of the presentation compiler in an interactive environment such as an IDE
  */
-class Global(_settings: Settings, _reporter: Reporter, projectName: String = ""
-) extends scala.tools.nsc.interactive.Global(_settings, _reporter, projectName) {
-  
+class Global(_settings: Settings, _reporter: Reporter, projectName: String = "") extends scala.tools.nsc.interactive.Global(_settings, _reporter, projectName) {
+
   // @see scala.tools.nsc.interactive.Global.reset(unit: RichCompilationUnit)
   def resetUnitOf(source: SourceFile) {
     unitOfFile(source.file) = new RichCompilationUnit(source)
-//    getUnitOf(source) match {
-//      case Some(unit) =>
-//        unit.depends.clear()
-//        unit.defined.clear()
-//        unit.synthetics.clear()
-//        unit.toCheck.clear()
-//        unit.targetPos = NoPosition
-//        unit.contexts.clear()
-//        unit.problems.clear()
-//        unit.body = EmptyTree
-//        unit.status = NotLoaded
-//      case None =>
-//        unitOfFile(source.file) = new RichCompilationUnit(source)
-//    }
+    //    getUnitOf(source) match {
+    //      case Some(unit) =>
+    //        unit.depends.clear()
+    //        unit.defined.clear()
+    //        unit.synthetics.clear()
+    //        unit.toCheck.clear()
+    //        unit.targetPos = NoPosition
+    //        unit.contexts.clear()
+    //        unit.problems.clear()
+    //        unit.body = EmptyTree
+    //        unit.status = NotLoaded
+    //      case None =>
+    //        unitOfFile(source.file) = new RichCompilationUnit(source)
+    //    }
   }
 
 //  final def recoveredType(tree: Tree): Option[Type] = {

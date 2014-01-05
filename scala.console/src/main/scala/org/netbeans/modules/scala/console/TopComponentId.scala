@@ -6,12 +6,12 @@ import org.openide.loaders.InstanceDataObject
 
 /**
  * @see org.netbeans.core.windows.persistence.PersistenceManager
- * 
+ *
  * @author Caoyuan Deng
  */
 object TopComponentId {
   private val log = Logger.getLogger(getClass.getName)
-  
+
   private val idEscape = try {
     val x = classOf[InstanceDataObject].getDeclaredMethod("escapeAndCut", classOf[String])
     x.setAccessible(true)
@@ -19,7 +19,7 @@ object TopComponentId {
   } catch {
     case ex: Exception => null
   }
-  
+
   private val idUnescape = try {
     val x = classOf[InstanceDataObject].getDeclaredMethod("unescape", classOf[String])
     x.setAccessible(true)
@@ -28,12 +28,12 @@ object TopComponentId {
     case ex: Exception => null
   }
 
-  /** 
+  /**
    * compute filename in the same manner as InstanceDataObject.create
    * [PENDING] in next version this should be replaced by public support
    * likely from FileUtil
    * @see issue #17142
-   * 
+   *
    */
   def escape(name: String) = {
     if (idEscape != null) {
@@ -44,8 +44,8 @@ object TopComponentId {
       }
     } else name
   }
-    
-  /** 
+
+  /**
    * compute filename in the same manner as InstanceDataObject.create
    * [PENDING] in next version this should be replaced by public support
    * likely from FileUtil

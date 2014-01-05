@@ -65,7 +65,7 @@ object SourceGroupTreeElement {
 }
 class SourceGroupTreeElement(asg: SourceGroup) extends TreeElement {
   import SourceGroupTreeElement._
-  
+
   private val sg = new WeakReference[SourceGroup](asg)
   private val dir = asg.getRootFolder
   private val displayName = asg.getDisplayName
@@ -73,12 +73,12 @@ class SourceGroupTreeElement(asg: SourceGroup) extends TreeElement {
     case null =>
       try {
         var image = DataObject.find(asg.getRootFolder).getNodeDelegate.getIcon(BeanInfo.ICON_COLOR_16x16)
-        image = ImageUtilities.mergeImages(image, ImageUtilities.loadImage(PACKAGE_BADGE), 7, 7 )
+        image = ImageUtilities.mergeImages(image, ImageUtilities.loadImage(PACKAGE_BADGE), 7, 7)
         new ImageIcon(image)
-      } catch {case ex: DataObjectNotFoundException => null}
+      } catch { case ex: DataObjectNotFoundException => null }
     case x => x
   }
-    
+
   override def getParent(isLogical: Boolean): TreeElement = {
     TreeElementFactory.getTreeElement(FileOwnerQuery.getOwner(dir))
   }
@@ -87,14 +87,14 @@ class SourceGroupTreeElement(asg: SourceGroup) extends TreeElement {
     icon
   }
 
-  override def getText(isLogical: Boolean):  String = {
+  override def getText(isLogical: Boolean): String = {
     displayName
   }
 
-  override def getUserObject:  Object = {
+  override def getUserObject: Object = {
     sg.get match {
       case null => FolderTreeElement.getSourceGroup(dir)
-      case x => x
+      case x    => x
     }
   }
 }

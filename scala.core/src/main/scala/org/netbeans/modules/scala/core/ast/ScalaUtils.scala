@@ -39,7 +39,7 @@
 
 package org.netbeans.modules.scala.core.ast
 
-import org.netbeans.modules.csl.api.{ElementKind, Modifier}
+import org.netbeans.modules.csl.api.{ ElementKind, Modifier }
 import org.netbeans.api.language.util.ast.AstItem
 import org.netbeans.modules.csl.api.HtmlFormatter
 
@@ -47,13 +47,13 @@ import org.netbeans.modules.scala.core.ScalaGlobal
 
 import scala.reflect.internal.Flags
 
-trait ScalaUtils {self: ScalaGlobal =>
-  
+trait ScalaUtils { self: ScalaGlobal =>
+
   object ScalaUtil {
-    
-    def getModifiers(symbol: Symbol): java.util.Set[Modifier] = {
+
+    def askForModifiers(symbol: Symbol): java.util.Set[Modifier] = {
       val modifiers = new java.util.HashSet[Modifier]
-      askForResponse {() =>
+      askForResponse { () =>
 
         if (symbol hasFlag Flags.PROTECTED) {
           modifiers.add(Modifier.PROTECTED)
@@ -63,55 +63,70 @@ trait ScalaUtils {self: ScalaGlobal =>
           modifiers.add(Modifier.PUBLIC)
         }
 
-        if (symbol hasFlag Flags.MUTABLE)    modifiers.add(Modifier.STATIC) // to use STATIC icon only
+        if (symbol hasFlag Flags.MUTABLE) modifiers.add(Modifier.STATIC) // to use STATIC icon only
         if (symbol.isDeprecated) modifiers.add(Modifier.DEPRECATED)
 
         modifiers
       } get match {
-        case Left(x) => x
+        case Left(x)  => x
         case Right(_) => modifiers
       }
     }
 
-    def getKind(sym: Symbol): ElementKind = {
-      askForResponse {() =>
-        if (sym.isPackage) {
+    def askForKind(symbol: Symbol): ElementKind = {
+      askForResponse { () =>
+        if (symbol.isPackage) {
           ElementKind.PACKAGE
-        } else if (sym.isClass) {
+        } else if (symbol.isClass) {
           ElementKind.CLASS
-        } else if (sym.isType) {
+        } else if (symbol.isType) {
           ElementKind.CLASS
-        } else if (sym.isTrait) {
+        } else if (symbol.isTrait) {
           ElementKind.CLASS
-        } else if (sym.isModule) {
+        } else if (symbol.isModule) {
           ElementKind.MODULE
-        } else if (sym.isConstructor) {
+        } else if (symbol.isConstructor) {
           ElementKind.CONSTRUCTOR
-        } else if (sym.isConstant) {
+        } else if (symbol.isConstant) {
           ElementKind.CONSTANT
-        } else if (sym.isValue) {
+        } else if (symbol.isValue) {
           ElementKind.FIELD
-        } else if (sym.isVariable) {
+        } else if (symbol.isVariable) {
           ElementKind.VARIABLE
-        } else if (sym.isGetter) {
+        } else if (symbol.isGetter) {
           ElementKind.FIELD
-        } else if (sym.isMethod) {
+        } else if (symbol.isMethod) {
           ElementKind.METHOD
-        } else if (sym.isValueParameter) {
+        } else if (symbol.isValueParameter) {
           ElementKind.PARAMETER
-        } else if (sym.isTypeParameter) {
+        } else if (symbol.isTypeParameter) {
           ElementKind.CLASS
         } else {
           ElementKind.OTHER
         }
-        
+
       } get match {
         case Left(x) => x
-        case Right(_) => 
+        case Right(_) =>
           // java.lang.Error: no-symbol does not have owner
           //      at scala.tools.nsc.symtab.Symbols$NoSymbol$.owner(Symbols.scala:1609)
           //      at scala.tools.nsc.symtab.Symbols$Symbol.isLocal(Symbols.scala:346)
           ElementKind.OTHER
+      }
+    }
+
+    def askForMembers(symbol: Symbol): Scope = {
+      askForResponse { () =>
+        completeIfWithLazyType(symbol)
+
+        try {
+          symbol.tpe.members
+        } catch {
+          case _: Throwable => EmptyScope
+        }
+      } get match {
+        case Left(x)   => x
+        case Right(ex) => EmptyScope
       }
     }
 
@@ -171,7 +186,8 @@ trait ScalaUtils {self: ScalaGlobal =>
       val str = try {
         tpe.toString
       } catch {
-        case ex: java.lang.AssertionError => ScalaGlobal.resetLate(self, ex); null // ignore assert ex from scala
+        case ex: java.lang.AssertionError =>
+          ScalaGlobal.resetLate(self, ex); null // ignore assert ex from scala
         case ex: Throwable => ScalaGlobal.resetLate(self, ex); null
       }
 
@@ -179,58 +195,57 @@ trait ScalaUtils {self: ScalaGlobal =>
     }
 
     def askForHtmlFormat(symbol: Symbol, fm: HtmlFormatter) {
-      askForResponse {() =>
+      askForResponse { () =>
         symbol match {
-          case sym if sym.isPackage | sym.isClass | sym.isModule => fm.appendText(sym.nameString)
-          case sym if sym.isConstructor =>
-            fm.appendText(sym.owner.nameString)
-            htmlTypeName(sym, fm)
-          case sym if sym.isMethod =>
-            fm.appendText(sym.nameString)
-            htmlTypeName(sym, fm)
-          case sym =>
-            fm.appendText(sym.nameString)
+          case _ if symbol.isPackage | symbol.isClass | symbol.isModule => fm.appendText(symbol.nameString)
+          case _ if symbol.isConstructor =>
+            fm.appendText(symbol.owner.nameString)
+            htmlTypeName(symbol, fm)
+          case _ if symbol.isMethod =>
+            fm.appendText(symbol.nameString)
+            htmlTypeName(symbol, fm)
+          case _ =>
+            fm.appendText(symbol.nameString)
             fm.appendText(": ")
-            htmlTypeName(sym, fm)
+            htmlTypeName(symbol, fm)
         }
       } get match {
-        case Left(_) =>
+        case Left(_)  =>
         case Right(_) =>
       }
     }
 
-    private def tryTpe(sym: Symbol): Type = {
+    private def tryTpe(symbol: Symbol): Type = {
       try {
-        sym.tpe
+        symbol.tpe
       } catch {
-        case ex: Throwable => ScalaGlobal.resetLate(self, ex); null
+        case ex: Throwable => ScalaGlobal.resetLate(self, ex); NoType
       }
     }
 
-    private def htmlTypeName(sym: Symbol, fm: HtmlFormatter) {      
+    private def htmlTypeName(sym: Symbol, fm: HtmlFormatter) {
       htmlTypeName(tryTpe(sym), fm)
     }
 
     private def htmlTypeName(tpe: Type, fm: HtmlFormatter): Unit = {
-      if (tpe eq null) return
       tpe match {
-        case ErrorType => fm.appendText("<error>")
-          // internal: error
+        case ErrorType    => fm.appendText("<error>")
+        // internal: error
         case WildcardType => fm.appendText("_")
-          // internal: unknown
-        case NoType => fm.appendText("<notype>")
-        case NoPrefix => fm.appendText("<noprefix>")
-        case ThisType(sym) => 
+        // internal: unknown
+        case NoType       => fm.appendText("<notype>")
+        case NoPrefix     => fm.appendText("<noprefix>")
+        case ThisType(sym) =>
           fm.appendText(sym.nameString)
           fm.appendText(".this.type")
-          // sym.this.type
+        // sym.this.type
         case SingleType(pre, sym) =>
           fm.appendText(sym.nameString)
           fm.appendText(".type")
-          // pre.sym.type
-        case ConstantType(value) => 
-          
-          // int(2)
+        // pre.sym.type
+        case ConstantType(value) =>
+
+        // int(2)
         case TypeRef(pre, sym, args) =>
           fm.appendText(sym.nameString)
           if (!args.isEmpty) {
@@ -244,23 +259,24 @@ trait ScalaUtils {self: ScalaGlobal =>
             }
             fm.appendText("]")
           }
-          // pre.sym[targs]
+        // pre.sym[targs]
         case RefinedType(parents, defs) =>
-          // parent1 with ... with parentn { defs }
-        case AnnotatedType(annots, tp, selfsym) => htmlTypeName(tp, fm)
-          // tp @annots
+        // parent1 with ... with parentn { defs }
+        case AnnotatedType(annots, tp, selfsym) =>
+          htmlTypeName(tp, fm)
+        // tp @annots
 
-          // the following are non-value types; you cannot write them down in Scala source.
+        // the following are non-value types; you cannot write them down in Scala source.
 
         case TypeBounds(lo, hi) =>
           fm.appendText(">: ")
           htmlTypeName(lo, fm)
           fm.appendText(" <: ")
           htmlTypeName(hi, fm)
-          // >: lo <: hi
-        case ClassInfoType(parents, defs, clazz) => 
+        // >: lo <: hi
+        case ClassInfoType(parents, defs, clazz) =>
           htmlTypeName(clazz.tpe, fm)
-          // same as RefinedType except as body of class
+        // same as RefinedType except as body of class
         case MethodType(paramtypes, result) =>
           if (!paramtypes.isEmpty) {
             fm.appendText("(")
@@ -277,7 +293,7 @@ trait ScalaUtils {self: ScalaGlobal =>
           }
           fm.appendText(": ")
           htmlTypeName(result, fm)
-          // (paramtypes)result
+        // (paramtypes)result
         case NullaryMethodType(result) =>
           fm.appendText(": ")
           htmlTypeName(result, fm)
@@ -297,24 +313,25 @@ trait ScalaUtils {self: ScalaGlobal =>
           }
           fm.appendText(": ")
           htmlTypeName(result, fm)
-          // [tparams]result where result is a MethodType or ClassInfoType
-          // or
-          // []T  for a eval-by-name type
-        case ExistentialType(tparams, result) => 
+        // [tparams]result where result is a MethodType or ClassInfoType
+        // or
+        // []T  for a eval-by-name type
+        case ExistentialType(tparams, result) =>
           fm.appendText("ExistantialType")
-          // exists[tparams]result
+        // exists[tparams]result
 
-          // the last five types are not used after phase `typer'.
+        // the last five types are not used after phase `typer'.
 
-          //case OverloadedType(pre, tparams, alts) => "Overlaod"
-          // all alternatives of an overloaded ident
-        case AntiPolyType(pre: Type, targs) => 
+        //case OverloadedType(pre, tparams, alts) => "Overlaod"
+        // all alternatives of an overloaded ident
+        case AntiPolyType(pre: Type, targs) =>
           fm.appendText("AntiPolyType")
-        case TypeVar(_, _) => tpe.safeToString
-          // a type variable
-          //case DeBruijnIndex(level, index) => 
-          //fm.appendText("DeBruijnIndex")
-        case _ => 
+        case TypeVar(_, _) =>
+          tpe.safeToString
+        // a type variable
+        //case DeBruijnIndex(level, index) =>
+        //fm.appendText("DeBruijnIndex")
+        case _ =>
           fm.appendText(tpe.getClass.getSimpleName)
       }
     }
@@ -324,7 +341,7 @@ trait ScalaUtils {self: ScalaGlobal =>
      * from scala.tools.nsc.symtab.Symbols
      */
     def askForHtmlDef(sym: Symbol, fm: HtmlFormatter) {
-      askForResponse {() =>
+      askForResponse { () =>
         fm.appendHtml("<i>")
         fm.appendText(sym.enclClass.fullName)
         fm.appendHtml("</i><p>")
@@ -336,15 +353,15 @@ trait ScalaUtils {self: ScalaGlobal =>
         }
 
         completeIfWithLazyType(sym)
-      
+
         val flags = if (sym.owner.isRefinementClass) {
           sym.flags & Flags.ExplicitFlags & ~Flags.OVERRIDE
         } else sym.flags & Flags.ExplicitFlags
 
         compose(List(sym.flagString(flags),
-                     sym.keyString,
-                     sym.varianceString + sym.nameString), fm)
-      
+          sym.keyString,
+          sym.varianceString + sym.nameString), fm)
+
         sym match {
           case _ if sym.isPackage | sym.isClass | sym.isTrait =>
             if (sym.hasRawInfo) htmlTypeInfo(sym.rawInfo, fm)
@@ -354,14 +371,13 @@ trait ScalaUtils {self: ScalaGlobal =>
             if (sym.hasRawInfo) fm.appendText(sym.infoString(sym.rawInfo))
           case _ if sym.isMethod =>
             if (sym.hasRawInfo) fm.appendText(sym.infoString(sym.rawInfo))
-          case _ => 
+          case _ =>
             if (sym.hasRawInfo) fm.appendText(sym.infoString(sym.rawInfo))
         }
-        
+
       } get match {
-        case Left(x) =>
-        case Right(ex) =>
-          ScalaGlobal.resetLate(self, ex)
+        case Left(x)   =>
+        case Right(ex) => ScalaGlobal.resetLate(self, ex)
       }
     }
 
@@ -377,23 +393,23 @@ trait ScalaUtils {self: ScalaGlobal =>
     private def htmlTypeInfo(tpe: Type, fm: HtmlFormatter) {
       if (tpe eq null) return
       tpe match {
-        case ErrorType => fm.appendText("<error>")
-          // internal: error
+        case ErrorType    => fm.appendText("<error>")
+        // internal: error
         case WildcardType => fm.appendText("_")
-          // internal: unknown
-        case NoType => fm.appendText("<notype>")
-        case NoPrefix => fm.appendText("<noprefix>")
+        // internal: unknown
+        case NoType       => fm.appendText("<notype>")
+        case NoPrefix     => fm.appendText("<noprefix>")
         case ThisType(sym) =>
           fm.appendText(sym.nameString)
           fm.appendText(".this.type")
-          // sym.this.type
+        // sym.this.type
         case SingleType(pre, sym) =>
           fm.appendText(sym.nameString)
           fm.appendText(".type")
-          // pre.sym.type
+        // pre.sym.type
         case ConstantType(value) =>
 
-          // int(2)
+        // int(2)
         case TypeRef(pre, sym, args) =>
           fm.appendText(sym.fullName)
           if (!args.isEmpty) {
@@ -407,7 +423,7 @@ trait ScalaUtils {self: ScalaGlobal =>
             }
             fm.appendText("]")
           }
-          // pre.sym[targs]
+        // pre.sym[targs]
         case RefinedType(parents, defs) =>
           fm.appendText(" extends ")
           val itr = parents.iterator
@@ -419,18 +435,18 @@ trait ScalaUtils {self: ScalaGlobal =>
             }
           }
           fm.appendText("{...}")
-          // parent1 with ... with parentn { defs }
+        // parent1 with ... with parentn { defs }
         case AnnotatedType(annots, tp, selfsym) => htmlTypeInfo(tp, fm)
-          // tp @annots
+        // tp @annots
 
-          // the following are non-value types; you cannot write them down in Scala source.
+        // the following are non-value types; you cannot write them down in Scala source.
 
         case TypeBounds(lo, hi) =>
           fm.appendText(">: ")
           htmlTypeInfo(lo, fm)
           fm.appendText(" <: ")
           htmlTypeInfo(hi, fm)
-          // >: lo <: hi
+        // >: lo <: hi
         case ClassInfoType(parents, defs, clazz) =>
           //htmlTypeInfo(clazz.tpe, fm)
           fm.appendText(" extends ")
@@ -442,7 +458,7 @@ trait ScalaUtils {self: ScalaGlobal =>
               fm.appendText(" with ")
             }
           }
-          // same as RefinedType except as body of class
+        // same as RefinedType except as body of class
         case MethodType(paramtypes, result) =>
           if (!paramtypes.isEmpty) {
             fm.appendText("(")
@@ -459,7 +475,7 @@ trait ScalaUtils {self: ScalaGlobal =>
           }
           fm.appendText(": ")
           htmlTypeInfo(result, fm)
-          // (paramtypes)result
+        // (paramtypes)result
         case NullaryMethodType(result) =>
           fm.appendText(": ")
           htmlTypeInfo(result, fm)
@@ -479,45 +495,47 @@ trait ScalaUtils {self: ScalaGlobal =>
           }
           fm.appendText(": ")
           htmlTypeInfo(result, fm)
-          // [tparams]result where result is a MethodType or ClassInfoType
-          // or
-          // []T  for a eval-by-name type
+        // [tparams]result where result is a MethodType or ClassInfoType
+        // or
+        // []T  for a eval-by-name type
         case ExistentialType(tparams, result) =>
           fm.appendText("ExistantialType")
-          // exists[tparams]result
+        // exists[tparams]result
 
-          // the last five types are not used after phase `typer'.
+        // the last five types are not used after phase `typer'.
 
-          //case OverloadedType(pre, tparams, alts) => "Overlaod"
-          // all alternatives of an overloaded ident
+        //case OverloadedType(pre, tparams, alts) => "Overlaod"
+        // all alternatives of an overloaded ident
         case AntiPolyType(pre: Type, targs) =>
           fm.appendText("AntiPolyType")
-        case TypeVar(_, _) => 
+        case TypeVar(_, _) =>
           fm.appendText(tpe.safeToString)
-          // a type variable
-          //case DeBruijnIndex(level, index) =>
-          //fm.appendText("DeBruijnIndex")
+        // a type variable
+        //case DeBruijnIndex(level, index) =>
+        //fm.appendText("DeBruijnIndex")
         case _ =>
           fm.appendText(tpe.safeToString)
       }
     }
 
+    /**
+     * @Note use only under compiler thread.
+     */
     def completeIfWithLazyType(sym: Symbol) {
-      askForResponse {() =>
-        val topClazz = sym.enclosingTopLevelClass
+      val topClazz = sym.enclosingTopLevelClass
 
-        if (topClazz.nameString.indexOf('$') != -1) return // avoid assertion error @see
-      
-        val (clazz, staticModule) = if (topClazz.isModule) {
-          (topClazz.companionClass, topClazz)
-        } else {
-          (topClazz, topClazz.companionModule)
-        }
+      if (topClazz.nameString.indexOf('$') != -1) return // avoid assertion error @see
 
-        if (clazz != NoSymbol && staticModule != NoSymbol) { // avoid Error: NoSymbol does not have owner
-          topClazz.rawInfo match {
-            case x if !x.isComplete => 
-              /*
+      val (clazz, staticModule) = if (topClazz.isModule) {
+        (topClazz.companionClass, topClazz)
+      } else {
+        (topClazz, topClazz.companionModule)
+      }
+
+      if (clazz != NoSymbol && staticModule != NoSymbol) { // avoid Error: NoSymbol does not have owner
+        topClazz.rawInfo match {
+          case x if !x.isComplete =>
+            /*
                java.lang.AssertionError: assertion failed: object NotificationDisplayer$NotificationImpl
                at scala.Predef$.assert(Predef.scala:179)
                at scala.tools.nsc.Global.assert(Global.scala:239)
@@ -624,79 +642,123 @@ trait ScalaUtils {self: ScalaGlobal =>
                at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:603)
                at java.lang.Thread.run(Thread.java:722)
                */
-              try {
-                x.complete(topClazz)
-              } catch {
-                case ex: Throwable =>
-              }
-            case _ =>
-          }
+            try {
+              x.complete(topClazz)
+            } catch {
+              case ex: Throwable =>
+            }
+          case _ =>
         }
-      } get match {
-        case Left(_) =>
-        case Right(ex) =>
       }
     }
 
-    def isProperType(sym: Symbol): Boolean = {
-      askForResponse {() =>
+    def askForIsProperType(sym: Symbol): Boolean = {
+      askForResponse { () =>
         if (sym.isType && sym.hasRawInfo) {
           completeIfWithLazyType(sym)
           sym.rawInfo match {
             case NoType | ErrorType => false
-            case _ => true
+            case _                  => true
           }
         } else false
       } get match {
-        case Left(x) => x
+        case Left(x)   => x
         case Right(ex) => false
       }
     }
 
-    def importantItem(items: List[AstItem]): ScalaItem = {
-      askForResponse {() =>
-        items map {item =>
-          val (sym, baseLevel) = item match {
-            case dfn: ScalaDfn => (dfn.symbol, 0)
-            case ref: ScalaRef => (ref.symbol, 100)
-          }
-
-          val importantLevel = baseLevel + (if (sym == NoSymbol) 90
-                                            else if (sym.isClass  || sym.isTrait || sym.isType || sym.isModule) 10
-                                            else if (sym.isSetter || sym.hasFlag(Flags.MUTABLE)) 20
-                                            else if (sym.isGetter)      30
-                                            else if (sym.isConstructor) 40
-                                            else if (!sym.isMethod)     50
-                                            else 60)
-
-          (importantLevel, item)
-        } sortWith {(x1, x2) => x1._1 < x2._1} head match {
-          case (_, item) => item.asInstanceOf[ScalaItem]
-        }
+    def askForImportantItem(items: List[AstItem]): ScalaItem = {
+      askForResponse { () =>
+        importantItem(items)
       } get match {
-        case Left(x) => x
+        case Left(x)   => x
         case Right(ex) => items.head.asInstanceOf[ScalaItem]
       }
     }
 
-    @throws(classOf[Throwable])
-    def symSimpleSig(sym: Symbol): String = {
-      askForResponse {() =>
-        val tpe = sym.tpe // may throws exception
-        typeSimpleSig(tpe)
-      } get match {
-        case Left(x) => x
-        case Right(ex) => "<error>"
+    /**
+     * @Note use only under compiler thread.
+     */
+    def importantItem(items: List[AstItem]): ScalaItem = {
+      try {
+        items.map {
+          case item: ScalaItem =>
+            val sym = item.symbol
+            val importantLevel = item match {
+              case dfn: ScalaDfn =>
+                0 + {
+                  if (sym == NoSymbol) 90
+                  else if (sym.isClass) 20 // prefer moduleClass over module
+                  else if (sym.isTrait || sym.isType || sym.isModule) 21
+                  else if (sym.isMethod) {
+                    if (sym.isSetter || sym.hasFlag(Flags.MUTABLE)) 31
+                    else if (sym.isGetter) 32
+                    else if (sym.isConstructor) 33
+                    else 35
+
+                  } else 60
+                }
+
+              case ref: ScalaRef =>
+                100 + {
+                  if (sym == NoSymbol) 90
+                  else if (sym.isClass) 20 // prefer moduleClass over module
+                  else if (sym.isTrait || sym.isType || sym.isModule) 21
+                  else if (sym.hasFlag(Flags.PARAM) || sym.hasFlag(Flags.PARAMACCESSOR)) 31
+                  else if (sym.isValue || sym.isVariable) 31
+                  else if (sym.isMethod) {
+                    // it's difficult to process apply/unapply method on same token, since in
+                    // this case, the token is bound to multipe symbols: the apply method, the
+                    // term symbol of this ref itself etc. so just let it behind.
+                    if (sym.nameString == "apply" || sym.nameString == "unapply") 39
+                    else if (sym.isSetter || sym.hasFlag(Flags.MUTABLE)) 32
+                    else if (sym.isGetter) 33
+                    else if (sym.isConstructor) 34
+                    else 35
+                  } else 60
+                }
+            }
+
+            (importantLevel, item)
+        }.sortWith(_._1 < _._1).head._2
+      } catch {
+        case _: Throwable => items.head.asInstanceOf[ScalaItem]
       }
     }
 
-    def typeSimpleSig(tpe: Type): String = {
-      askForResponse {() =>
+    def askForSymSimpleSig(sym: Symbol): String = {
+      askForResponse { () =>
+        val tpe = sym.tpe // may throws exception
         val sb = new StringBuilder
         typeSimpleSig_(tpe, sb)
         sb.toString
       } get match {
-        case Left(x) => x
+        case Left(x)   => x
+        case Right(ex) => "<error>"
+      }
+    }
+
+    /**
+     * @Note use only under compiler thread.
+     */
+    def symSimpleSig(sym: Symbol): String = {
+      try {
+        val tpe = sym.tpe // may throws exception
+        val sb = new StringBuilder
+        typeSimpleSig_(tpe, sb)
+        sb.toString
+      } catch {
+        case _: Throwable => "<error>"
+      }
+    }
+
+    def askForTypeSimpleSig(tpe: Type): String = {
+      askForResponse { () =>
+        val sb = new StringBuilder
+        typeSimpleSig_(tpe, sb)
+        sb.toString
+      } get match {
+        case Left(x)   => x
         case Right(ex) => "<error>"
       }
     }
@@ -707,21 +769,21 @@ trait ScalaUtils {self: ScalaGlobal =>
       tpe match {
         case ErrorType =>
           sb.append("<error>")
-          // internal: error
+        // internal: error
         case WildcardType => sb.append("_")
-          // internal: unknown
-        case NoType => sb.append("<notype>")
-        case NoPrefix => sb.append("<noprefix>")
+        // internal: unknown
+        case NoType       => sb.append("<notype>")
+        case NoPrefix     => sb.append("<noprefix>")
         case ThisType(sym) =>
           sb append (sym.fullName)
         case SingleType(pre, sym) =>
           sb append (sym.fullName)
         case ConstantType(value) =>
-          // int(2)
+        // int(2)
         case TypeRef(pre, sym, args) =>
           sb append (sym.fullName)
           sb append (args map (x => typeSimpleSig_(x, sb)) mkString ("[", ",", "]"))
-          // pre.sym[targs]
+        // pre.sym[targs]
         case RefinedType(parents, defs) =>
           sb append (parents map (x => typeSimpleSig_(x, sb)) mkString (" extends ", "with ", ""))
         case AnnotatedType(annots, tp, selfsym) =>
@@ -731,41 +793,40 @@ trait ScalaUtils {self: ScalaGlobal =>
           typeSimpleSig_(lo, sb)
           sb append (" <: ")
           typeSimpleSig_(hi, sb)
-          // >: lo <: hi
+        // >: lo <: hi
         case ClassInfoType(parents, defs, clazz) =>
           sb append (parents map (x => typeSimpleSig_(x, sb)) mkString (" extends ", " with ", ""))
         case MethodType(paramtypes, result) => // same as RefinedType except as body of class
-          sb append (paramtypes map (x => typeSimpleSig_(x.tpe, sb)) mkString("(", ",", ")"))
+          sb append (paramtypes map (x => typeSimpleSig_(x.tpe, sb)) mkString ("(", ",", ")"))
           sb append (": ")
           typeSimpleSig_(result, sb)
-          // (paramtypes): result
+        // (paramtypes): result
         case PolyType(tparams, result) =>
-          sb append (tparams map (x => typeSimpleSig_(x.tpe, sb)) mkString("[", ",", "]"))
+          sb append (tparams map (x => typeSimpleSig_(x.tpe, sb)) mkString ("[", ",", "]"))
           sb append (": ")
           typeSimpleSig_(result, sb)
-          // [tparams]: result where result is a MethodType or ClassInfoType
-          // or
-          // []: T  for a eval-by-name type
+        // [tparams]: result where result is a MethodType or ClassInfoType
+        // or
+        // []: T  for a eval-by-name type
         case ExistentialType(tparams, result) =>
           sb append ("ExistantialType")
-          // exists[tparams]result
+        // exists[tparams]result
 
-          // the last five types are not used after phase `typer'.
+        // the last five types are not used after phase `typer'.
 
-          //case OverloadedType(pre, tparams, alts) => "Overlaod"
-          // all alternatives of an overloaded ident
+        //case OverloadedType(pre, tparams, alts) => "Overlaod"
+        // all alternatives of an overloaded ident
         case AntiPolyType(pre: Type, targs) =>
           sb append ("AntiPolyType")
         case TypeVar(_, _) =>
           sb append (tpe.safeToString)
-          // a type variable
-          //case DeBruijnIndex(level, index) =>
-          //sb append ("DeBruijnIndex")
+        // a type variable
+        //case DeBruijnIndex(level, index) =>
+        //sb append ("DeBruijnIndex")
         case _ =>
           sb append (tpe.safeToString)
       }
     }
-
 
   }
 

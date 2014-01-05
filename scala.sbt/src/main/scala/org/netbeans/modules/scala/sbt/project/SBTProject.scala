@@ -17,10 +17,11 @@ import org.openide.util.Lookup
 import org.openide.util.lookup.Lookups
 
 /**
- * 
+ *
  * @author Caoyuan Deng
  */
 class SBTProject(projectDir: FileObject, state: ProjectState) extends Project {
+  // TODO @see org.netbeans.api.project.ProjectUtil for more providers
   private lazy val lookup: Lookup = Lookups.fixed(
     this,
     new Info(),
@@ -31,48 +32,47 @@ class SBTProject(projectDir: FileObject, state: ProjectState) extends Project {
     new SBTProjectOpenedHook(this),
     new SBTActionProvider(this),
     new SBTSourceForBinaryQuery(this),
-    new SBTBinaryForSourceQuery(this)
-  )
-  
-  override
-  def getProjectDirectory = projectDir
+    new SBTBinaryForSourceQuery(this))
 
-  override
-  def getLookup: Lookup = lookup
-  
-  def getMasterProject: Option[SBTProject] = {
-    projectDir.getParent match {
-      case parentDir: FileObject if parentDir.isFolder =>
-        parentDir.getFileObject(ProjectConstants.PROJECT_FOLDER_NAME) match {
-          case projectFolder: FileObject if projectFolder.isFolder =>
-            ProjectManager.getDefault.findProject(parentDir) match {
-              case x: SBTProject => Some(x)
-              case _ => None
-            }
-          case _ => None
-        }
-      case _ => None
+  override def getProjectDirectory = projectDir
+
+  override def getLookup: Lookup = lookup
+
+  private def findParentProject: Option[SBTProject] = findParentProject(projectDir)
+  private def findParentProject(dir: FileObject): Option[SBTProject] = {
+    if (dir.isRoot) {
+      None
+    } else {
+      val parentDir = dir.getParent
+      SBTProjectType.findSbtProjectFolder(parentDir) match {
+        case Some(x) =>
+          ProjectManager.getDefault.findProject(parentDir) match {
+            case x: SBTProject => Some(x)
+            case _             => findParentProject(parentDir)
+          }
+        case None => findParentProject(parentDir)
+      }
     }
   }
-  
+
   /**
    * Top parent project or myself
    */
   def getRootProject: SBTProject = getProjectChain.head
-  
+
   def getProjectChain: List[SBTProject] = getProjectChain(this, List(this))
-  
+
   private def getProjectChain(project: SBTProject, chain: List[SBTProject]): List[SBTProject] = {
-    project.getMasterProject match {
-      case None => chain
+    project.findParentProject match {
+      case None    => chain
       case Some(x) => getProjectChain(x, x :: chain)
     }
   }
-  
+
   def getName: String = {
     val resolvedName = getLookup.lookup(classOf[SBTResolver]) match {
-      case null => null
-      case resolver => resolver.getName 
+      case null     => null
+      case resolver => resolver.getName
     }
     if (resolvedName != null) {
       resolvedName
@@ -80,55 +80,49 @@ class SBTProject(projectDir: FileObject, state: ProjectState) extends Project {
       getLookup.lookup(classOf[ProjectInformation]).getName
     }
   }
-  
+
   /**
    * May be null
    */
   def getId: String = {
     getLookup.lookup(classOf[SBTResolver]) match {
-      case null => null
-      case resolver => resolver.getId 
+      case null     => null
+      case resolver => resolver.getId
     }
   }
-  
+
   def getDisplayName = {
     val name = getName
     val id = getId
-    if (id != null && id != "" && id != name) 
-      name + " (" + id + ")" 
-    else 
+    if (id != null && id != "" && id != name)
+      name + " (" + id + ")"
+    else
       name
   }
 
   private final class Info extends ProjectInformation {
 
-    override
-    def getIcon: Icon = new ImageIcon(SBTProject.SBT_ICON)
+    override def getIcon: Icon = new ImageIcon(SBTProject.SBT_ICON)
 
-    override
-    def getName: String = {
+    override def getName: String = {
       getProjectDirectory.getName
     }
 
-    override
-    def getDisplayName: String = {
+    override def getDisplayName: String = {
       getName
     }
 
-    override
-    def addPropertyChangeListener(pcl: PropertyChangeListener) {
+    override def addPropertyChangeListener(pcl: PropertyChangeListener) {
       //do nothing, won't change
     }
 
-    override
-    def removePropertyChangeListener(pcl: PropertyChangeListener) {
+    override def removePropertyChangeListener(pcl: PropertyChangeListener) {
       //do nothing, won't change
     }
 
-    override
-    def getProject: Project = SBTProject.this
+    override def getProject: Project = SBTProject.this
   }
-  
+
 }
 
 object SBTProject {

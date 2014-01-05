@@ -39,8 +39,7 @@
 
 package org.netbeans.modules.scala.editor
 
-
-import org.netbeans.modules.csl.api.{ElementKind, HtmlFormatter}
+import org.netbeans.modules.csl.api.{ ElementKind, HtmlFormatter }
 
 trait ScalaHtmlFormatters {
 
@@ -63,8 +62,7 @@ trait ScalaHtmlFormatters {
       // Not sure what to do about maxLength here... but presumably
     }
 
-    override 
-    def appendText(text: String, fromInclusive: Int, toExclusive: Int) {
+    override def appendText(text: String, fromInclusive: Int, toExclusive: Int) {
       var i = fromInclusive
       var break = false
       while (i < toExclusive && !break) {
@@ -97,8 +95,7 @@ trait ScalaHtmlFormatters {
       }
     }
 
-    override 
-    def name(kind: ElementKind, start: Boolean) {
+    override def name(kind: ElementKind, start: Boolean) {
       assert(start != isName)
       isName = start
 
@@ -153,25 +150,21 @@ trait ScalaHtmlFormatters {
       }
     }
 
-    override 
-    def active(start: Boolean) {
+    override def active(start: Boolean) {
       emphasis(start)
     }
 
-    override 
-    def getText: String = {
+    override def getText: String = {
       assert(!isParameter && !isDeprecated && !isName && !isType)
       sb.toString
     }
 
-    override 
-    def toString = {
+    override def toString = {
       getText
     }
   }
 
-
-  import org.netbeans.api.lexer.{TokenHierarchy}
+  import org.netbeans.api.lexer.{ TokenHierarchy }
   import org.netbeans.modules.scala.core.lexer.ScalaTokenId
   import org.openide.util.NbBundle
 
@@ -199,7 +192,7 @@ trait ScalaHtmlFormatters {
     private var deprecation: String = _
     private var code: String = _
     // flag to see if this is already formatted comment with all html stuff
-    private var formattedComment :Boolean = _
+    private var formattedComment: Boolean = _
 
     private val summary = new StringBuilder
     private val rest = new StringBuilder
@@ -208,7 +201,6 @@ trait ScalaHtmlFormatters {
     private val th = TokenHierarchy.create(comment, ScalaTokenId.language)
     private val ts = th.tokenSequence(ScalaTokenId.language)
     process
-
 
     def setSeqName(name: String) {}
 
@@ -332,7 +324,7 @@ trait ScalaHtmlFormatters {
       }
 
       ts.movePrevious
-      var sb :StringBuilder = null
+      var sb: StringBuilder = null
       while (ts.moveNext) {
         val token = ts.token
         if (token.id == ScalaTokenId.CommentTag) {
@@ -409,21 +401,21 @@ trait ScalaHtmlFormatters {
       } else if (tag.startsWith(CODE_TAG)) {
         code = tag.substring(CODE_TAG.length).trim
         code = code.replace("&", "&amp;") // NOI18N
-        code = code.replace("<", "&lt;")  // NOI18N
-        code = code.replace(">", "&gt;")  // NOI18N
+        code = code.replace("<", "&lt;") // NOI18N
+        code = code.replace(">", "&gt;") // NOI18N
       } else if (tag.startsWith(EXAMPLE_TAG)) {
         code = tag.substring(EXAMPLE_TAG.length).trim
         code = code.replace("&", "&amp;") // NOI18N
-        code = code.replace("<", "&lt;")  // NOI18N
-        code = code.replace(">", "&gt;")  // NOI18N
+        code = code.replace("<", "&lt;") // NOI18N
+        code = code.replace(">", "&gt;") // NOI18N
       } else { // NOI18N
         // Store up the rest of the stuff so we don't miss unexpected tags,
         // like @private, @config, etc.
         if (!tag.startsWith("@id ") &&
-            !tag.startsWith("@name ") && // NOI18N
-            !tag.startsWith("@attribute") && // NOI18N
-            !tag.startsWith("@method") &&
-            !tag.startsWith("@property")) { // NOI18N
+          !tag.startsWith("@name ") && // NOI18N
+          !tag.startsWith("@attribute") && // NOI18N
+          !tag.startsWith("@method") &&
+          !tag.startsWith("@property")) { // NOI18N
           rest.append(tag)
           rest.append("<br>") // NOI18N
         }

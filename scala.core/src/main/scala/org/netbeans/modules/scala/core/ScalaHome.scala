@@ -40,20 +40,20 @@
  */
 package org.netbeans.modules.scala.core
 
-import java.io.{File, IOException}
-import java.net.{MalformedURLException, URL}
-import java.util.{Properties}
+import java.io.{ File, IOException }
+import java.net.{ MalformedURLException, URL }
+import java.util.{ Properties }
 
 import org.netbeans.spi.java.classpath.support.ClassPathSupport
-import org.openide.filesystems.{FileObject, FileUtil}
-import org.openide.util.{Exceptions, Utilities}
-import scala.tools.nsc.{Settings}
+import org.openide.filesystems.{ FileObject, FileUtil }
+import org.openide.util.{ Exceptions, Utilities }
+import scala.tools.nsc.{ Settings }
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * 
+ *
  * @todo Set scala home via installed scala platform
- * 
+ *
  * @author Caoyuan Deng
  */
 object ScalaHome {
@@ -63,7 +63,7 @@ object ScalaHome {
     val scalaHomeDir: File = try {
       val dir = new File(scalaHome)
       dir.getCanonicalFile
-    } catch {case ioe: IOException => Exceptions.printStackTrace(ioe); null}
+    } catch { case ioe: IOException => Exceptions.printStackTrace(ioe); null }
 
     val scalaLib = new File(scalaHomeDir, "lib") // NOI18N
     assert(scalaLib.exists) //:  '"' + scalaLib.getAbsolutePath() + "\" exists (\"" + descriptor.getCmd() + "\" is not valid Scala executable?)";
@@ -84,7 +84,7 @@ object ScalaHome {
     sb.append(System.getProperty("sun.boot.class.path"))
     sb.append(File.pathSeparator)
     sb.append(toClassPath(List("scala-library.jar", "scala-reflect.jar", "scala-compiler.jar"), scalaLib))
-        
+
     //System.out.println("boot:" + sb);
     settings.bootclasspath.value = sb.toString
 
@@ -97,41 +97,40 @@ object ScalaHome {
     settings.classpath.value = sb.toString
 
     new ScalaGlobal(settings, new ErrorReporter) {
-      override 
-      def onlyPresentation = true
+      override def onlyPresentation = true
     }
   }
-  
+
   def toClassPath(jars: List[String], folder: File) = {
     val folderPath = folder.getAbsolutePath
-    (jars map (folderPath + File.separator + _) filter {x =>
-        val file = new File(x)
-        try {
-          (file ne null) && file.exists && file.canRead
-        } catch {
-          case ex: Throwable => false
-        }
-      }) mkString (File.pathSeparator)
+    (jars map (folderPath + File.separator + _) filter { x =>
+      val file = new File(x)
+      try {
+        (file ne null) && file.exists && file.canRead
+      } catch {
+        case ex: Throwable => false
+      }
+    }) mkString (File.pathSeparator)
   }
 
   def getJavaHome: String = {
     System.getProperty("scala.java.home") match { // NOI18N
       case null => System.getProperty("java.home") // NOI18N
-      case x => x
-    } 
+      case x    => x
+    }
   }
 
   def getJavaClassPath: String = {
     System.getProperty("java.class.path") match {
       case null => ""
-      case x => x
+      case x    => x
     }
   }
 
   def getScalaHome: String = {
     val scalaHome = System.getProperty("scala.home") match { // NOI18N
       case null => System.getenv("SCALA_HOME") // NOI18N
-      case x => System.setProperty("scala.home", x); x
+      case x    => System.setProperty("scala.home", x); x
     }
 
     if (scalaHome ne null) {
@@ -152,21 +151,21 @@ object ScalaHome {
         if (scalaHomeDir.exists && scalaHomeDir.isDirectory) {
           try {
             val scalaHomeFo = FileUtil.createData(scalaHomeDir)
-            val bin = scalaHomeFo.getFileObject("bin")           //NOI18N
+            val bin = scalaHomeFo.getFileObject("bin") //NOI18N
             if (Utilities.isWindows) {
               bin.getFileObject("scala", "exe") match {
                 case null => bin.getFileObject("scala", "bat")
-                case x => x
+                case x    => x
               }
             } else {
-              bin.getFileObject("scala", null)    //NOI18N
+              bin.getFileObject("scala", null) //NOI18N
             }
           } catch {
             case ex: IOException => Exceptions.printStackTrace(ex); null
           }
         } else null
     }
-    
+
     if (scalaFo ne null) {
       FileUtil.toFile(scalaFo)
     } else null
@@ -175,7 +174,7 @@ object ScalaHome {
   def getSources(scalaHome: File): List[URL] = {
     if (scalaHome ne null) {
       try {
-        val scalaSrc = new File(scalaHome, "src")    //NOI18N
+        val scalaSrc = new File(scalaHome, "src") //NOI18N
         if ((scalaSrc ne null) && scalaSrc.exists && scalaSrc.canRead) {
           val srcUrls = new ArrayBuffer[URL]
           for (src <- scalaSrc.listFiles) {
@@ -285,9 +284,9 @@ object ScalaHome {
   def getStandardLib(scalaHome: File): Option[File] = {
     if (scalaHome ne null) {
       try {
-        val scalaLib = new File(scalaHome, "lib")    //NOI18N
+        val scalaLib = new File(scalaHome, "lib") //NOI18N
         if ((scalaLib ne null) && scalaLib.exists && scalaLib.canRead) {
-          return scalaLib.listFiles find {jar => jar.getName == "scala-library.jar"}
+          return scalaLib.listFiles find { jar => jar.getName == "scala-library.jar" }
         }
       }
     }
@@ -315,7 +314,7 @@ object ScalaHome {
 
     props.getProperty("version.number", "<unknown>")
   }
-  
+
   private def printProperties(props: Properties): Unit = {
     println("===========================")
     val keys = props.keys

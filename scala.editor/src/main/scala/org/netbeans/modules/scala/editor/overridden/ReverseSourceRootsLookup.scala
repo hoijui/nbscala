@@ -51,8 +51,8 @@ import scala.collection.mutable.HashSet
  * @author Jan Lahoda
  */
 object ReverseSourceRootsLookup {
-    
-  def  reverseSourceRootsLookup(baseSourceRoot: FileObject): Set[FileObject] = {
+
+  def reverseSourceRootsLookup(baseSourceRoot: FileObject): Set[FileObject] = {
     //System.err.println("baseSourceRoot=" + baseSourceRoot);
     val result = new HashSet[FileObject]
 
@@ -77,8 +77,8 @@ object ReverseSourceRootsLookup {
       }
     }
     loop
-        
+
     result.toSet
   }
-    
+
 }

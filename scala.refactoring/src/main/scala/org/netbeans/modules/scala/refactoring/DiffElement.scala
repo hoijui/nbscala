@@ -74,7 +74,7 @@ class DiffElement(diff: Difference, bounds: PositionBounds, parentFile: FileObje
   def getLookup: Lookup = {
     val composite = ElementGripFactory.getDefault.get(parentFile, bounds.getBegin.getOffset) match {
       case null => parentFile
-      case x => x
+      case x    => x
     }
     Lookups.fixed(composite, diff)
   }
@@ -96,13 +96,13 @@ class DiffElement(diff: Difference, bounds: PositionBounds, parentFile: FileObje
     if (newFileContent ne null) {
       newFileContent.get match {
         case null =>
-        case x => return x
+        case x    => return x
       }
     }
-    
+
     val result = try {
       modification.getResultingSource(parentFile)
-    } catch {case ex: IOException => Exceptions.printStackTrace(ex); return null}
+    } catch { case ex: IOException => Exceptions.printStackTrace(ex); return null }
 
     newFileContent = new WeakReference[String](result)
     result

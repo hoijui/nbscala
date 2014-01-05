@@ -17,7 +17,7 @@ import org.openide.util.NbBundle
 
 /**
  * This is for query on project. (ClassPath.SOURCE is on fileobject)
- * 
+ *
  * @author Caoyuan Deng
  */
 class SBTSources(project: Project) extends Sources {
@@ -26,41 +26,33 @@ class SBTSources(project: Project) extends Sources {
     val x = project.getLookup.lookup(classOf[SBTResolver])
 
     x.addPropertyChangeListener(new PropertyChangeListener() {
-        def propertyChange(evt: PropertyChangeEvent) {
-          evt.getPropertyName match {
-            case SBTResolver.DESCRIPTOR_CHANGE => 
-              cs.fireChange
-            case _ =>
-          }
+      def propertyChange(evt: PropertyChangeEvent) {
+        evt.getPropertyName match {
+          case SBTResolver.DESCRIPTOR_CHANGE =>
+            cs.fireChange
+          case _ =>
         }
-      })
-    
+      }
+    })
+
     x
-  }  
+  }
 
   import ProjectConstants._
-  
-  override 
-  def getSourceGroups(tpe: String): Array[SourceGroup] = {
+
+  override def getSourceGroups(tpe: String): Array[SourceGroup] = {
     tpe match {
       case Sources.TYPE_GENERIC =>
-        // It's necessary for project's PhysicalView (in Files window), 
+        // It's necessary for project's PhysicalView (in Files window),
         // @see org.netbeans.modules.project.ui.PhysicalView#createNodesForProject(Project)
         val projectDir = project.getProjectDirectory
         Array(GenericSources.group(project, projectDir, projectDir.getNameExt, projectDir.getNameExt, null, null))
-      
+
       case ProjectResources.SOURCES_TYPE_JAVA | ProjectResources.SOURCES_TYPE_SCALA | ProjectResources.SOURCES_TYPE_MANAGED =>
         val mainSrcs = maybeAddGroup(tpe, false)
         val testSrcs = maybeAddGroup(tpe, true)
-        // We should keep the order Array(main, test), @see org.netbeans.modules.scala.core.ProjectResourcs#findMainAndTestSrcs
-        if (mainSrcs.length > 0 && testSrcs.length > 0) {
-          Array(mainSrcs(0), testSrcs(0))
-        } else if (mainSrcs.length > 0) {
-          Array(mainSrcs(0))
-        } else {
-          Array()
-        }
-      
+        mainSrcs ++ testSrcs
+
       case _ =>
         Array()
     }
@@ -76,11 +68,11 @@ class SBTSources(project: Project) extends Sources {
           Array(project.getProjectDirectory.getFileObject("src/" + (if (isTest) "test" else "main") + "/java"))
         case ProjectResources.SOURCES_TYPE_SCALA =>
           Array(project.getProjectDirectory.getFileObject("src/" + (if (isTest) "test" else "main") + "/scala"))
-        case _ => 
+        case _ =>
           Array[FileObject]()
       }
     }
-    
+
     val name = tpe match {
       case ProjectResources.SOURCES_TYPE_JAVA =>
         if (isTest) NAME_JAVATESTSOURCE else NAME_JAVASOURCE
@@ -90,7 +82,7 @@ class SBTSources(project: Project) extends Sources {
         if (isTest) NAME_MANAGEDTESTSOURCE else NAME_MANAGEDSOURCE
       case _ => NAME_OTHERSOURCE
     }
-    
+
     val displayName = tpe match {
       case ProjectResources.SOURCES_TYPE_JAVA =>
         if (isTest) NbBundle.getMessage(classOf[SBTSources], "SG_Test_JavaSources") else NbBundle.getMessage(classOf[SBTSources], "SG_JavaSources")
@@ -98,19 +90,18 @@ class SBTSources(project: Project) extends Sources {
         if (isTest) NbBundle.getMessage(classOf[SBTSources], "SG_Test_ScalaSources") else NbBundle.getMessage(classOf[SBTSources], "SG_ScalaSources")
       case ProjectResources.SOURCES_TYPE_MANAGED =>
         if (isTest) NbBundle.getMessage(classOf[SBTSources], "SG_Test_ManagedSources") else NbBundle.getMessage(classOf[SBTSources], "SG_ManagedSources")
-      case _ => NbBundle.getMessage(classOf[SBTSources], "SG_OtherSources")
+      case _ =>
+        NbBundle.getMessage(classOf[SBTSources], "SG_OtherSources")
     }
-    
+
     for (root <- roots if root != null) yield GenericSources.group(project, root, name, displayName, null, null)
   }
 
-  override 
-  def addChangeListener(l: ChangeListener) {
+  override def addChangeListener(l: ChangeListener) {
     cs.addChangeListener(l)
   }
 
-  override 
-  def removeChangeListener(l: ChangeListener) {
+  override def removeChangeListener(l: ChangeListener) {
     cs.removeChangeListener(l)
   }
 }

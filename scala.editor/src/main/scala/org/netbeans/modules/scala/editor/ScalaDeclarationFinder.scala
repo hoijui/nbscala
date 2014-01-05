@@ -40,24 +40,23 @@
 package org.netbeans.modules.scala.editor
 
 import javax.swing.text.Document
-import org.netbeans.api.lexer.{TokenHierarchy, TokenSequence}
-import org.netbeans.modules.csl.api.{DeclarationFinder, OffsetRange}
+import org.netbeans.api.lexer.{ TokenHierarchy, TokenSequence }
+import org.netbeans.modules.csl.api.{ DeclarationFinder, OffsetRange }
 import org.netbeans.editor.BaseDocument
 import org.netbeans.modules.csl.api.DeclarationFinder.DeclarationLocation
 import org.netbeans.modules.csl.spi.ParserResult
 //import org.netbeans.modules.parsing.spi.indexing.support.QuerySupport
 
 import org.netbeans.modules.scala.core.ScalaParserResult
-import org.netbeans.modules.scala.core.lexer.{ScalaLexUtil, ScalaTokenId}
+import org.netbeans.modules.scala.core.lexer.{ ScalaLexUtil, ScalaTokenId }
 
 /**
  *
  * @author Caoyuan Deng
  */
 class ScalaDeclarationFinder extends DeclarationFinder {
-  
-  override 
-  def getReferenceSpan(document: Document, lexOffset: Int): OffsetRange = {
+
+  override def getReferenceSpan(document: Document, lexOffset: Int): OffsetRange = {
     val th = TokenHierarchy.get(document)
 
     val ts = ScalaLexUtil.getTokenSequence(document.asInstanceOf[BaseDocument], th, lexOffset).getOrElse(return OffsetRange.NONE)
@@ -87,8 +86,7 @@ class ScalaDeclarationFinder extends DeclarationFinder {
     }
   }
 
-  override 
-  def findDeclaration(info: ParserResult, lexOffset: Int): DeclarationLocation = {
+  override def findDeclaration(info: ParserResult, lexOffset: Int): DeclarationLocation = {
     val pr = info.asInstanceOf[ScalaParserResult]
     val doc = pr.getSnapshot.getSource.getDocument(false).asInstanceOf[BaseDocument]
     val global = pr.global
@@ -102,9 +100,9 @@ class ScalaDeclarationFinder extends DeclarationFinder {
 
     val closest = root.findItemsAt(th, astOffset) match {
       case Nil => return DeclarationLocation.NONE
-      case xs => global.ScalaUtil.importantItem(xs)
+      case xs  => global.ScalaUtil.askForImportantItem(xs)
     }
-        
+
     root.findDfnOf(closest) match {
       case Some(dfn) =>
         // is local
@@ -116,14 +114,14 @@ class ScalaDeclarationFinder extends DeclarationFinder {
           val ts = ScalaLexUtil.getTokenSequence(doc, th, lexOffset).getOrElse(return DeclarationLocation.NONE)
           ts.move(lexOffset)
           if (!ts.moveNext && !ts.movePrevious) return DeclarationLocation.NONE
-        
+
           val token = ts.token
           token.id match {
             case ScalaTokenId.Identifier | ScalaTokenId.SymbolLiteral =>
               root.findItemsAt(th, token.offset(th)) match {
                 case Nil => DeclarationLocation.NONE
                 case xs =>
-                  val item = global.ScalaUtil.importantItem(xs).asInstanceOf[global.ScalaItem]
+                  val item = global.ScalaUtil.askForImportantItem(xs).asInstanceOf[global.ScalaItem]
                   val remoteDfn = global.ScalaElement(item.symbol, info)
                   val location = new DeclarationLocation(remoteDfn.getFileObject, remoteDfn.getOffset, remoteDfn)
                   if (remoteDfn.getFileObject eq null) {
@@ -138,7 +136,6 @@ class ScalaDeclarationFinder extends DeclarationFinder {
           doc.readUnlock
         }
 
-        
     }
   }
 }

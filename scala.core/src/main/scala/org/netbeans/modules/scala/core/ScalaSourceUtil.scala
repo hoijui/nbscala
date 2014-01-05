@@ -36,26 +36,27 @@ import org.netbeans.api.java.classpath.ClassPath
 import org.netbeans.api.java.classpath.GlobalPathRegistry
 import org.netbeans.api.java.queries.SourceForBinaryQuery
 import org.netbeans.api.java.source.ClasspathInfo
-import org.netbeans.api.language.util.ast.{AstDfn, AstScope}
+import org.netbeans.api.language.util.ast.{ AstDfn, AstScope }
 import org.netbeans.api.lexer.TokenHierarchy
 import org.netbeans.editor.BaseDocument
 import org.netbeans.modules.classfile.ClassFile
-import org.netbeans.modules.csl.api.{ElementKind, OffsetRange}
+import org.netbeans.modules.csl.api.{ ElementKind, OffsetRange }
 import org.netbeans.modules.csl.spi.ParserResult
-import org.netbeans.modules.parsing.api.{ParserManager, ResultIterator, Source, UserTask}
+import org.netbeans.modules.parsing.api.{ ParserManager, ResultIterator, Source, UserTask }
 import org.netbeans.modules.parsing.impl.indexing.friendapi.IndexingController
-import org.netbeans.modules.parsing.spi.{ParseException, Parser}
-import org.netbeans.modules.scala.core.ast.{ScalaDfns}
-import org.netbeans.modules.scala.core.element.{JavaElements}
+import org.netbeans.modules.parsing.spi.{ ParseException, Parser }
+import org.netbeans.modules.scala.core.ast.{ ScalaDfns }
+import org.netbeans.modules.scala.core.element.{ JavaElements }
 import org.netbeans.modules.scala.core.lexer.ScalaLexUtil
 import org.netbeans.spi.java.classpath.support.ClassPathSupport
-import org.openide.filesystems.{FileObject, FileUtil}
+import org.openide.filesystems.{ FileObject, FileUtil }
 import org.openide.text.NbDocument
-import org.openide.util.{Exceptions}
+import org.openide.util.{ Exceptions }
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
-import scala.reflect.internal.{Flags, Symbols}
+import scala.reflect.internal.Flags
+import scala.reflect.internal.Symbols
 
 /**
  *
@@ -72,17 +73,17 @@ object ScalaSourceUtil {
   def isIdentifierChar(c: Char): Boolean = {
     c match {
       case '$' | '@' | '&' | ':' | '!' | '?' | '=' => true // Function name suffixes
-      case _ if Character.isJavaIdentifierPart(c) => true // Globals, fields and parameter prefixes (for blocks and symbols)
-      case _ => false
+      case _ if Character.isJavaIdentifierPart(c)  => true // Globals, fields and parameter prefixes (for blocks and symbols)
+      case _                                       => false
     }
   }
 
   /** Includes things you'd want selected as a unit when double clicking in the editor */
   def isStrictIdentifierChar(c: Char): Boolean = {
     c match {
-      case '!' | '?' | '=' => true
+      case '!' | '?' | '='                        => true
       case _ if Character.isJavaIdentifierPart(c) => true
-      case _ => false
+      case _                                      => false
     }
   }
 
@@ -93,19 +94,19 @@ object ScalaSourceUtil {
       var break = false
       for (i <- offset until text.length if !break) {
         text.charAt(i) match {
-          case '\n' => break = true
+          case '\n'                            => break = true
           case c if !Character.isWhitespace(c) => return false
-          case _ =>
+          case _                               =>
         }
       }
-    
+
       // Search backwards
       break = false
       for (i <- offset - 1 to 0 if !break) {
         text.charAt(i) match {
-          case '\n' => break = true
+          case '\n'                            => break = true
           case c if !Character.isWhitespace(c) => return false
-          case _ =>
+          case _                               =>
         }
       }
 
@@ -160,15 +161,15 @@ object ScalaSourceUtil {
       i -= 1
       while (i >= 0) {
         text.charAt(i) match {
-          case '\n' => return -1
+          case '\n'                            => return -1
           case c if !Character.isWhitespace(c) => return i
-          case _ => i -= 1
+          case _                               => i -= 1
         }
       }
 
       -1
     } catch {
-      case ex:Exception =>
+      case ex: Exception =>
         val ble = new BadLocationException(offset + " out of " + text.length, offset)
         ble.initCause(ex)
         throw ble
@@ -190,15 +191,15 @@ object ScalaSourceUtil {
       // Search forwards to find first nonspace char from offset
       while (i < text.length) {
         text.charAt(i) match {
-          case '\n' => return - 1
+          case '\n'                            => return -1
           case c if !Character.isWhitespace(c) => return i
-          case _ => i += 1
+          case _                               => i += 1
         }
       }
 
       -1
     } catch {
-      case ex:Exception =>
+      case ex: Exception =>
         val ble = new BadLocationException(offset + " out of " + text.length, offset)
         ble.initCause(ex)
         throw ble
@@ -212,7 +213,7 @@ object ScalaSourceUtil {
       for (i <- offset - 1 to 0) {
         text.charAt(i) match {
           case '\n' => return i + 1
-          case _ =>
+          case _    =>
         }
       }
 
@@ -281,19 +282,19 @@ object ScalaSourceUtil {
     }
 
     val doc = pr.getSnapshot.getSource.getDocument(true) match {
-      case null => return null
+      case null            => return null
       case x: BaseDocument => x
     }
 
     val th = pr.getSnapshot.getTokenHierarchy
 
-    val offset = 0//element.getBoundsOffset(th)
+    val offset = 0 //element.getBoundsOffset(th)
     val range = ScalaLexUtil.getDocumentationRange(doc, th, offset)
 
     if (range.getEnd < doc.getLength) {
       try {
         return doc.getText(range.getStart, range.getLength)
-      } catch {case ex:BadLocationException => Exceptions.printStackTrace(ex)}
+      } catch { case ex: BadLocationException => Exceptions.printStackTrace(ex) }
     }
 
     null
@@ -302,7 +303,7 @@ object ScalaSourceUtil {
   def getDocComment(doc: BaseDocument, symbolOffset: Int): String = {
     val th = TokenHierarchy.get(doc) match {
       case null => return ""
-      case x => x
+      case x    => x
     }
 
     val range = ScalaLexUtil.getDocCommentRangeBefore(doc, th, symbolOffset)
@@ -310,97 +311,89 @@ object ScalaSourceUtil {
     if (range != OffsetRange.NONE && range.getEnd < doc.getLength) {
       try {
         return doc.getText(range.getStart, range.getLength)
-      } catch {case ex: BadLocationException => Exceptions.printStackTrace(ex)}
+      } catch { case ex: BadLocationException => Exceptions.printStackTrace(ex) }
     }
 
     ""
   }
 
-  /** @todo */
-  def getOffset(pr: Parser.Result, element: JavaElements#JavaElement): Int = {
-    if (pr eq null) {
-      return -1
-    }
+  /**
+   * @return position, 0 if no position info
+   */
+  def getOffset(pr: ParserResult, symbol: Symbols#Symbol, foOfSymmbol: FileObject): Int = {
+    val global = pr.asInstanceOf[ScalaParserResult].global
 
-    val th = pr.getSnapshot.getTokenHierarchy
-    //element.getPickOffset(th)
-    return -1
+    val srcFile = ScalaSourceFile.sourceFileOf(foOfSymmbol)
+    val resp = new global.Response[global.Position]
+    global.askLinkPos(symbol.asInstanceOf[global.Symbol], srcFile, resp)
+    resp get match {
+      case Left(x)   => x.startOrPoint
+      case Right(ex) => 0
+    }
   }
 
-  def getFileObject(pr: ParserResult, sym: Symbols#Symbol): Option[FileObject] = {
-    var srcPath: String = null
+  def getFileObject(pr: ParserResult, symbol: Symbols#Symbol): Option[FileObject] = {
+    val global = pr.asInstanceOf[ScalaParserResult].global
+    if (symbol == global.NoSymbol) return None
 
-    val pos = sym.pos
-    if (pos.isDefined) {
-      val srcFile = pos.source
-      if (srcFile ne null) {
+    val topEnclClass = findTopEnclClass(symbol, symbol.enclClassChain)
+    val srcFile = symbol.sourceFile match {
+      case null =>
+        try {
+          topEnclClass.sourceFile
+        } catch { case _: Throwable => null }
+      case x => x
+    }
+
+    var srcPath: String = null
+    if (srcFile != null) {
+      val file = if (srcFile.file != null) {
+        srcFile.file
+      } else {
         srcPath = srcFile.path
-        var afile = srcFile.file
-        var file = if (afile ne null) afile.file else null
-        if (file eq null) {
-          if (srcPath ne null) {
-            file = new File(srcPath)
-          }
-        }
-        
-        if ((file ne null) && file.exists) {
-          // * it's a real file instead of an archive file
-          return Some(FileUtil.toFileObject(file))
-        }
+        if (srcPath != null) {
+          new File(srcPath)
+        } else null
+      }
+
+      if (file != null && file.exists) { // it's a real file instead of an archive file
+        return Option(FileUtil.toFileObject(file))
       }
     }
 
-    val qName: String = try {
-      sym.enclClass.fullName('/')
-    } catch {
-      case ex: java.lang.Error => null
-        // java.lang.Error: no-symbol does not have owner
-        //        at scala.tools.nsc.symtab.Symbols$NoSymbol$.owner(Symbols.scala:1565)
-        //        at scala.tools.nsc.symtab.Symbols$Symbol.fullName(Symbols.scala:1156)
-        //        at scala.tools.nsc.symtab.Symbols$Symbol.fullName(Symbols.scala:1166)
-    }
+    val qName = topEnclClass.fullName('/')
 
-    if (qName eq null) {
-      return None
-    }
-
-    //* @Note Always use '/' instead File.SeparatorChar when try to findResource
+    // @Note Always use '/' instead File.SeparatorChar when try to findResource
 
     val pkgName = qName.lastIndexOf('/') match {
       case -1 => null
-      case  i => qName.substring(0, i)
+      case i  => qName.substring(0, i)
     }
 
     val clzName = qName + ".class"
 
     val fo = pr.getSnapshot.getSource.getFileObject
-
-    // * For some reason, the ClassPath.getClassPath(fo, ClassPath.SOURCE) can not get
-    // * "src/main/scala" back for maven project
-    // * The safer way is using ProjectUtils.getSources(project). See ScalaGlobal#findDirResources
-    // *     val srcCp = ClassPath.getClassPath(fo, ClassPath.SOURCE)
-
-    val srcRootsMine = ProjectResources.getSrcFileObjects(fo, true)
-    val srcCpMine = ClassPathSupport.createClassPath(srcRootsMine: _*)
+    val srcCpMine = ClassPath.getClassPath(fo, ClassPath.SOURCE)
 
     val cp = getClassPath(fo)
     val clzFo = cp.findResource(clzName)
-    val root  = cp.findOwnerRoot(clzFo)
+    val root = cp.findOwnerRoot(clzFo)
 
-    val srcCpTarget = if (root ne null) {
-      val srcRoots1 = ProjectResources.getSrcFileObjects(root, true)
-      val srcRoots2 = SourceForBinaryQuery.findSourceRoots(root.toURL).getRoots
-      ClassPathSupport.createClassPath(srcRoots1 ++ srcRoots2: _*)
-    } else null
+    val srcCpTarget = if (root != null) {
+      val srcRoots = SourceForBinaryQuery.findSourceRoots(root.toURL).getRoots
+      ClassPathSupport.createClassPath(srcRoots: _*)
+    } else {
+      null
+    }
 
-    if ((srcPath ne null) && srcPath != "") {
+    if (srcPath != null && srcPath != "") {
       findSourceFileObject(srcCpMine, srcCpTarget, srcPath) match {
         case None =>
         case some => return some
       }
     }
 
-    val ext = if (sym hasFlag Flags.JAVA) ".java" else ".scala"
+    val ext = if (symbol hasFlag Flags.JAVA) ".java" else ".scala"
 
     // * see if we can find this class's source file straightforward
     findSourceFileObject(srcCpMine, srcCpTarget, qName + ext) match {
@@ -409,34 +402,60 @@ object ScalaSourceUtil {
     }
 
     try {
-      srcPath = if (clzFo ne null) {
+      val srcPath = if (clzFo ne null) {
         val in = clzFo.getInputStream
         try {
           new ClassFile(in, false) match {
-            case null => null
+            case null    => null
             case clzFile => clzFile.getSourceFileName
           }
-        } finally {if (in ne null) in.close}
-      } else null
+        } finally {
+          if (in != null) in.close
+        }
+      } else {
+        null
+      }
 
-      if (srcPath ne null) {
-        val srcPath1 = if (pkgName ne null) pkgName + "/" + srcPath else srcPath
+      if (srcPath != null) {
+        val srcPath1 = if (pkgName != null) pkgName + "/" + srcPath else srcPath
         findSourceFileObject(srcCpMine, srcCpTarget, srcPath1)
-      } else None
-    } catch {case ex: Exception => ex.printStackTrace; None}
+      } else {
+        None
+      }
+    } catch { case ex: Throwable => ex.printStackTrace; None }
+  }
+
+  def findTopEnclClass(pre: Symbols#Symbol, chain: List[Symbols#Symbol]): Symbols#Symbol = {
+    try {
+      chain match {
+        case h :: tail =>
+          if (h.isPackage || h.isPackageClass) {
+            pre
+          } else {
+            findTopEnclClass(h, tail)
+          }
+        case Nil => pre
+      }
+    } catch {
+      case _: Throwable => pre
+    }
   }
 
   def findSourceFileObject(srcCpMine: ClassPath, srcCpTarget: ClassPath, srcPath: String): Option[FileObject] = {
     // find in own project's srcCp first
     srcCpMine.findResource(srcPath) match {
-      case null if srcCpTarget eq null => None
-      case null => srcCpTarget.findResource(srcPath) match {
-          case null => None
-          case x => Some(x)
+      case null =>
+        if (srcCpTarget == null) {
+          None
+        } else {
+          srcCpTarget.findResource(srcPath) match {
+            case null => None
+            case x    => Some(x)
+          }
         }
-      case x => return Some(x)
+      case x => Some(x)
     }
-    
+
   }
 
   /** @see org.netbeans.api.java.source.SourceUtils#getDependentRoots */
@@ -460,12 +479,12 @@ object ScalaSourceUtil {
           inverseDeps += (u2 -> x)
           x
         }
-        
+
         l2 += u1
       }
     }
 
-    // * collect dependencies
+    // collect dependencies
     val result = new HashSet[URL]
     var todo = List(root)
     while (!todo.isEmpty) {
@@ -474,12 +493,12 @@ object ScalaSourceUtil {
         case url :: xs =>
           todo = xs
           if (result.add(url)) {
-            inverseDeps.get(url) foreach {x => todo = x.toList ::: todo}
+            inverseDeps.get(url) foreach { x => todo = x.toList ::: todo }
           }
       }
     }
 
-    // * filter non opened projects
+    // filter non opened projects
     val cps = GlobalPathRegistry.getDefault.getPaths(ClassPath.SOURCE).iterator
     val toRetain = new HashSet[URL]
     while (cps.hasNext) {
@@ -495,7 +514,6 @@ object ScalaSourceUtil {
     result.toSet
   }
 
-
   private val TMPL_KINDS = Set(ElementKind.CLASS, ElementKind.MODULE)
 
   def getBinaryClassName(pr: ScalaParserResult, lineNumber: Int): String = {
@@ -506,11 +524,12 @@ object ScalaSourceUtil {
     val offset = NbDocument.findLineOffset(doc, lineNumber - 1)
 
     var clazzName = ""
-    
+
     val global = pr.global
     import global._
-    askForResponse {() =>
-      root.enclosingDfn(TMPL_KINDS, th, offset) foreach {case enclDfn: ScalaDfn =>
+    askForResponse { () =>
+      root.enclosingDfn(TMPL_KINDS, th, offset) foreach {
+        case enclDfn: ScalaDfn =>
           val sym = enclDfn.symbol
           // "scalarun.Dog.$talk$1"
           val fqn = new StringBuilder(sym.fullName('.'))
@@ -531,15 +550,15 @@ object ScalaSourceUtil {
           }
           clazzName = fqn.toString
       }
-      
+
     } get match {
-      case Left(_) =>
+      case Left(_)  =>
       case Right(_) =>
     }
 
     if (clazzName.length == 0) return null
 
-    val out = ProjectResources.getOutFileObject(fo, true) getOrElse {return clazzName}
+    val out = ProjectResources.getOutFileObjectForSrc(fo) getOrElse { return clazzName }
 
     def findAllClassFilesWith(prefix: String, dirFo: FileObject, result: ArrayBuffer[FileObject]): Unit = {
       dirFo.getChildren foreach {
@@ -566,11 +585,11 @@ object ScalaSourceUtil {
             val code = method.getCode
             if (code ne null) {
               //Log.info("LineNumbers: " + code.getLineNumberTable.mkString("[", ",", "]"))
-              if (code.getLineNumberTable exists {_ == lineNumber}) {
+              if (code.getLineNumberTable exists { _ == lineNumber }) {
                 clazzName = FileUtil.getRelativePath(out, clazzFo).replace('/', '.')
                 clazzName = clazzName.lastIndexOf(".class") match {
                   case -1 => clazzName
-                  case  i => clazzName.substring(0, i)
+                  case i  => clazzName.substring(0, i)
                 }
                 logger.info("Found binary class name: " + clazzName)
                 return clazzName
@@ -578,126 +597,15 @@ object ScalaSourceUtil {
             }
           }
         }
-      } finally {if (in ne null) in.close}
+      } finally { if (in ne null) in.close }
     }
 
     clazzName
   }
 
-  @deprecated("For reference only", "1.6.0")
-  def getBinaryClassName_old(pr: ScalaParserResult, offset: Int): String = {
-    val root = pr.rootScopeForDebug
-    val th = pr.getSnapshot.getTokenHierarchy
-    
-    var clzName = ""
-    root.enclosingDfn(TMPL_KINDS, th, offset) foreach {enclDfn =>
-      val sym = enclDfn.asInstanceOf[ScalaDfns#ScalaDfn].symbol
-      if (sym ne null) {
-        // "scalarun.Dog.$talk$1"
-        val fqn = new StringBuilder(sym.fullName('.'))
-
-        // * getTopLevelClassName "scalarun.Dog"
-        val topSym = sym.enclosingTopLevelClass
-        val topClzName = topSym.fullName('.')
-
-        // "scalarun.Dog$$talk$1"
-        for (i <- topClzName.length until fqn.length) {
-          if (fqn.charAt(i) == '.') {
-            fqn.setCharAt(i, '$')
-          }
-        }
-
-        // * According to Symbol#kindString, an object template isModuleClass()
-        // * trait's symbol name has been added "$class" by compiler
-        if (topSym.isModuleClass) {
-          fqn.append("$")
-        }
-        clzName = fqn.toString
-      }
-    }
-
-    if (clzName.length == 0) {
-      clzName = null
-    }
-
-    //        AstDfn tmpl = rootScope.getEnclosinDef(ElementKind.CLASS, th, offset);
-    //        if (tmpl eq null) {
-    //            tmpl = rootScope.getEnclosinDef(ElementKind.MODULE, th, offset);
-    //        }
-    //        if (tmpl eq null) {
-    //            ErrorManager.getDefault().log(ErrorManager.WARNING,
-    //                    "No enclosing class for " + pResult.getSnapshot().getSource().getFileObject() + ", offset = " + offset);
-    //        }
-    //
-    //        String className = tmpl.getBinaryName();
-    //
-    //        String enclosingPackage = tmpl.getPackageName();
-    //        if (enclosingPackage eq null || enclosingPackage ne null && enclosingPackage.length() == 0) {
-    //            result[0] = className;
-    //        } else {
-    //            result[0] = enclosingPackage + "." + className;
-    //        }
-    clzName
-  }
-
-  /**
-   * Returns classes declared in the given source file which have the main method.
-   * @param fo source file
-   * @return the classes containing main method
-   * @throws IllegalArgumentException when file does not exist or is not a java source file.
-   */
-  def getMainClasses(fo: FileObject): Seq[ScalaDfns#ScalaDfn] = {
-    if ((fo eq null) || !fo.isValid || fo.isVirtual) {
-      throw new IllegalArgumentException
-    }
-    val source = Source.create(fo) match {
-      case null => throw new IllegalArgumentException
-      case x => x
-    }
-    try {
-      val result = new ArrayBuffer[ScalaDfns#ScalaDfn]
-      ParserManager.parse(java.util.Collections.singleton(source), new UserTask {
-          @throws(classOf[Exception])
-          override 
-          def run(ri: ResultIterator) {
-            val pr = ri.getParserResult.asInstanceOf[ScalaParserResult]
-            val root = pr.rootScope
-            val global = pr.global
-            
-            def getAllDfns(scope: AstScope, kind: ElementKind, result: ArrayBuffer[global.ScalaDfn]): Seq[global.ScalaDfn] = {
-              scope.dfns foreach {dfn =>
-                if (dfn.getKind == kind)  result += dfn.asInstanceOf[global.ScalaDfn]
-              }
-              scope.subScopes foreach {
-                childScope => getAllDfns(childScope, kind, result)
-              }
-              result
-            }
-
-            // * get all dfns will return all visible packages from the root and down
-            getAllDfns(root, ElementKind.PACKAGE, new ArrayBuffer[global.ScalaDfn]) foreach {packaging => 
-              // * only go through the defs for each package scope.
-              // * Sub-packages are handled by the fact that
-              // * getAllDefs will find them.
-              packaging.bindingScope.dfns foreach {dfn =>
-                if (isMainMethodExists(dfn.asInstanceOf[global.ScalaDfn])) result += dfn.asInstanceOf[global.ScalaDfn]
-              }
-            }
-            
-            root.visibleDfns(ElementKind.MODULE) foreach {dfn =>
-              if (isMainMethodExists(dfn.asInstanceOf[global.ScalaDfn])) result += dfn.asInstanceOf[global.ScalaDfn]
-            }
-          }
-
-        })
-
-      result
-    } catch {case ex: ParseException => Exceptions.printStackTrace(ex); Nil}
-  }
-
   def getMainClassesAsJavaCollection(fo: FileObject): java.util.Collection[AstDfn] = {
     val result = new java.util.ArrayList[AstDfn]
-    getMainClasses(fo) foreach {result.add(_)}
+    getMainClasses(fo) foreach result.add
     result
   }
 
@@ -741,14 +649,64 @@ object ScalaSourceUtil {
         //                    }
         //                }, false);
         result
-      } catch {case ioe: Exception => Exceptions.printStackTrace(ioe); return java.util.Collections.emptySet[AstDfn]}
+      } catch { case ioe: Exception => Exceptions.printStackTrace(ioe); java.util.Collections.emptySet[AstDfn] }
     }
     result
   }
 
-  
-  def isMainMethodExists(dfn: ScalaDfns#ScalaDfn): Boolean = {
-    dfn.members exists {member => member.isMethod && isMainMethod(member)}
+  /**
+   * Returns classes declared in the given source file which have the main method.
+   * @param fo source file
+   * @return the classes containing main method
+   * @throws IllegalArgumentException when file does not exist or is not a java source file.
+   */
+  def getMainClasses(fo: FileObject): Seq[ScalaDfns#ScalaDfn] = {
+    if ((fo eq null) || !fo.isValid || fo.isVirtual) {
+      throw new IllegalArgumentException
+    }
+    val source = Source.create(fo) match {
+      case null => throw new IllegalArgumentException
+      case x    => x
+    }
+    try {
+      val pr = Array.ofDim[ScalaParserResult](1)
+      ParserManager.parse(java.util.Collections.singleton(source), new UserTask {
+        @throws(classOf[Exception])
+        override def run(ri: ResultIterator) {
+          pr(0) = ri.getParserResult.asInstanceOf[ScalaParserResult]
+        }
+      })
+
+      val root = pr(0).rootScope
+      implicit val global = pr(0).global
+
+      val mainClasses = new ArrayBuffer[ScalaDfns#ScalaDfn]
+      // get all dfns will return all visible packages from the root and down
+      getAllDfns(ElementKind.PACKAGE, new ArrayBuffer[ScalaDfns#ScalaDfn]())(root) foreach { packaging =>
+        // only go through the defs for each package scope.
+        // Sub-packages are handled by the fact that getAllDefs will find them.
+        packaging.bindingScope.dfns map (_.asInstanceOf[global.ScalaDfn]) foreach { dfn =>
+          dfn.getKind match {
+            case ElementKind.MODULE | ElementKind.CLASS if existsMainMethod(dfn) =>
+              mainClasses += dfn
+            case _ =>
+          }
+        }
+      }
+
+      mainClasses
+    } catch { case ex: ParseException => Exceptions.printStackTrace(ex); Nil }
+  }
+
+  def getAllDfns(kind: ElementKind, result: ArrayBuffer[ScalaDfns#ScalaDfn])(scope: AstScope): Seq[ScalaDfns#ScalaDfn] = {
+    result ++= scope.dfns filter (_.getKind == kind) map (_.asInstanceOf[ScalaDfns#ScalaDfn])
+    scope.subScopes foreach getAllDfns(kind, result)
+    result
+  }
+
+  def existsMainMethod(dfn: ScalaDfns#ScalaDfn)(implicit global: ScalaGlobal): Boolean = {
+    val possibalMembers = global.ScalaUtil.askForMembers(dfn.symbol.asInstanceOf[global.Symbol]) filter { sym => sym.isMethod && sym.isPublic && sym.nameString == "main" }
+    possibalMembers exists askForIsMainMethod
   }
 
   /**
@@ -756,14 +714,16 @@ object ScalaSourceUtil {
    * @param method to be checked
    * @return true when the method is a main method
    */
-  def isMainMethod(method: Symbols#Symbol): Boolean = {
-    try {
-      (method.nameString, method.tpe.paramTypes) match {
-        case ("main", List(x)) => true  //NOI18N
-        case _ => false
+  private def askForIsMainMethod(symbol: Symbols#Symbol)(implicit global: ScalaGlobal): Boolean = {
+    global.askForResponse { () =>
+      val tpe = symbol.tpe // should be called under compiler thread
+      (tpe.paramTypes, tpe.resultType) match {
+        case (List(x), returnType) => true // todo
+        case x                     => false
       }
-    } catch {
-      case _: Throwable => false
+    } get match {
+      case Left(x)  => x
+      case Right(_) => false
     }
   }
 
@@ -818,7 +778,7 @@ object ScalaSourceUtil {
   def getClasspathInfo(fo: FileObject): Option[ClasspathInfo] = {
     val bootCp = ClassPath.getClassPath(fo, ClassPath.BOOT)
     val compCp = ClassPath.getClassPath(fo, ClassPath.COMPILE)
-    val srcCp  = ClassPath.getClassPath(fo, ClassPath.SOURCE)
+    val srcCp = ClassPath.getClassPath(fo, ClassPath.SOURCE)
 
     if (bootCp == null || compCp == null || srcCp == null) {
       /** @todo why? at least I saw this happens on "Scala project created from existing sources" */
@@ -832,7 +792,7 @@ object ScalaSourceUtil {
   def getClassPath(fo: FileObject) = {
     val bootCp = ClassPath.getClassPath(fo, ClassPath.BOOT)
     val compCp = ClassPath.getClassPath(fo, ClassPath.COMPILE)
-    val srcCp  = ClassPath.getClassPath(fo, ClassPath.SOURCE)
+    val srcCp = ClassPath.getClassPath(fo, ClassPath.SOURCE)
     ClassPathSupport.createProxyClassPath(Array(bootCp, compCp, srcCp): _*)
   }
 
@@ -864,7 +824,5 @@ object ScalaSourceUtil {
       end + 1
     } else end
   }
-  
-  
-  
+
 }

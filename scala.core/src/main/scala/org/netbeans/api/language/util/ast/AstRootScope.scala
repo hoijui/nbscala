@@ -38,7 +38,7 @@
  */
 package org.netbeans.api.language.util.ast
 
-import org.netbeans.api.lexer.{Token, TokenId, TokenHierarchy}
+import org.netbeans.api.lexer.{ Token, TokenId, TokenHierarchy }
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
@@ -66,7 +66,7 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
 
   private def sortedTokens(th: TokenHierarchy[_]): Array[Token[TokenId]] = {
     if (!_isTokensSorted) {
-      _sortedTokens = _idTokenToItems.keySet.toArray sortWith {compareToken(th, _, _)}
+      _sortedTokens = _idTokenToItems.keySet.toArray sortWith { compareToken(th, _, _) }
       _isTokensSorted = true
     }
     _sortedTokens
@@ -75,13 +75,13 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
   def putImportingItem(item: AstItem): Boolean = {
     _importingItems add item
   }
-  
+
   /**
    * each idToken may correspond to more then one AstItem
    */
   protected[ast] def put(idToken: Token[TokenId], item: AstItem): Boolean = {
     val items = _idTokenToItems.getOrElse(idToken, Nil)
-    if (items exists {_.symbol == item.symbol}) {
+    if (items exists { _.symbol == item.symbol }) {
       if (item.resultType ne null) {
         // * it has exlicit assigned resultType, always add it
         _idTokenToItems += (idToken -> (item :: items))
@@ -130,7 +130,7 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
       } else {
         _idTokenToItems.get(middle) match {
           case Some(x) if !x.isEmpty => return x
-          case _ =>
+          case _                     =>
         }
       }
     }
@@ -147,13 +147,15 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
   }
 
   def findAllDfnSyms[A <: AnyRef](clazz: Class[A]): List[A] = {
-    findAllDfnsOf(clazz).map{_.symbol}.asInstanceOf[List[A]]
+    findAllDfnsOf(clazz).map { _.symbol }.asInstanceOf[List[A]]
   }
 
   def findAllDfnsOf[A <: AnyRef](clazz: Class[A]): List[AstDfn] = {
     var result: List[AstDfn] = Nil
-    for (items <- _idTokenToItems.valuesIterator;
-         item <- items if item.isInstanceOf[AstDfn] && clazz.isInstance(item.symbol)) {
+    for (
+      items <- _idTokenToItems.valuesIterator;
+      item <- items if item.isInstanceOf[AstDfn] && clazz.isInstance(item.symbol)
+    ) {
       result = item.asInstanceOf[AstDfn] :: result
     }
     result
@@ -162,12 +164,13 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
   def findDfnOf(item: AstItem): Option[AstDfn] = {
     item match {
       case dfn: AstDfn => Some(dfn)
-      case ref: AstRef => 
+      case ref: AstRef =>
         samePlaceItems(ref) foreach {
           case refx: AstRef =>
-            _idTokenToItems.valuesIterator foreach {xs => xs foreach {
+            _idTokenToItems.valuesIterator foreach { xs =>
+              xs foreach {
                 case x: AstDfn if x.isReferredBy(refx) => return Some(x)
-                case _ =>
+                case _                                 =>
               }
             }
           case _ =>
@@ -176,8 +179,7 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
     }
   }
 
-  override 
-  def findOccurrences(item: AstItem): Seq[AstItem] = {
+  override def findOccurrences(item: AstItem): Seq[AstItem] = {
     val occurrences = new ArrayBuffer[AstItem]
 
     findDfnOf(item) match {
@@ -185,9 +187,10 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
         samePlaceItems(dfn) foreach {
           case dfnx: AstDfn =>
             occurrences += dfnx
-            _idTokenToItems.valuesIterator foreach {xs => occurrences ++=  xs filter {
+            _idTokenToItems.valuesIterator foreach { xs =>
+              occurrences ++= xs filter {
                 case x: AstRef => dfnx.isReferredBy(x)
-                case _ => false
+                case _         => false
               }
             }
           case _ =>
@@ -197,7 +200,8 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
         samePlaceItems(ref) foreach {
           case refx: AstRef =>
             occurrences += refx
-            _idTokenToItems.valuesIterator foreach {xs => occurrences ++= xs filter {
+            _idTokenToItems.valuesIterator foreach { xs =>
+              occurrences ++= xs filter {
                 case x: AstDfn => x.isReferredBy(refx)
                 case x: AstRef => x.isOccurrence(refx)
               }
@@ -214,9 +218,9 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
   }
 
   def findFirstItemWithName(name: String): Option[AstItem] = {
-    _idTokenToItems.find{case (token, items) => token.text.toString == name} match {
+    _idTokenToItems.find { case (token, items) => token.text.toString == name } match {
       case Some((token, x)) if !x.isEmpty => Some(x.head)
-      case _ => None
+      case _                              => None
     }
   }
 
@@ -225,9 +229,9 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
   }
 
   def debugPrintTokens(th: TokenHierarchy[_]): Unit = {
-    sortedTokens(th) foreach {token =>
+    sortedTokens(th) foreach { token =>
       println("<" + token + "> ->")
-      _idTokenToItems.get(token) foreach {items => items foreach {println _}}
+      _idTokenToItems.get(token) foreach { items => items foreach { println _ } }
       println
     }
     println

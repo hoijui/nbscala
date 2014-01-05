@@ -42,7 +42,7 @@ package org.netbeans.modules.scala.refactoring
 
 import java.io.IOException
 import org.netbeans.modules.csl.spi.support.ModificationResult
-import org.netbeans.modules.refactoring.spi.{BackupFacility, Transaction}
+import org.netbeans.modules.refactoring.spi.{ BackupFacility, Transaction }
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -59,7 +59,7 @@ class ScalaTransaction(results: Seq[ModificationResult]) extends Transaction {
         for (id <- ids) {
           try {
             id.restore
-          } catch {case ex: IOException => throw new RuntimeException().initCause(ex)}
+          } catch { case ex: IOException => throw new RuntimeException().initCause(ex) }
         }
       } else {
         commited = true
@@ -69,14 +69,14 @@ class ScalaTransaction(results: Seq[ModificationResult]) extends Transaction {
         }
       }
 
-    } catch {case ex: IOException => throw new RuntimeException().initCause(ex)}
+    } catch { case ex: IOException => throw new RuntimeException().initCause(ex) }
   }
 
   def rollback {
     for (id <- ids) {
       try {
         id.restore
-      } catch {case ex: IOException => throw new RuntimeException().initCause(ex)}
+      } catch { case ex: IOException => throw new RuntimeException().initCause(ex) }
     }
   }
 }

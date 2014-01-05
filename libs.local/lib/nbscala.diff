@@ -1,20 +1,20 @@
 diff --git a/src/compiler/scala/tools/nsc/Global.scala b/src/compiler/scala/tools/nsc/Global.scala
-index 116684c..e025016 100644
+index aea3e0d..788c3fb 100644
 --- a/src/compiler/scala/tools/nsc/Global.scala
 +++ b/src/compiler/scala/tools/nsc/Global.scala
-@@ -201,6 +201,7 @@ class Global(var currentSettings: Settings, var reporter: Reporter)
+@@ -202,6 +202,7 @@ class Global(var currentSettings: Settings, var reporter: Reporter)
    val treeBrowser = treeBrowsers.create()
  
    // ------------ Hooks for interactive mode-------------------------
-+  var qualToRecoveredType = new mutable.HashMap[Tree, Type]
++  var qualToRecoveredType = new mutable.HashMap[Tree, Type] 
  
    /** Called every time an AST node is successfully typechecked in typerPhase.
     */
 diff --git a/src/compiler/scala/tools/nsc/interactive/Global.scala b/src/compiler/scala/tools/nsc/interactive/Global.scala
-index 105b0e4..a6fcc44 100644
+index d6fa42b..c6772fe 100644
 --- a/src/compiler/scala/tools/nsc/interactive/Global.scala
 +++ b/src/compiler/scala/tools/nsc/interactive/Global.scala
-@@ -919,8 +919,9 @@ class Global(settings: Settings, _reporter: Reporter, projectName: String = "")
+@@ -922,8 +922,9 @@ class Global(settings: Settings, _reporter: Reporter, projectName: String = "")
        (!implicitlyAdded || m.implicitlyAdded)
  
      def add(sym: Symbol, pre: Type, implicitlyAdded: Boolean)(toMember: (Symbol, Type) => M) {
@@ -26,7 +26,7 @@ index 105b0e4..a6fcc44 100644
        } else if (!sym.name.decodedName.containsName(Dollar) && !sym.isSynthetic && sym.hasRawInfo) {
          val symtpe = pre.memberType(sym) onTypeError ErrorType
          matching(sym, symtpe, this(sym.name)) match {
-@@ -1041,7 +1042,7 @@ class Global(settings: Settings, _reporter: Reporter, projectName: String = "")
+@@ -1054,7 +1055,7 @@ class Global(settings: Settings, _reporter: Reporter, projectName: String = "")
      }
  
      //print("add members")
@@ -36,10 +36,10 @@ index 105b0e4..a6fcc44 100644
      members.allMembers #:: {
        //print("\nadd pimped")
 diff --git a/src/compiler/scala/tools/nsc/typechecker/ContextErrors.scala b/src/compiler/scala/tools/nsc/typechecker/ContextErrors.scala
-index 4bf7f78..f0e6d51 100644
+index a7b0e47..2183d5d 100644
 --- a/src/compiler/scala/tools/nsc/typechecker/ContextErrors.scala
 +++ b/src/compiler/scala/tools/nsc/typechecker/ContextErrors.scala
-@@ -294,6 +294,8 @@ trait ContextErrors {
+@@ -313,6 +313,8 @@ trait ContextErrors {
  
        //typedSelect
        def NotAMemberError(sel: Tree, qual: Tree, name: Name) = {
@@ -49,10 +49,10 @@ index 4bf7f78..f0e6d51 100644
            val owner            = qual.tpe.typeSymbol
            val target           = qual.tpe.widen
 diff --git a/src/compiler/scala/tools/nsc/typechecker/Namers.scala b/src/compiler/scala/tools/nsc/typechecker/Namers.scala
-index 7a3ab00..fdf4737 100644
+index bb93807..ba3a738 100644
 --- a/src/compiler/scala/tools/nsc/typechecker/Namers.scala
 +++ b/src/compiler/scala/tools/nsc/typechecker/Namers.scala
-@@ -1275,6 +1275,7 @@ trait Namers extends MethodSynthesis {
+@@ -1281,6 +1281,7 @@ trait Namers extends MethodSynthesis {
              }
              if (!isConstr)
                methOwner.resetFlag(INTERFACE) // there's a concrete member now
@@ -60,7 +60,7 @@ index 7a3ab00..fdf4737 100644
              val default = parentNamer.enterSyntheticSym(defaultTree)
              if (forInteractive && default.owner.isTerm) {
                // save the default getters as attachments in the method symbol. if compiling the
-@@ -1286,6 +1287,7 @@ trait Namers extends MethodSynthesis {
+@@ -1292,6 +1293,7 @@ trait Namers extends MethodSynthesis {
                  case None => meth.updateAttachment(new DefaultsOfLocalMethodAttachment(default))
                }
              }
