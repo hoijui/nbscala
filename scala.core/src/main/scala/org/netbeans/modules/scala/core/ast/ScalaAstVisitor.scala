@@ -420,9 +420,9 @@ trait ScalaAstVisitor { self: ScalaGlobal =>
                  * @Note: this symbol may has wrong tpe, for example, an error tree,
                  * to get the proper resultType, we'll check if the qualierMaybeType isDefined
                  */
-//                if ((sym ne null) && !sym.exists) {
-//                  recoveredType(tree) foreach {tpex => ref.resultType = tpex}
-//                }
+                //                if ((sym ne null) && !sym.exists) {
+                //                  recoveredType(tree) foreach {tpex => ref.resultType = tpex}
+                //                }
                 if (scopes.top.addRef(ref)) logInfo("\tAdded: ", ref)
               }
             }
@@ -446,9 +446,9 @@ trait ScalaAstVisitor { self: ScalaGlobal =>
                * @Note: this symbol may has wrong tpe, for example, an error tree,
                * to get the proper resultType, we'll check if the qualierMaybeType isDefined
                */
-//              if (!sym1.exists) {
-//                recoveredType(tree) foreach {tpex => ref.resultType = tpex}
-//              }
+              //              if (!sym1.exists) {
+              //                recoveredType(tree) foreach {tpex => ref.resultType = tpex}
+              //              }
               // * set ref.resultType before addRef to scope, otherwise, it may not be added if there is same symbol had been added
               if (scopes.top.addRef(ref)) logInfo("\tAdded: ", ref)
             }
