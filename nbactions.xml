@@ -29,4 +29,17 @@
                 <skipTests>true</skipTests>
             </properties>
         </action>
+    <action>
+            <actionName>CUSTOM-Clean&amp;Build</actionName>
+            <displayName>Clean&amp;Build</displayName>
+            <goals>
+                <goal>clean</goal>
+                <goal>install</goal>
+                <goal>nbm:cluster</goal>
+                <goal>nbm:autoupdate</goal>
+            </goals>
+            <properties>
+                <skipTests>true</skipTests>
+            </properties>
+        </action>
 </actions>

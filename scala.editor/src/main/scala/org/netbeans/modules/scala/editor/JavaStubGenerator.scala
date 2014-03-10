@@ -38,6 +38,7 @@
  */
 package org.netbeans.modules.scala.editor
 
+import language._
 import java.io.FileNotFoundException
 import java.util.logging.Logger
 

@@ -111,7 +111,12 @@ class ShowTypeAction extends BaseAction(NbBundle.getMessage(classOf[ShowTypeActi
       }
     }
     if (t == null || t.symbol == null) "No suitiable info available"
-    else t.symbol.toString + ": " + describeType(t.symbol.tpe.normalize) + "\n\n" + g.show(t) + "\n\n" + g.showRaw(t)
+    else {
+      t.symbol.toString + ": " + describeType(t.symbol.tpe.normalize) + "\n\n" +
+      t.symbol.toString + ": " + describeType(t.tpe) + "\n\n" + 
+      t.symbol.toString + ": " + describeType(t.tpe.typeSymbol.typeSignature) + "\n\n" + 
+      g.show(t) + "\n\n" + g.showRaw(t)
+    }
   }
   
   def popup(comp: JTextComponent, msg: String) {
