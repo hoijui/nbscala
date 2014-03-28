@@ -41,8 +41,8 @@
 package org.netbeans.modules.scala.core.lexer
 
 import org.netbeans.modules.csl.api.OffsetRange
-import org.netbeans.api.lexer.{Token, TokenHierarchy, TokenId, TokenSequence}
-import org.netbeans.editor.{BaseDocument}
+import org.netbeans.api.lexer.{ Token, TokenHierarchy, TokenId, TokenSequence }
+import org.netbeans.editor.{ BaseDocument }
 import scala.collection.mutable.ArrayBuffer
 import org.netbeans.api.language.util.lex.LexUtil
 
@@ -69,13 +69,11 @@ object ScalaLexUtil extends LexUtil {
     ScalaTokenId.BlockCommentStart,
     ScalaTokenId.BlockCommentEnd,
     ScalaTokenId.BlockCommentData,
-    ScalaTokenId.CommentTag
-  )
+    ScalaTokenId.CommentTag)
 
   override val WS: Set[TokenId] = Set(
     ScalaTokenId.Ws,
-    ScalaTokenId.Nl
-  )
+    ScalaTokenId.Nl)
 
   /**
    * Tokens that should cause indentation of the next line. This is true for all {@link #END_PAIRS},
@@ -92,26 +90,22 @@ object ScalaLexUtil extends LexUtil {
     ScalaTokenId.While,
     ScalaTokenId.Case,
     ScalaTokenId.If,
-    ScalaTokenId.Else
-  )
+    ScalaTokenId.Else)
 
   override val BLOCK_COMMENTS: Set[TokenId] = Set(
     ScalaTokenId.BlockCommentStart,
     ScalaTokenId.BlockCommentEnd,
     ScalaTokenId.BlockCommentData,
-    ScalaTokenId.CommentTag
-  )
+    ScalaTokenId.CommentTag)
 
   override val DOC_COMMENTS: Set[TokenId] = Set(
     ScalaTokenId.DocCommentStart,
     ScalaTokenId.DocCommentEnd,
     ScalaTokenId.DocCommentData,
-    ScalaTokenId.CommentTag
-  )
+    ScalaTokenId.CommentTag)
 
   override val LINE_COMMENTS: Set[TokenId] = Set(
-    ScalaTokenId.LineComment
-  )
+    ScalaTokenId.LineComment)
 
   override val WHITE_SPACE: TokenId = ScalaTokenId.Ws
   override val NEW_LINE: TokenId = ScalaTokenId.Nl
@@ -137,11 +131,10 @@ object ScalaLexUtil extends LexUtil {
     ScalaTokenId.XmlSTagName,
     ScalaTokenId.XmlCharData,
     ScalaTokenId.LArrow,
-    ScalaTokenId.Wild
-  )
+    ScalaTokenId.Wild)
 
   override def getDocCommentRangeBefore(doc: BaseDocument, th: TokenHierarchy[_], lexOffset: Int): OffsetRange = {
-    
+
     val ts = getTokenSequence(doc, th, lexOffset).getOrElse(return OffsetRange.NONE)
 
     ts.move(lexOffset)
@@ -160,7 +153,7 @@ object ScalaLexUtil extends LexUtil {
         case id if !isWsComment(id) && !isKeyword(id) =>
           ts.moveNext // recheck from this id
           findAnnotationBwd(ts) match {
-            case None => done = true
+            case None    => done = true
             case Some(x) => // ts is moved to '@' now
           }
         case _ =>
@@ -171,7 +164,6 @@ object ScalaLexUtil extends LexUtil {
       new OffsetRange(offset, endOffset)
     } else OffsetRange.NONE
   }
-
 
   private def findMultilineRange(ts: TokenSequence[TokenId]): OffsetRange = {
     val startOffset = ts.offset
@@ -212,7 +204,7 @@ object ScalaLexUtil extends LexUtil {
     } else OffsetRange.NONE
   }
 
-  def getMultilineRange(doc :BaseDocument, ts :TokenSequence[TokenId]): OffsetRange = {
+  def getMultilineRange(doc: BaseDocument, ts: TokenSequence[TokenId]): OffsetRange = {
     val index = ts.index
     val offsetRange = findMultilineRange(ts)
     ts.moveIndex(index)
@@ -267,7 +259,7 @@ object ScalaLexUtil extends LexUtil {
             exactBehindComma = true
           }
         case id if isWsComment(id) =>
-        case _ => return Nil
+        case _                     => return Nil
       }
     }
 
@@ -276,7 +268,7 @@ object ScalaLexUtil extends LexUtil {
 
   case class ImportTokens(start: Token[TokenId], end: Token[TokenId], qual: List[Token[TokenId]], selectors: List[(Token[TokenId], Token[TokenId])])
   val NullImportTokens = ImportTokens(null, null, Nil, Nil)
-  
+
   def findImportAt(doc: BaseDocument, th: TokenHierarchy[_], offsetInImporting: Int): ImportTokens = {
     val ts = getTokenSequence(doc, th, offsetInImporting).getOrElse(return NullImportTokens)
     ts.move(offsetInImporting)
@@ -294,7 +286,7 @@ object ScalaLexUtil extends LexUtil {
     while (ts.isValid && ts.moveNext) {
       val token = ts.token match {
         case x if x.isFlyweight => ts.offsetToken
-        case x => x
+        case x                  => x
       }
 
       token.id match {
@@ -336,7 +328,7 @@ object ScalaLexUtil extends LexUtil {
             return ImportTokens(start, end, qual.reverse, selectors.reverse)
           }
         case id if isWsComment(id) =>
-        case _ => return NullImportTokens
+        case _                     => return NullImportTokens
       }
     }
 
@@ -350,7 +342,7 @@ object ScalaLexUtil extends LexUtil {
     while (ts.movePrevious) {
       ts.token.id match {
         case ScalaTokenId.If =>
-        
+
       }
     }
   }
@@ -380,7 +372,7 @@ object ScalaLexUtil extends LexUtil {
         case _ => break = true
       }
 
-      collector map {_.id} match {
+      collector map { _.id } match {
         case List(ScalaTokenId.At, ScalaTokenId.Identifier) => return Some(collector.last)
         case List(_, _, _) => break = true // collect no more than 3 tokens
         case _ =>

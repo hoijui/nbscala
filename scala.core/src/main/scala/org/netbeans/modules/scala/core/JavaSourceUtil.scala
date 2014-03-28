@@ -92,7 +92,7 @@ object JavaSourceUtil {
   private val UNKNOWN = "<unknown>" //NOI18N
   private var caseSensitive = true
   private var showDeprecatedMembers = true
-  private var inited :Boolean = _
+  private var inited: Boolean = _
   private var cachedPrefix: String = _
   private var cachedPattern: Pattern = _
 
@@ -172,7 +172,7 @@ object JavaSourceUtil {
   def getCompilationInfoForScalaFile(fo: FileObject): CompilationInfo = {
     var info = scalaFileToJavaCompilationInfo.get(fo) match {
       case null => null
-      case ref => ref.get
+      case ref  => ref.get
     }
 
     if (info eq null) {
@@ -181,13 +181,13 @@ object JavaSourceUtil {
       try {
         source.runUserActionTask(new Task[CompilationController] {
 
-            @throws(classOf[Exception])
-            def run(controller: CompilationController) {
-              controller.toPhase(PHASE_ELEMENTS_RESOLVED)
-              javaControllers(0) = controller
-            }
-          }, true)
-      } catch {case ex: IOException => Exceptions.printStackTrace(ex)}
+          @throws(classOf[Exception])
+          def run(controller: CompilationController) {
+            controller.toPhase(PHASE_ELEMENTS_RESOLVED)
+            javaControllers(0) = controller
+          }
+        }, true)
+      } catch { case ex: IOException => Exceptions.printStackTrace(ex) }
 
       info = javaControllers(0)
       //scalaFileToJavaCompilationInfo.put(fo, new WeakReference<CompilationInfo>(info));
@@ -223,7 +223,7 @@ object JavaSourceUtil {
   def getDocComment(info: CompilationInfo, e: Element): String = {
     // to resolve javadoc, only needs Phase.ELEMENT_RESOLVED, and we have reached when create info
     info.getElementUtilities.javaDocFor(e) match {
-      case null => ""
+      case null    => ""
       case javaDoc => javaDoc.getRawCommentText
     }
   }
@@ -235,7 +235,7 @@ object JavaSourceUtil {
     val handle = ElementHandle.create(e)
     SourceUtils.getFile(handle, info.getClasspathInfo) match {
       case null => None
-      case x => Some(x)
+      case x    => Some(x)
     }
   }
 
@@ -245,7 +245,8 @@ object JavaSourceUtil {
 
     val originFo = getOriginFileObject(info, e).getOrElse(return -1)
 
-    /** @Note
+    /**
+     * @Note
      * We should create a element handle and a new CompilationInfo, then resolve
      * a new element from this hanlde and info
      */
@@ -258,24 +259,24 @@ object JavaSourceUtil {
      */
     try {
       source.runUserActionTask(new Task[CompilationController]() {
-          @throws(classOf[Exception])
-          def run(controller: CompilationController) {
-            controller.toPhase(PHASE_RESOLVED)
+        @throws(classOf[Exception])
+        def run(controller: CompilationController) {
+          controller.toPhase(PHASE_RESOLVED)
 
-            val el = handle.resolve(controller)
-            val v = new FindDeclarationVisitor(el, controller)
+          val el = handle.resolve(controller)
+          val v = new FindDeclarationVisitor(el, controller)
 
-            val cu = controller.getCompilationUnit
+          val cu = controller.getCompilationUnit
 
-            v.scan(cu, null)
-            val elTree = v.declTree
+          v.scan(cu, null)
+          val elTree = v.declTree
 
-            if (elTree ne null) {
-              offset(0) = controller.getTrees.getSourcePositions.getStartPosition(cu, elTree).toInt
-            }
+          if (elTree ne null) {
+            offset(0) = controller.getTrees.getSourcePositions.getStartPosition(cu, elTree).toInt
           }
-        }, true)
-    } catch {case ex: IOException => Exceptions.printStackTrace(ex)}
+        }
+      }, true)
+    } catch { case ex: IOException => Exceptions.printStackTrace(ex) }
 
     offset(0)
   }
@@ -296,33 +297,33 @@ object JavaSourceUtil {
     if (te eq null) {
       return None
     }
-    
+
     val itr = te.getEnclosedElements.iterator
     while (itr.hasNext) {
       val element = itr.next
       if (element.getSimpleName.toString.equals(sName)) {
         element.getKind match {
           case ElementKind.METHOD => element match {
-              case ee: ExecutableElement =>
-                val params1 = ee.getParameters
-                val params2 = try {
-                  sym.tpe.paramTypes
-                } catch {
-                  case _: Throwable => /**@todo reset global */ Nil
+            case ee: ExecutableElement =>
+              val params1 = ee.getParameters
+              val params2 = try {
+                sym.tpe.paramTypes
+              } catch {
+                case _: Throwable => /**@todo reset global */ Nil
+              }
+              if (params1.size == params2.size) {
+                var i = 0
+                for (param2 <- params2) {
+                  val param1 = params1.get(i).asType
+                  i += 1
+                  // @todo compare param's type, should convert primary type between Java and Scala
                 }
-                if (params1.size == params2.size) {
-                  var i = 0
-                  for (param2 <- params2) {
-                    val param1 = params1.get(i).asType
-                    i += 1
-                    // @todo compare param's type, should convert primary type between Java and Scala
-                  }
-                  return Some(element)
-                }
-              case _ =>
-            }
+                return Some(element)
+              }
+            case _ =>
+          }
           case ElementKind.FIELD => return Some(element)
-          case _ =>
+          case _                 =>
         }
       }
     }

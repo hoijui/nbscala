@@ -41,9 +41,9 @@ package org.netbeans.modules.scala.editor
 
 import java.util.logging.Logger
 import java.util.logging.Level
-import org.netbeans.api.lexer.{TokenHierarchy}
-import org.netbeans.modules.csl.api.{ElementKind, ColoringAttributes, OffsetRange, SemanticAnalyzer}
-import org.netbeans.modules.parsing.spi.{Scheduler, SchedulerEvent}
+import org.netbeans.api.lexer.{ TokenHierarchy }
+import org.netbeans.modules.csl.api.{ ElementKind, ColoringAttributes, OffsetRange, SemanticAnalyzer }
+import org.netbeans.modules.parsing.spi.{ Scheduler, SchedulerEvent }
 import org.netbeans.modules.scala.core.ScalaGlobal
 import org.netbeans.modules.scala.core.ScalaParserResult
 import org.netbeans.modules.scala.core.ast.ScalaRootScope
@@ -58,7 +58,7 @@ import scala.reflect.internal.Flags
  */
 class ScalaSemanticAnalyzer extends SemanticAnalyzer[ScalaParserResult] {
   private val log = Logger.getLogger(this.getClass.getName)
-  
+
   private var cancelled: Boolean = _
   private var semanticHighlights: java.util.Map[OffsetRange, java.util.Set[ColoringAttributes]] = _
 
@@ -66,28 +66,23 @@ class ScalaSemanticAnalyzer extends SemanticAnalyzer[ScalaParserResult] {
     cancelled
   }
 
-  override 
-  def cancel: Unit = synchronized {
+  override def cancel: Unit = synchronized {
     log.info("Ignore cancel. @todo")
     //cancelled = true
   }
 
-  override 
-  def getHighlights: java.util.Map[OffsetRange, java.util.Set[ColoringAttributes]] = {
+  override def getHighlights: java.util.Map[OffsetRange, java.util.Set[ColoringAttributes]] = {
     semanticHighlights
   }
 
-  override 
-  def getPriority: Int = 0
+  override def getPriority: Int = 0
 
-  override 
-  def getSchedulerClass: Class[_ <: Scheduler] = {
+  override def getSchedulerClass: Class[_ <: Scheduler] = {
     Scheduler.EDITOR_SENSITIVE_TASK_SCHEDULER
   }
 
   @throws(classOf[Exception])
-  override 
-  def run(pr: ScalaParserResult, event: SchedulerEvent) {
+  override def run(pr: ScalaParserResult, event: SchedulerEvent) {
     cancelled = false
 
     if (isCancelled) return
@@ -99,7 +94,7 @@ class ScalaSemanticAnalyzer extends SemanticAnalyzer[ScalaParserResult] {
       log.warning("doc is null.")
       return
     }
-    
+
     val th = pr.getSnapshot.getTokenHierarchy
     val global = pr.global
 
@@ -126,33 +121,33 @@ class ScalaSemanticAnalyzer extends SemanticAnalyzer[ScalaParserResult] {
   private def visitItems(global: ScalaGlobal, th: TokenHierarchy[_], root: ScalaRootScope): java.util.HashMap[OffsetRange, java.util.Set[ColoringAttributes]] = {
 
     val highlights = new java.util.HashMap[OffsetRange, java.util.Set[ColoringAttributes]](100)
-  
+
     def isSingletonType(sym: global.Symbol) = try {
       sym.tpe.resultType.isInstanceOf[global.SingletonType]
     } catch {
       case _: Throwable => false
     }
 
-    global.askForResponse {() =>
+    global.askForResponse { () =>
       for {
         (idToken, items) <- root.idTokenToItems
         item = global.ScalaUtil.importantItem(items)
         name = item.getName if name != "this" && name != "super"
       } {
-      
+
         if (isCancelled) return null
-      
-        // * token may be xml tokens, @see AstVisit#getTokenId
+
+        // token may be xml tokens, @see AstVisit#getTokenId
         idToken.id match {
           case ScalaTokenId.Identifier | ScalaTokenId.This | ScalaTokenId.Super =>
             val hiRange = ScalaLexUtil.getRangeOfToken(th, idToken)
             val coloringSet = new java.util.HashSet[ColoringAttributes]
             val sym = item.symbol
-          
+
             item match {
-            
+
               case dfn: global.ScalaDfn =>
-              
+
                 if (sym.isModule) {
 
                   coloringSet.add(ColoringAttributes.CLASS)
@@ -178,21 +173,18 @@ class ScalaSemanticAnalyzer extends SemanticAnalyzer[ScalaParserResult] {
 
                   coloringSet.add(ColoringAttributes.FIELD)
                   val owner = sym.owner
-                  if ((owner ne null) && (owner.isClass || owner.isTrait || owner.isModule)) {
+                  if (owner != null && (owner.isClass || owner.isTrait || owner.isModule)) {
                     coloringSet.add(ColoringAttributes.GLOBAL)
                   }
-
-                } else if (sym.isMethod && sym.hasFlag(Flags.DEFERRED)) {
-
-                  coloringSet.add(ColoringAttributes.METHOD)
-                  coloringSet.add(ColoringAttributes.DECLARATION)
-                  coloringSet.add(ColoringAttributes.GLOBAL)
 
                 } else if (sym.isMethod) {
 
                   coloringSet.add(ColoringAttributes.METHOD)
                   coloringSet.add(ColoringAttributes.DECLARATION)
-                  
+                  if (sym.hasFlag(Flags.DEFERRED)) {
+                    coloringSet.add(ColoringAttributes.GLOBAL)
+                  }
+
                 } else if (sym.hasFlag(Flags.PARAM)) {
 
                   coloringSet.add(ColoringAttributes.PARAMETER)
@@ -200,15 +192,15 @@ class ScalaSemanticAnalyzer extends SemanticAnalyzer[ScalaParserResult] {
                 } else if (sym.hasFlag(Flags.MUTABLE)) {
 
                   coloringSet.add(ColoringAttributes.LOCAL_VARIABLE)
-                  
+
                 } else if (sym.isValue && !sym.hasFlag(Flags.PACKAGE)) {
 
                   coloringSet.add(ColoringAttributes.FIELD)
-                
-                } 
-              
+
+                }
+
               case ref: global.ScalaRef =>
-              
+
                 if (sym.isClass || sym.isType || sym.isTrait || sym.isTypeParameter || sym.isConstructor) {
 
                   coloringSet.add(ColoringAttributes.CLASS)
@@ -222,7 +214,7 @@ class ScalaSemanticAnalyzer extends SemanticAnalyzer[ScalaParserResult] {
 
                   coloringSet.add(ColoringAttributes.FIELD)
                   val owner = sym.owner
-                  if ((owner ne null) && (owner.isClass || owner.isTrait || owner.isModule)) {
+                  if (owner != null && (owner.isClass || owner.isTrait || owner.isModule)) {
                     coloringSet.add(ColoringAttributes.GLOBAL)
                   }
 
@@ -236,7 +228,7 @@ class ScalaSemanticAnalyzer extends SemanticAnalyzer[ScalaParserResult] {
                   val name = sym.nameString
                   val isVariable = try {
                     val owntpe = sym.owner.tpe
-                    owntpe.members exists {x => x.isVariable && x.nameString == name}
+                    owntpe.members exists { x => x.isVariable && x.nameString == name }
                   } catch {
                     case _: Throwable => false
                   }
@@ -252,24 +244,30 @@ class ScalaSemanticAnalyzer extends SemanticAnalyzer[ScalaParserResult] {
 
                   coloringSet.add(ColoringAttributes.PARAMETER)
 
-                } else if (sym.isMethod && ref.getKind == ElementKind.RULE) { // implicit call
-
-                  coloringSet.add(ColoringAttributes.CUSTOM1)
-
                 } else if (sym.isMethod) {
 
-                  coloringSet.add(ColoringAttributes.METHOD)
+                  sym.nameString match {
+                    case "apply" | "unapply" =>
+                      coloringSet.add(ColoringAttributes.CLASS)
 
-                } else if (sym.hasFlag(Flags.IMPLICIT)) {
+                    case _ =>
+                      coloringSet.add(ColoringAttributes.METHOD)
+                  }
+
+                  if (ref.getKind == ElementKind.RULE) { // implicit call
+                    coloringSet.add(ColoringAttributes.CUSTOM1)
+                  }
+
+                } /* else if (sym.hasFlag(Flags.IMPLICIT)) {
 
                   coloringSet.add(ColoringAttributes.CUSTOM1)
 
-                } else if (sym.hasFlag(Flags.MUTABLE)) {
+                } */ else if (sym.hasFlag(Flags.MUTABLE)) {
 
                   coloringSet.add(ColoringAttributes.LOCAL_VARIABLE)
 
                 } else if (sym.isValue && !sym.hasFlag(Flags.PACKAGE)) {
-                
+
                   coloringSet.add(ColoringAttributes.FIELD)
 
                 }
@@ -277,19 +275,19 @@ class ScalaSemanticAnalyzer extends SemanticAnalyzer[ScalaParserResult] {
 
             if (sym.isDeprecated) coloringSet.add(ColoringAttributes.DEPRECATED)
             if (sym.hasFlag(Flags.LAZY)) coloringSet.add(ColoringAttributes.CUSTOM2)
-            if (sym.hasFlag(Flags.BYNAMEPARAM)) coloringSet.add(ColoringAttributes.CUSTOM1)
+            //if (sym.hasFlag(Flags.BYNAMEPARAM)) coloringSet.add(ColoringAttributes.CUSTOM1)
 
             if (!coloringSet.isEmpty) highlights.put(hiRange, coloringSet)
 
           case _ =>
         }
       }
-      
+
     } get match {
-      case Left(x) =>
-      case Right(ex) => ScalaSemanticAnalyzer.this.log.log(Level.WARNING, ex.getMessage, ex)
+      case Left(x)   =>
+      case Right(ex) => global.processGlobalException(ex)
     }
-    
+
     highlights
-  }  
+  }
 }

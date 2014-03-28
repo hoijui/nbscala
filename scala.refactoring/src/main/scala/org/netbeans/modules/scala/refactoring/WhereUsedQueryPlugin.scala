@@ -68,13 +68,12 @@ import org.netbeans.modules.refactoring.api.WhereUsedQuery;
 import org.netbeans.modules.refactoring.spi.RefactoringElementsBag;
 
 import org.netbeans.modules.scala.core.ScalaParserResult
-import org.netbeans.modules.scala.core.ast.{ScalaItems, ScalaRootScope}
+import org.netbeans.modules.scala.core.ast.{ ScalaItems, ScalaRootScope }
 import org.netbeans.modules.scala.core.lexer.ScalaLexUtil
 import org.openide.filesystems.FileObject
 import org.openide.util.NbBundle;
 import scala.collection.mutable.HashSet
 import scala.reflect.internal.Flags
-
 
 /**
  * Actual implementation of Find Usages query search
@@ -98,7 +97,7 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
   override def preCheck: Problem = {
     searchHandle.fo match {
       case Some(x) if x.isValid => null
-      case _ => return new Problem(true, NbBundle.getMessage(classOf[WhereUsedQueryPlugin], "DSC_ElNotAvail")) // NOI18N
+      case _                    => return new Problem(true, NbBundle.getMessage(classOf[WhereUsedQueryPlugin], "DSC_ElNotAvail")) // NOI18N
     }
   }
 
@@ -106,11 +105,11 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
     val cpInfo = getClasspathInfo(refactoring)
     val set = new HashSet[FileObject]
 
-    handle.fo foreach {fo =>
+    handle.fo foreach { fo =>
       set.add(fo)
 
       // * is there any symbol in this place not private?
-      val notLocal = samePlaceSyms exists {x => !x.hasFlag(Flags.PRIVATE)}
+      val notLocal = samePlaceSyms exists { x => !x.hasFlag(Flags.PRIVATE) }
 
       if (notLocal) {
         val srcCp = cpInfo.getClassPath(ClasspathInfo.PathKind.SOURCE)
@@ -191,13 +190,13 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
      } catch (IOException ioe) {
      throw (RuntimeException) new RuntimeException().initCause(ioe);
      } */
-    
+
     if (isFindUsages || isFindDirectSubclassesOnly || isFindOverridingMethods) {
-      (set filter {x => 
-          try {
-            BoyerMoore.indexOf(x.asText, targetName) != -1
-          } catch {case _: IOException => true}
-        }).toSet
+      (set filter { x =>
+        try {
+          BoyerMoore.indexOf(x.asText, targetName) != -1
+        } catch { case _: IOException => true }
+      }).toSet
     } else set.toSet
   }
 
@@ -337,13 +336,13 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
        } else*/
 
       if (samePlaceSymToDSimpleSig.isEmpty) {
-        samePlaceSymToDSimpleSig = samePlaceSyms map {case x: global.Symbol => (x, global.ScalaUtil.symSimpleSig(x))}
+        samePlaceSymToDSimpleSig = samePlaceSyms map { case x: global.Symbol => (x, global.ScalaUtil.askForSymSimpleSig(x)) }
       }
 
       if (isFindUsages) {
-        global.askForResponse {() =>
+        global.askForResponse { () =>
           import global._
-          
+
           def isRef(sym: Symbol) = try {
             lazy val overriddens = sym.allOverriddenSymbols
             val mySig = ScalaUtil.symSimpleSig(sym)
@@ -351,14 +350,14 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
             samePlaceSymToDSimpleSig exists {
               case (symx, sigx) if mySig == sigx =>
                 val qNamex = symx.fullName
-                if (myQName == qNamex) true 
-                else overriddens exists {_.fullName == qNamex}
+                if (myQName == qNamex) true
+                else overriddens exists { _.fullName == qNamex }
               case _ => false
             }
           } catch {
             case _: Throwable => false
           }
-        
+
           val tokens = new HashSet[Token[_]]
           for {
             (token, items) <- root.idTokenToItems
@@ -370,8 +369,11 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
             logger.info(pr.getSnapshot.getSource.getFileObject + ": find where used element " + sym.fullName)
             elements.add(refactoring, WhereUsedElement(pr, item.asInstanceOf[ScalaItem]))
           }
-        } get 
-        
+        } get match {
+          case Left(_)   =>
+          case Right(ex) => global.processGlobalException(ex)
+        }
+
       } else if (isFindOverridingMethods) {
         // TODO
       } else if (isSearchFromBaseClass) {
@@ -387,7 +389,7 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
           val token = ts.token
           val id = token.id
 
-          id.primaryCategory match {  
+          id.primaryCategory match {
             case "comment" | "block-comment" => // NOI18N
               // search this comment
               assert(targetName ne null)
@@ -402,8 +404,8 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
                     // used for other purposes in comments, consider letters
                     // and numbers as enough
                     if ((idx == 0 || !Character.isLetterOrDigit(text.charAt(idx - 1))) &&
-                        (idx + targetName.length >= text.length ||
-                         !Character.isLetterOrDigit(text.charAt(idx + targetName.length)))) {
+                      (idx + targetName.length >= text.length ||
+                        !Character.isLetterOrDigit(text.charAt(idx + targetName.length)))) {
                       val start = ts.offset + idx
                       val end = start + targetName.length
 
@@ -418,7 +420,7 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
               }
             case _ =>
               ts.embedded.asInstanceOf[TokenSequence[TokenId]] match {
-                case null =>
+                case null     =>
                 case embedded => searchTokenSequence(pr, embedded)
               }
           }

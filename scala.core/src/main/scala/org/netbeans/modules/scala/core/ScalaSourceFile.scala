@@ -18,39 +18,45 @@ import scala.reflect.internal.util.BatchSourceFile
 import scala.tools.nsc.util.Chars._
 
 /**
- * 
+ *
  * @author Caoyuan Deng
  */
 object ScalaSourceFile {
   private val instances = new java.util.WeakHashMap[FileObject, Reference[ScalaSourceFile]]
 
-  def sourceFileOf(fileObject: FileObject) = instances synchronized {
-    val sourceRef = instances.get(fileObject)
-    var source = if (sourceRef eq null) null else sourceRef.get
-
-    if (source eq null) {
-      source = new ScalaSourceFile(fileObject)
-      instances.put(fileObject, new WeakReference[ScalaSourceFile](source))
+  def sourceFileOf(fileObject: FileObject): ScalaSourceFile = instances synchronized {
+    def createNew() = {
+      val srcFile = new ScalaSourceFile(fileObject)
+      instances.put(fileObject, new WeakReference[ScalaSourceFile](srcFile))
+      srcFile
     }
-    
-    source
+
+    instances.get(fileObject) match {
+      case null => createNew
+      case srcRef =>
+        srcRef.get match {
+          case null    => createNew() // srcRef.get is null, WHY?
+          case srcFile => srcFile
+        }
+    }
   }
+
 }
 
 /**
  * A file whose contents in editing
- * 
+ *
  * @author Caoyuan Deng
  */
 class ScalaSourceFile private (val fileObject: FileObject) extends SourceFile {
-  
+
   lazy val file: AbstractFile = {
     val javaIoFile = if (fileObject ne null) FileUtil.toFile(fileObject) else null
     if (javaIoFile ne null) new PlainFile(javaIoFile) else new VirtualFile("<current>", "")
   }
-  
-  lazy val source = Source.create(fileObject) // if has been created, will return existed one
-  
+
+  lazy val source = Source.create(fileObject) // if has been created, will return exi}sted one
+
   private var _snapshot: Snapshot = _
   def snapshot = {
     if (_snapshot eq null) {
@@ -64,23 +70,23 @@ class ScalaSourceFile private (val fileObject: FileObject) extends SourceFile {
   def refreshSnapshot {
     _snapshot = source.createSnapshot
   }
-  
+
   def doc = source.getDocument(false).asInstanceOf[BaseDocument]
   def tokenHierarchy: TokenHierarchy[_] = snapshot.getTokenHierarchy
   def content = snapshot.getText.toString.toCharArray
-  
+
   def length = content.length
   def start = 0
   def isSelfContained = true
 
-  override def identifier(pos: Position) = 
+  override def identifier(pos: Position) =
     if (pos.isDefined && pos.source == this && pos.point != -1) {
       def isOK(c: Char) = isIdentifierPart(c) || isOperatorPart(c)
       Some(new String(content drop pos.point takeWhile isOK))
     } else {
       super.identifier(pos)
     }
-  
+
   def isLineBreak(idx: Int) =
     if (idx >= length) false else {
       val ch = content(idx)
@@ -95,12 +101,12 @@ class ScalaSourceFile private (val fileObject: FileObject) extends SourceFile {
     for (i <- 0 until cs.length) if (isLineBreak(i)) buf += i + 1
     buf += cs.length // sentinel, so that findLine below works smoother
     buf.toArray
-  }  
-  private lazy val lineIndices: Array[Int] = calculateLineIndices(content)  
+  }
+  private lazy val lineIndices: Array[Int] = calculateLineIndices(content)
 
-  def lineToOffset(index : Int): Int = lineIndices(index)
+  def lineToOffset(index: Int): Int = lineIndices(index)
 
-  /** 
+  /**
    * Convert offset to line in this source file
    * Lines are numbered from 0
    */
@@ -113,20 +119,18 @@ class ScalaSourceFile private (val fileObject: FileObject) extends SourceFile {
         else if (offset > lines(mid)) findLine(mid + 1, hi)
         else mid
       } else if (lo == hi) {
-        mid 
+        mid
       } else mid
     }
     findLine(0, lines.length - 1) // use (lines.length - 1) instead of lines.length here
   }
-  
-  override 
-  def hashCode = file.file.hashCode
 
-  override 
-  def equals(that : Any) = that match {
-    case that : BatchSourceFile => file.path == that.file.path && start == that.start
-    case that : ScalaSourceFile => file.file == that.file.file // compare underlying java io file.
-    case _ => false
+  override def hashCode = file.file.hashCode
+
+  override def equals(that: Any) = that match {
+    case that: BatchSourceFile => file.path == that.file.path && start == that.start
+    case that: ScalaSourceFile => file.file == that.file.file // compare underlying java io file.
+    case _                     => false
   }
 
 }

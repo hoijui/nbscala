@@ -5,19 +5,19 @@ import java.util.Properties
 
 abstract class TerminalInput {
   import TerminalInput._
-  
+
   private var _terminalId = "VT320"
-  
+
   /** in vms mode, set by Terminal.VMS property */
   private var vms = false
 
   var vt52mode = false
   var keypadmode = false /* false - numeric, true - application */
   var output8bit = false
-  
+
   var capslock = false
   var numlock = false
-  
+
   var mouserpt = 0
   var mousebut = 0.toByte
 
@@ -26,7 +26,7 @@ abstract class TerminalInput {
   private val PF2 = "\u001bOQ"
   private val PF3 = "\u001bOR"
   private val PF4 = "\u001bOS"
-  
+
   /* some more VT100 keys */
   private val Find = "\u001b[1~"
   private val Select = "\u001b[4~"
@@ -43,9 +43,8 @@ abstract class TerminalInput {
     "\u001bOv",
     "\u001bOw",
     "\u001bOx",
-    "\u001bOy"
-  )
-  
+    "\u001bOy")
+
   private val FunctionKey = Array[String](
     "",
     PF1,
@@ -68,8 +67,7 @@ abstract class TerminalInput {
     "\u001b[31~",
     "\u001b[32~",
     "\u001b[33~",
-    "\u001b[34~"
-  )
+    "\u001b[34~")
 
   private val FunctionKeyShift = Array.fill[String](21)("")
   private val FunctionKeyAlt = Array.fill[String](21)("")
@@ -78,51 +76,47 @@ abstract class TerminalInput {
   FunctionKeyShift(16) = Select
 
   /* the 3x2 keyblock on PC keyboards */
-  private val Insert  = Array("\u001b[2~", "\u001b[2~", "\u001b[2~", "\u001b[2~")
-  private val Remove  = Array("\u001b[3~", "\u001b[3~", "\u001b[3~", "\u001b[3~")
-  private val KeyHome = Array("\u001b[H",  "\u001b[H",  "\u001b[H",  "\u001b[H")
-  private val KeyEnd  = Array("\u001b[F",  "\u001b[F",  "\u001b[F",  "\u001b[F")
+  private val Insert = Array("\u001b[2~", "\u001b[2~", "\u001b[2~", "\u001b[2~")
+  private val Remove = Array("\u001b[3~", "\u001b[3~", "\u001b[3~", "\u001b[3~")
+  private val KeyHome = Array("\u001b[H", "\u001b[H", "\u001b[H", "\u001b[H")
+  private val KeyEnd = Array("\u001b[F", "\u001b[F", "\u001b[F", "\u001b[F")
   private val NextScn = Array("\u001b[6~", "\u001b[6~", "\u001b[6~", "\u001b[6~")
   private val PrevScn = Array("\u001b[5~", "\u001b[5~", "\u001b[5~", "\u001b[5~")
-  private val Escape  = Array("\u001b",    "\u001b",    "\u001b",    "\u001b")
-  private val BackSpace = if (vms) 
+  private val Escape = Array("\u001b", "\u001b", "\u001b", "\u001b")
+  private val BackSpace = if (vms)
     Array(
-      "\u007f",       //  VMS other is delete
+      "\u007f", //  VMS other is delete
       "" + 10.toChar, //  VMS shift deletes word back
-      "\u0018",       //  VMS control deletes line back
-      "\u007f"        //  VMS other is delete
-    ) 
+      "\u0018", //  VMS control deletes line back
+      "\u007f" //  VMS other is delete
+      )
   else Array("\b", "\b", "\b", "\b")
 
-  
   private val KeyUp = Array.ofDim[String](4)
   private val KeyDown = Array.ofDim[String](4)
   private val KeyRight = Array.ofDim[String](4)
   private val KeyLeft = Array.ofDim[String](4)
-  KeyUp(0)    = "\u001b[A"
-  KeyDown(0)  = "\u001b[B"
+  KeyUp(0) = "\u001b[A"
+  KeyDown(0) = "\u001b[B"
   KeyRight(0) = "\u001b[C"
-  KeyLeft(0)  = "\u001b[D"
+  KeyLeft(0) = "\u001b[D"
 
-  
   private val TabKey = Array[String](
     "\u0009",
     "\u001bOP\u0009",
     "",
-    ""
-  )
-  
+    "")
+
   private val NUMPlus = Array.ofDim[String](4)
   private val NUMDot = Array.ofDim[String](4)
   NUMPlus(0) = "+"
-  NUMDot(0)  = "."
+  NUMDot(0) = "."
 
-  private val KPMinus  = PF4
-  private val KPComma  = "\u001bOl"
+  private val KPMinus = PF4
+  private val KPComma = "\u001bOl"
   private val KPPeriod = "\u001bOn"
-  private val KPEnter  = "\u001bOM"
+  private val KPEnter = "\u001bOM"
 
-  
   /**
    * Direct access to writing data ...
    * @param b
@@ -143,12 +137,12 @@ abstract class TerminalInput {
     val mods = modifiers
     mousebut = if ((mods & 16) == 16) 0
     else if ((mods & 8) == 8) 1
-    else if ((mods & 4) == 4) 2  
+    else if ((mods & 4) == 4) 2
     else 3
 
-    val mousecode = if (mouserpt == 9) {	/* X10 Mouse */
+    val mousecode = if (mouserpt == 9) { /* X10 Mouse */
       0x20 | mousebut
-    }  else {		/* normal xterm mouse reporting */
+    } else { /* normal xterm mouse reporting */
       mousebut | 0x20 | ((mods & 7) << 2)
     }
 
@@ -158,8 +152,7 @@ abstract class TerminalInput {
       'M',
       mousecode.toByte,
       (0x20 + x + 1).toByte,
-      (0x20 + y + 1).toByte
-    )
+      (0x20 + y + 1).toByte)
 
     write(b) // FIXME: writeSpecial here
   }
@@ -184,7 +177,7 @@ abstract class TerminalInput {
      */
 
     val mousecode = if (mouserpt == 9) {
-      0x20 + mousebut	/* same as press? appears so. */
+      0x20 + mousebut /* same as press? appears so. */
     } else {
       '#'
     }
@@ -195,14 +188,12 @@ abstract class TerminalInput {
       'M',
       mousecode.toByte,
       (0x20 + x + 1).toByte,
-      (0x20 + y + 1).toByte
-    )
-    
+      (0x20 + y + 1).toByte)
+
     write(b) // FIXME: writeSpecial here
     mousebut = 0
   }
 
-  
   /**
    * Override the standard key codes used by the terminal emulation.
    * @param codes a properties object containing key code definitions
@@ -210,40 +201,39 @@ abstract class TerminalInput {
   def setKeyCodes(codes: Properties) {
     var i = 0
     while (i < 10) {
-      codes.getProperty("NUMPAD" + i) match {case null =>; case x => Numpad(i) = unEscape(x)}
+      codes.getProperty("NUMPAD" + i) match { case null => ; case x => Numpad(i) = unEscape(x) }
       i += 1
     }
     i = 1
     while (i < 20) {
-      codes.getProperty("F"  + i) match {case null =>; case x => FunctionKey(i) = unEscape(x)}
-      codes.getProperty("SF" + i) match {case null =>; case x => FunctionKeyShift(i) = unEscape(x)}
-      codes.getProperty("CF" + i) match {case null =>; case x => FunctionKeyCtrl(i) = unEscape(x)}
-      codes.getProperty("AF" + i) match {case null =>; case x => FunctionKeyAlt(i) = unEscape(x)}
+      codes.getProperty("F" + i) match { case null => ; case x => FunctionKey(i) = unEscape(x) }
+      codes.getProperty("SF" + i) match { case null => ; case x => FunctionKeyShift(i) = unEscape(x) }
+      codes.getProperty("CF" + i) match { case null => ; case x => FunctionKeyCtrl(i) = unEscape(x) }
+      codes.getProperty("AF" + i) match { case null => ; case x => FunctionKeyAlt(i) = unEscape(x) }
       i += 1
     }
     val prefixes = Array("", "S", "C", "A")
     i = 0
     while (i < prefixes.length) {
-      codes.getProperty(prefixes(i) + "PGUP") match {case null =>; case x => PrevScn(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "PGDOWN") match {case null =>; case x => NextScn(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "END") match {case null =>; case x => KeyEnd(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "HOME") match {case null =>; case x => KeyHome(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "INSERT") match {case null =>; case x => Insert(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "REMOVE") match {case null =>; case x => Remove(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "UP") match {case null =>; case x => KeyUp(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "DOWN") match {case null =>; case x => KeyDown(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "LEFT") match {case null =>; case x => KeyLeft(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "RIGHT") match {case null =>; case x => KeyRight(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "ESCAPE") match {case null =>; case x => Escape(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "BACKSPACE") match {case null =>; case x => BackSpace(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "TAB") match {case null =>; case x => TabKey(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "NUMPLUS") match {case null =>; case x => NUMPlus(i) = unEscape(x)}
-      codes.getProperty(prefixes(i) + "NUMDECIMAL") match {case null =>; case x => NUMDot(i) = unEscape(x)}
+      codes.getProperty(prefixes(i) + "PGUP") match { case null => ; case x => PrevScn(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "PGDOWN") match { case null => ; case x => NextScn(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "END") match { case null => ; case x => KeyEnd(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "HOME") match { case null => ; case x => KeyHome(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "INSERT") match { case null => ; case x => Insert(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "REMOVE") match { case null => ; case x => Remove(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "UP") match { case null => ; case x => KeyUp(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "DOWN") match { case null => ; case x => KeyDown(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "LEFT") match { case null => ; case x => KeyLeft(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "RIGHT") match { case null => ; case x => KeyRight(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "ESCAPE") match { case null => ; case x => Escape(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "BACKSPACE") match { case null => ; case x => BackSpace(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "TAB") match { case null => ; case x => TabKey(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "NUMPLUS") match { case null => ; case x => NUMPlus(i) = unEscape(x) }
+      codes.getProperty(prefixes(i) + "NUMDECIMAL") match { case null => ; case x => NUMDot(i) = unEscape(x) }
       i += 1
     }
   }
 
-  
   /**
    * A small conveniance method thar converts the string to a byte array
    * for sending.
@@ -287,27 +277,27 @@ abstract class TerminalInput {
     if (s == null) {
       return true
     }
-    
+
     if (s.length >= 3 && s.charAt(0) == 27 && s.charAt(1) == 'O') {
       if (vt52mode) {
         if (s.charAt(2) >= 'P' && s.charAt(2) <= 'S') {
-          s = "\u001b" + s.substring(2)  /* ESC x */
+          s = "\u001b" + s.substring(2) /* ESC x */
         } else {
           s = "\u001b?" + s.substring(2) /* ESC ? x */
         }
       } else {
         if (output8bit) {
-          s = "\u008f" + s.substring(2)  /* SS3 x */
+          s = "\u008f" + s.substring(2) /* SS3 x */
         } // else keep string as it is 
       }
     }
-    
+
     if (s.length >= 3 && s.charAt(0) == 27 && s.charAt(1) == '[') {
       if (output8bit) {
         s = "\u009b" + s.substring(2) /* CSI ... */
       } // else keep 
     }
-    
+
     write(s)
   }
 
@@ -379,13 +369,13 @@ abstract class TerminalInput {
         writeSpecial(Remove(xind))
       case KeyEvent.VK_BACK_SPACE =>
         writeSpecial(BackSpace(xind))
-//	if (localecho) {
-//	  if (BackSpace(xind) == "\b") {
-//	    putString("\b \b") // make the last Char 'deleted'
-//	  } else {
-//	    putString(BackSpace(xind)) // echo it
-//	  }
-//	}
+      //	if (localecho) {
+      //	  if (BackSpace(xind) == "\b") {
+      //	    putString("\b \b") // make the last Char 'deleted'
+      //	  } else {
+      //	    putString(BackSpace(xind)) // echo it
+      //	  }
+      //	}
       case KeyEvent.VK_HOME =>
         writeSpecial(KeyHome(xind))
       case KeyEvent.VK_END =>
@@ -433,7 +423,7 @@ abstract class TerminalInput {
       }
       return
     }
-    
+
     if (alt) {
       write("" + (keyChar | 0x80).toChar)
       return
@@ -462,9 +452,9 @@ abstract class TerminalInput {
     if (vms) {
       if (keyChar == 127 && !control) {
         if (shift)
-          writeSpecial(Insert(0))       //  VMS shift delete = insert
+          writeSpecial(Insert(0)) //  VMS shift delete = insert
         else
-          writeSpecial(Remove(0))       //  VMS delete = remove
+          writeSpecial(Remove(0)) //  VMS delete = remove
         return
       } else if (control)
         keyChar match {
@@ -517,7 +507,7 @@ abstract class TerminalInput {
           case '*' =>
             writeSpecial(PF3)
             return
-            /* NUMLOCK handled in keyPressed */
+          /* NUMLOCK handled in keyPressed */
           case _ =>
         }
       /* Now what does this do and how did it get here. -Marcus
@@ -597,25 +587,24 @@ abstract class TerminalInput {
     }
   }
 
-  
   /**
    * Terminal id used to identify this terminal.
    */
   def terminalId = _terminalId
   def terminalId_=(id: String) {
     _terminalId = id
-    
+
     id match {
       case ScoAnsi =>
-        FunctionKey(1)  = "\u001b[M"
-        FunctionKey(2)  = "\u001b[N"
-        FunctionKey(3)  = "\u001b[O"
-        FunctionKey(4)  = "\u001b[P"
-        FunctionKey(5)  = "\u001b[Q"
-        FunctionKey(6)  = "\u001b[R"
-        FunctionKey(7)  = "\u001b[S"
-        FunctionKey(8)  = "\u001b[T"
-        FunctionKey(9)  = "\u001b[U"
+        FunctionKey(1) = "\u001b[M"
+        FunctionKey(2) = "\u001b[N"
+        FunctionKey(3) = "\u001b[O"
+        FunctionKey(4) = "\u001b[P"
+        FunctionKey(5) = "\u001b[Q"
+        FunctionKey(6) = "\u001b[R"
+        FunctionKey(7) = "\u001b[S"
+        FunctionKey(8) = "\u001b[T"
+        FunctionKey(9) = "\u001b[U"
         FunctionKey(10) = "\u001b[V"
         FunctionKey(11) = "\u001b[W"
         FunctionKey(12) = "\u001b[X"
@@ -635,8 +624,8 @@ abstract class TerminalInput {
         NextScn(1) = "\u001b[G"
         NextScn(2) = "\u001b[G"
         NextScn(3) = "\u001b[G"
-        // more theoretically.
-        
+      // more theoretically.
+
       case JLineWindows =>
         // @see jline.WindowsTerminal
         // SPECIAL_KEY_INDICATOR = 224, ie. '\u00E0', which will be sendSpecical convert to "-32" (bad)
@@ -644,20 +633,20 @@ abstract class TerminalInput {
         val prefixes = Array("", "S", "C", "A")
         var i = 0
         while (i < prefixes.length) {
-          KeyLeft(i)  = "\u0000K" // 75 -> K
+          KeyLeft(i) = "\u0000K" // 75 -> K
           KeyRight(i) = "\u0000M" // 77 -> M
-          KeyUp(i)    = "\u0000H" // 72 -> H
-          KeyDown(i)  = "\u0000P" // 80 -> P
-          Remove(i)   = "\u0000S" // 83 -> S
-          KeyHome(i)  = "\u0000G" // 71 -> G
-          KeyEnd(i)   = "\u0000O" // 79 -> O
-          PrevScn(i)  = "\u0000I" // 73 -> I
-          NextScn(i)  = "\u0000Q" // 81 -> Q
-          Insert(i)   = "\u0000R" // 82 -> R
-          Escape(i)   = "\u0000\u0000" // 0
+          KeyUp(i) = "\u0000H" // 72 -> H
+          KeyDown(i) = "\u0000P" // 80 -> P
+          Remove(i) = "\u0000S" // 83 -> S
+          KeyHome(i) = "\u0000G" // 71 -> G
+          KeyEnd(i) = "\u0000O" // 79 -> O
+          PrevScn(i) = "\u0000I" // 73 -> I
+          NextScn(i) = "\u0000Q" // 81 -> Q
+          Insert(i) = "\u0000R" // 82 -> R
+          Escape(i) = "\u0000\u0000" // 0
           i += 1
         }
-        
+
       case _ =>
     }
   }
@@ -667,12 +656,12 @@ abstract class TerminalInput {
 object TerminalInput {
   val ScoAnsi = "scoansi"
   val JLineWindows = "jlinewindows"
-  
+
   val KEY_CONTROL = 0x01
-  val KEY_SHIFT   = 0x02
-  val KEY_ALT     = 0x04
-  val KEY_ACTION  = 0x08
-  
+  val KEY_SHIFT = 0x02
+  val KEY_ALT = 0x04
+  val KEY_ACTION = 0x08
+
   /**
    * Replace escape code characters (backslash + identifier) with their
    * respective codes.
@@ -683,10 +672,10 @@ object TerminalInput {
     var idx = 0
     var oldidx = 0
     var cmd = ""
-    while ({idx = tmp.indexOf('\\', oldidx); idx >= 0} && {idx += 1; idx <= tmp.length}) {
+    while ({ idx = tmp.indexOf('\\', oldidx); idx >= 0 } && { idx += 1; idx <= tmp.length }) {
       cmd += tmp.substring(oldidx, idx - 1)
       if (idx == tmp.length) return cmd
-      
+
       tmp.charAt(idx) match {
         case 'b' =>
           cmd += "\b"
@@ -702,7 +691,7 @@ object TerminalInput {
           cmd += "\u000b"
         case 'a' =>
           cmd += "\u0012"
-        case _  =>
+        case _ =>
           if ((tmp.charAt(idx) >= '0') && (tmp.charAt(idx) <= '9')) {
             var i = idx
             var break = false
@@ -715,15 +704,14 @@ object TerminalInput {
             cmd += Integer.parseInt(tmp.substring(idx, i)).toChar
             idx = i - 1
           } else {
-            cmd += tmp.substring(idx, {idx += 1; idx})
+            cmd += tmp.substring(idx, { idx += 1; idx })
           }
       }
-      oldidx = {idx += 1; idx}
+      oldidx = { idx += 1; idx }
     }
     if (oldidx <= tmp.length) cmd += tmp.substring(oldidx)
-    
+
     cmd
   }
 
-  
 }

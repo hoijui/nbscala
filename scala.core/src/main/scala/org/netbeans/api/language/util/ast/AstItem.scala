@@ -1,8 +1,8 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
+ *
  * Copyright 2008 Sun Microsystems, Inc. All rights reserved.
- * 
+ *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common
  * Development and Distribution License("CDDL") (collectively, the
@@ -20,7 +20,7 @@
  * License Header, with the fields enclosed by brackets [] replaced by
  * your own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
- * 
+ *
  * If you wish your version of this file to be governed by only the CDDL
  * or only the GPL Version 2, indicate your decision by adding
  * "[Contributor] elects to include this software in this distribution
@@ -31,19 +31,19 @@
  * However, if you add GPL Version 2 code and therefore, elected the GPL
  * Version 2 license, then the option applies only if the new code is
  * made subject to such option by the copyright holder.
- * 
+ *
  * Contributor(s):
- * 
+ *
  * Portions Copyrighted 2008 Sun Microsystems, Inc.
  */
 package org.netbeans.api.language.util.ast
 
 import javax.swing.Icon
-import org.netbeans.api.lexer.{Token, TokenId, TokenHierarchy}
-import org.netbeans.modules.csl.api.{ElementKind, ElementHandle, Modifier, OffsetRange}
+import org.netbeans.api.lexer.{ Token, TokenId, TokenHierarchy }
+import org.netbeans.modules.csl.api.{ ElementKind, ElementHandle, Modifier, OffsetRange }
 import org.netbeans.modules.csl.api.UiUtils
-import org.netbeans.modules.csl.spi.{ParserResult}
-import org.openide.filesystems.{FileObject}
+import org.netbeans.modules.csl.spi.{ ParserResult }
+import org.openide.filesystems.{ FileObject }
 
 /**
  *
@@ -61,7 +61,7 @@ trait AstItem extends ForElementHandle {
   }
 
   var resultType: T = _
-  
+
   /**
    * @Note:
    * 1. Not all AstItem has pickToken, such as Expr etc.
@@ -95,7 +95,7 @@ trait AstItem extends ForElementHandle {
       _name = "" // should not happen?
       return
     }
-        
+
     try {
       _name = idToken.text.toString
     } catch {
@@ -145,13 +145,13 @@ trait AstItem extends ForElementHandle {
     _enclosingScope
   }
 
-  final def rootScope: AstRootScope = enclosingScope.root
+  def rootScope: AstRootScope = enclosingScope.root
 
-  final def samePlaceSymbols: Seq[AstItem#S] = {
+  def samePlaceSymbols: Seq[AstItem#S] = {
     samePlaceItems map (_.symbol)
   }
-  
-  final def samePlaceItems: Seq[AstItem] = {
+
+  def samePlaceItems: Seq[AstItem] = {
     rootScope.samePlaceItems(this)
   }
 
@@ -163,8 +163,7 @@ trait AstItem extends ForElementHandle {
     _properties += (k -> v)
   }
 
-  override 
-  def toString = {
+  override def toString = {
     symbol.toString
   }
 }
@@ -172,8 +171,8 @@ trait AstItem extends ForElementHandle {
 /**
  * Wrap functions that implemented some ElementHandle's methods
  */
-trait ForElementHandle {self: AstItem =>
-    
+trait ForElementHandle { self: AstItem =>
+
   def getMimeType: String
 
   def getName = self.name

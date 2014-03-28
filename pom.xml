@@ -14,7 +14,7 @@
         <name>NetBeans</name>
         <url>http://netbeans.org</url>
     </organization>
-    
+
     <developers>
         <developer>
             <id>dcaoyuan</id>
@@ -32,13 +32,13 @@
             <email>sreimers [at] gmail.com</email>
             <url>http://nbguru.blogspot.com</url>
             <timezone>+2</timezone>
-        </developer>        
+        </developer>
         <developer>
             <id>og0815</id>
             <name>Oliver Guenther</name>
             <email>oliver.guenther [at] gg-net.de</email>
             <timezone>+2</timezone>
-        </developer>        
+        </developer>
     </developers>
 
     <licenses>
@@ -54,31 +54,32 @@
         <brandingToken>nbscala</brandingToken>
         <deploy.version>snapshots</deploy.version>
 
-        <!-- Since this project has implementation dependencies on NetBeans no-friend module, 
-             we should build it using lower version NetBeans to get it can be installed both
+        <!-- Since this project has implementation dependencies on NetBeans no-friend modules,
+             we should build it using lower version NetBeans to get it to be able installed both
              on lower and higher version, unless we use un-compatible features of higher version.
         -->
-        <netbeans.version>RELEASE74</netbeans.version>
+        <netbeans.version>RELEASE80</netbeans.version>
 
         <scala.version>2.10.3</scala.version> <!-- use nbscala patched scala runtime @see libs.local-->
-        <sbt.version>0.12.2</sbt.version>
-        
+        <sbt.version>0.13.1</sbt.version>
+        <scalariform.version>0.1.5</scalariform.version>
+
         <!-- module versions -->
         <libs.scala.version>2.10.3.0</libs.scala.version>
-        <libs.sbt.version>0.12.2.1</libs.sbt.version>
+        <libs.sbt.version>0.13.1.0</libs.sbt.version>
+        <libs.scalariform.version>0.1.5.0</libs.scalariform.version>
         <libs.xtc.version>1.15.1</libs.xtc.version>
-        <languages.execution.version>1.6.1</languages.execution.version>
-        <scala.debugger.version>1.6.1</scala.debugger.version>
-        <scala.debugger.projects.version>1.6.1</scala.debugger.projects.version>
-        <scala.core.version>1.6.1.1</scala.core.version>
-        <scala.editor.version>1.6.1.1</scala.editor.version>
-        <scala.console.version>1.6.1</scala.console.version>
-        <scala.maven.version>1.6.1</scala.maven.version>
-        <scala.platform.version>1.6.1</scala.platform.version>
-        <scala.sbt.version>1.6.1.1</scala.sbt.version>
-        <scala.stdplatform.version>1.6.1</scala.stdplatform.version>
-        <scala.project.version>1.6.1</scala.project.version>
-        <scala.refactoring.version>1.6.1</scala.refactoring.version>
+        <scala.debugger.version>1.6.2.1</scala.debugger.version>
+        <scala.debugger.projects.version>1.6.2.1</scala.debugger.projects.version>
+        <scala.core.version>1.6.2.1</scala.core.version>
+        <scala.editor.version>1.6.2.1</scala.editor.version>
+        <scala.console.version>1.6.2.1</scala.console.version>
+        <scala.maven.version>1.6.2.1</scala.maven.version>
+        <scala.platform.version>1.6.2.1</scala.platform.version>
+        <scala.sbt.version>1.6.2.1</scala.sbt.version>
+        <scala.stdplatform.version>1.6.2.1</scala.stdplatform.version>
+        <scala.project.version>1.6.2.1</scala.project.version>
+        <scala.refactoring.version>1.6.2.1</scala.refactoring.version>
     </properties>
 
     <repositories>
@@ -98,7 +99,7 @@
             <id>repository.jboss.org-public</id>
             <name>JBoss.org Maven repository</name>
             <url>http://repository.jboss.org/nexus/content/groups/public</url>
-        </repository>  
+        </repository>
 
         <repository>
             <id>Typesafe releases</id>
@@ -108,9 +109,9 @@
             <id>Typesafe snapshots</id>
             <url>http://repo.typesafe.com/typesafe/ivy-snapshots</url>
         </repository>
-        
+
     </repositories>
-  
+
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -127,7 +128,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>nbm-maven-plugin</artifactId>
-                    <version>3.9</version>
+                    <version>3.11.1</version>
                     <extensions>true</extensions>
                     <configuration>
                         <brandingToken>${brandingToken}</brandingToken>
@@ -141,11 +142,12 @@
                         <keystorepassword>${nbm.sign.keystorepassword}</keystorepassword>
                     </configuration>
                 </plugin>
+
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>2.4</version>
-                    <configuration>                        
+                    <configuration>
                         <!-- to have the jar plugin pickup the nbm generated manifest -->
                         <useDefaultManifestFile>true</useDefaultManifestFile>
                     </configuration>
@@ -163,22 +165,31 @@
                         <target>1.6</target>
                     </configuration>
                 </plugin>
-                
+
+                <!-- Adds artifacts to the local maven repository -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+
+
+
                 <!-- Scala plugin for compiling and running Scala -->
-                <plugin>                    
+                <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
                     <version>3.1.6</version>
-                    <executions>  
+                    <executions>
                         <execution>
                             <phase>process-resources</phase> <!-- to support mix java/scala -->
                             <goals>
                                 <goal>add-source</goal> <!-- to support mix java/scala -->
                                 <goal>compile</goal>
                                 <goal>testCompile</goal>
-                            </goals>  
-                        </execution>  
-                    </executions> 
+                            </goals>
+                        </execution>
+                    </executions>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
                         <recompileMode>incremental</recompileMode>
@@ -203,17 +214,30 @@
                                 <artifactId>continuations</artifactId>
                                 <version>${scala.version}</version>
                             </complierPlugin>
-                        </compilerPlugins> 
+                        </compilerPlugins>
                     </configuration>
-                </plugin>  
-                
-                <!-- Adds artifacts to the local maven repository -->
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-install-plugin</artifactId>
-                    <version>2.4</version>
                 </plugin>
-                
+
+                <plugin>
+                    <groupId>org.scalariform</groupId>
+                    <artifactId>scalariform-maven-plugin</artifactId>
+                    <version>0.1.4</version>
+                    <executions>
+                        <execution>
+                            <phase>process-sources</phase>
+                            <goals>
+                                <goal>format</goal>
+                            </goals>
+                            <configuration>
+                                <indentSpaces>2</indentSpaces>
+                                <alignSingleLineCaseStatements>true</alignSingleLineCaseStatements>
+                                <alignParameters>true</alignParameters>
+                                <rewriteArrowSymbols>false</rewriteArrowSymbols>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
             </plugins>
         </pluginManagement>
     </build>
@@ -229,7 +253,7 @@
                     <value>Sun Microsystems Inc.</value>
                 </property>
             </activation>
-            
+
             <dependencies>
                 <dependency>
                     <groupId>com.sun</groupId>
@@ -240,7 +264,7 @@
                 </dependency>
             </dependencies>
         </profile>
-        
+
         <profile>
             <!-- The following code includes tools.jar for JDKs on Windows, Linux and Solaris (it is already included in the runtime for Mac OS X and some free JDKs). -->
             <!-- @see http://maven.apache.org/general.html#tools-jar-dependency -->
@@ -251,7 +275,7 @@
                     <value>Oracle Corporation</value>
                 </property>
             </activation>
-            
+
             <dependencies>
                 <dependency>
                     <groupId>com.sun</groupId>
@@ -283,13 +307,13 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
             <id>sign-nbscala-nbms</id>
             <!-- my keys/keystore was generated as (note: The keystore and key password needs to be the same):
-                 keytool -genkey -dname "CN=Caoyuan Deng, OU=nbscala, O=AIOTrade Co., L=Richmond, S=BC, C=CA" -alias nbscala -validity 1800
+                 keytool -genkey -dname "CN=Caoyuan Deng, OU=nbscala, O=inloop.io, L=Richmond, S=BC, C=CA" -alias nbscala -validity 1800
                  keytool -list -v
-                 
+
                  To enable it, add all three keystore related parameters in ~/m2/settings.xml as:
                  <profiles>
                      <profile>
@@ -304,6 +328,11 @@
                          </properties>
                      </profile>
                  </profiles>
+
+                 To pack a zip file for plugins.netbeans.org:
+                 mvn nbm:autoupdate
+                 cd target/netbeans_site
+                 zip nbscala-version.zip *.nbm
             -->
         </profile>
 
@@ -319,7 +348,7 @@
         <profile>
             <id>debug-ide</id>
             <properties>
-                <nbm.run.arguments>-J-Xdebug -J-Xnoagent -J-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=8000</nbm.run.arguments>
+                <nbm.run.arguments>-J-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000</nbm.run.arguments>
             </properties>
         </profile>
     </profiles>
@@ -330,6 +359,7 @@
         <module>libs.scala.continuations</module>
         <module>libs.scala.library</module>
         <module>libs.scala.reflect</module>
+        <module>libs.scalariform</module>
         <module>libs.sbt</module>
         <module>libs.xtc</module>
         <module>scala.core</module>

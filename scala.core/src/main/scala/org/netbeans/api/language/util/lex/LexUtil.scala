@@ -39,19 +39,18 @@
 package org.netbeans.api.language.util.lex
 
 import java.io.IOException
-import javax.swing.text.{BadLocationException, Document}
+import javax.swing.text.{ BadLocationException, Document }
 
 import org.netbeans.modules.csl.api.OffsetRange
-import org.netbeans.api.lexer.{Language, Token, TokenHierarchy, TokenId, TokenSequence}
-import org.netbeans.editor.{BaseDocument, Utilities}
+import org.netbeans.api.lexer.{ Language, Token, TokenHierarchy, TokenId, TokenSequence }
+import org.netbeans.editor.{ BaseDocument, Utilities }
 import org.netbeans.modules.parsing.spi.Parser
 import org.openide.cookies.EditorCookie
-import org.openide.filesystems.{FileObject, FileUtil}
-import org.openide.loaders.{DataObject, DataObjectNotFoundException}
+import org.openide.filesystems.{ FileObject, FileUtil }
+import org.openide.loaders.{ DataObject, DataObjectNotFoundException }
 import org.openide.util.Exceptions
 
-import scala.collection.mutable.{Stack}
-
+import scala.collection.mutable.{ Stack }
 
 /**
  *
@@ -72,7 +71,8 @@ trait LexUtil {
    *
    */
   val INDENT_WORDS: Set[TokenId]
-  /** Tokens that match a corresponding END statement. Even though while, unless etc.
+  /**
+   * Tokens that match a corresponding END statement. Even though while, unless etc.
    * can be statement modifiers, those luckily have different token ids so are not a problem
    * here.
    */
@@ -106,7 +106,7 @@ trait LexUtil {
   //
   //        return null;
   //    }
-  
+
   /** For a possibly generated offset in an AST, return the corresponding lexing/true document offset */
   def getLexerOffset(info: Parser.Result, astOffset: Int): Int = {
     if (info ne null) {
@@ -144,7 +144,7 @@ trait LexUtil {
       val rangeStart = lexicalRange.getStart
       pResult.getSnapshot.getEmbeddedOffset(rangeStart) match {
         case `rangeStart` => lexicalRange
-        case -1 => OffsetRange.NONE
+        case -1           => OffsetRange.NONE
         case start =>
           // Assumes the translated range maintains size
           new OffsetRange(start, start + lexicalRange.getLength)
@@ -156,7 +156,7 @@ trait LexUtil {
   final def getTokenHierarchy(doc: BaseDocument, offset: Int): Option[TokenHierarchy[_]] = {
     TokenHierarchy.get(doc) match {
       case null => None
-      case x => Some(x)
+      case x    => Some(x)
     }
   }
 
@@ -218,9 +218,10 @@ trait LexUtil {
         try {
           ts.move(offset)
         } catch {
-          case ex: AssertionError => doc.getProperty(Document.StreamDescriptionProperty) match {
+          case ex: AssertionError =>
+            doc.getProperty(Document.StreamDescriptionProperty) match {
               case dobj: DataObject => Exceptions.attachMessage(ex, FileUtil.getFileDisplayName(dobj.getPrimaryFile))
-              case _ =>
+              case _                =>
             }
             throw ex
         }
@@ -235,15 +236,15 @@ trait LexUtil {
   def getToken(doc: BaseDocument, offset: Int): Option[Token[TokenId]] = {
     getPositionedSequence(doc, offset) match {
       case Some(x) => x.token match {
-          case null => None
-          case token => Some(token)
-        }
+        case null  => None
+        case token => Some(token)
+      }
       case None => None
     }
   }
 
   def getTokenId(doc: BaseDocument, offset: Int): Option[TokenId] = {
-    getToken(doc, offset).map{_.id}
+    getToken(doc, offset).map { _.id }
   }
 
   def getTokenChar(doc: BaseDocument, offset: Int): Char = {
@@ -287,7 +288,7 @@ trait LexUtil {
     Option(ts.token)
   }
 
-  final def findPreviousNotIn(ts:TokenSequence[TokenId], excludes:Set[TokenId]): Option[Token[TokenId]] = {
+  final def findPreviousNotIn(ts: TokenSequence[TokenId], excludes: Set[TokenId]): Option[Token[TokenId]] = {
     if (excludes.contains(ts.token.id)) {
       while (ts.movePrevious && excludes.contains(ts.token.id)) {}
     }
@@ -474,7 +475,6 @@ trait LexUtil {
     None
   }
 
-
   /** Search forwards in the token sequence until a token of type <code>down</code> is found */
   def findFwd(ts: TokenSequence[TokenId], up: TokenId, down: TokenId): OffsetRange = {
     var balance = 0
@@ -561,7 +561,8 @@ trait LexUtil {
     OffsetRange.NONE
   }
 
-  /** Find the token that begins a block terminated by "end". This is a token
+  /**
+   * Find the token that begins a block terminated by "end". This is a token
    * in the END_PAIRS array. Walk backwards and find the corresponding token.
    * It does not use indentation for clues since this could be wrong and be
    * precisely the reason why the user is using pair matching to see what's wrong.
@@ -607,7 +608,8 @@ trait LexUtil {
     OffsetRange.NONE
   }
 
-  /** Determine whether "do" is an indent-token (e.g. matches an end) or if
+  /**
+   * Determine whether "do" is an indent-token (e.g. matches an end) or if
    * it's simply a separator in while,until,for expressions)
    */
   def isEndmatchingDo(doc: BaseDocument, offset: Int): Boolean = {
@@ -637,12 +639,13 @@ trait LexUtil {
           case None => return true
         }
       }
-    } catch {case ble: BadLocationException => Exceptions.printStackTrace(ble)}
+    } catch { case ble: BadLocationException => Exceptions.printStackTrace(ble) }
 
     true
   }
 
-  /** Compute the balance of begin/end tokens on the line.
+  /**
+   * Compute the balance of begin/end tokens on the line.
    * @param doc the document
    * @param offset The offset somewhere on the line
    * @param upToOffset If true, only compute the line balance up to the given offset (inclusive),
@@ -786,7 +789,7 @@ trait LexUtil {
 
     getTokenId(doc, begin) match {
       case Some(x) if isLineComment(x) => true
-      case _ => false
+      case _                           => false
     }
   }
 
@@ -1165,7 +1168,6 @@ trait LexUtil {
   //    }
   //
 
-
   /**
    * Back up to the first space character prior to the given offset - as long as
    * it's on the same line!  If there's only leading whitespace on the line up
@@ -1204,7 +1206,7 @@ trait LexUtil {
         lineStart = 0
       }
     } catch {
-      case ble:BadLocationException =>
+      case ble: BadLocationException =>
         Exceptions.printStackTrace(ble)
         return lexOffset
     }
@@ -1257,7 +1259,7 @@ trait LexUtil {
         offset = Utilities.getRowStart(baseDoc, offset)
 
         if (!Utilities.isRowEmpty(baseDoc, offset) &&
-            !Utilities.isRowWhite(baseDoc, offset)) {
+          !Utilities.isRowWhite(baseDoc, offset)) {
           break = true
         } else {
           offset -= 1
@@ -1299,7 +1301,7 @@ trait LexUtil {
         }
       }
     } catch {
-      case ble:BadLocationException => Exceptions.printStackTrace(ble)
+      case ble: BadLocationException => Exceptions.printStackTrace(ble)
     }
 
     comments.toList
@@ -1356,7 +1358,6 @@ trait LexUtil {
     INDENT_WORDS.contains(id)
   }
 
-
   def isKeyword(id: TokenId): Boolean = {
     id.primaryCategory.equals("keyword")
   }
@@ -1374,8 +1375,8 @@ trait LexUtil {
         return (if (openIfNecessary) Some(ec.openDocument) else Some(ec.getDocument)).asInstanceOf[Option[BaseDocument]]
       }
     } catch {
-      case ex:DataObjectNotFoundException => Exceptions.printStackTrace(ex)
-      case ex:IOException => Exceptions.printStackTrace(ex)
+      case ex: DataObjectNotFoundException => Exceptions.printStackTrace(ex)
+      case ex: IOException                 => Exceptions.printStackTrace(ex)
     }
 
     None

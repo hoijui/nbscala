@@ -42,28 +42,27 @@ import javax.lang.model.element.ExecutableElement
 import javax.swing.text.BadLocationException
 import org.netbeans.api.java.source.ClassIndex
 import org.netbeans.api.java.source.ClassIndex.NameKind
-import org.netbeans.api.lexer.{Token, TokenHierarchy, TokenId, TokenSequence}
-import org.netbeans.editor.{BaseDocument, Utilities}
+import org.netbeans.api.lexer.{ Token, TokenHierarchy, TokenId, TokenSequence }
+import org.netbeans.editor.{ BaseDocument, Utilities }
 import org.netbeans.modules.csl.api.CodeCompletionHandler.QueryType
-import org.netbeans.modules.csl.api.{CodeCompletionHandler, CompletionProposal}
-import org.netbeans.modules.csl.spi.{DefaultCompletionResult, ParserResult}
+import org.netbeans.modules.csl.api.{ CodeCompletionHandler, CompletionProposal }
+import org.netbeans.modules.csl.spi.{ DefaultCompletionResult, ParserResult }
 import org.netbeans.modules.parsing.spi.indexing.support.QuerySupport
 import org.openide.util.Exceptions
 
 import org.netbeans.modules.scala.core.ScalaParserResult
 import org.netbeans.modules.scala.core.ScalaSourceUtil
 import org.netbeans.modules.scala.core.ScalaSymbolResolver
-import org.netbeans.modules.scala.core.lexer.{ScalaLexUtil, ScalaTokenId}
+import org.netbeans.modules.scala.core.lexer.{ ScalaLexUtil, ScalaTokenId }
 import org.netbeans.modules.scala.core.ScalaGlobal
 import org.netbeans.modules.scala.core.rats.ParserScala
-
 
 /**
  *
  * @author Caoyuan Deng
- * 
+ *
  * It seems CompleteHandle will always be called before other csl features (semantic, structure etc)
- * that's good. But then, we may need to make sure the prResult had been reset first and 
+ * that's good. But then, we may need to make sure the prResult had been reset first and
  * go to semantic analysis when root is required.
  */
 class ScalaCodeCompleter(val pr: ScalaParserResult) {
@@ -72,7 +71,7 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
   val global = pr.global
   private val th = pr.getSnapshot.getTokenHierarchy
   private val doc = pr.getSnapshot.getSource.getDocument(false).asInstanceOf[BaseDocument]
-  
+
   private object completionProposals extends {
     val global = ScalaCodeCompleter.this.global
   } with ScalaCompletionProposals
@@ -94,15 +93,13 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
   var fqn: String = _
   //var index: ScalaIndex = _
 
-
   final case class Call(base: Token[TokenId], dot: Token[TokenId], select: Token[TokenId])
 
   private val CALL_IDs: Set[TokenId] = Set(ScalaTokenId.Identifier,
-                                           ScalaTokenId.This,
-                                           ScalaTokenId.Super,
-                                           ScalaTokenId.Class,
-                                           ScalaTokenId.Wild
-  )
+    ScalaTokenId.This,
+    ScalaTokenId.Super,
+    ScalaTokenId.Class,
+    ScalaTokenId.Wild)
 
   private def isCallId(id: TokenId) = CALL_IDs.contains(id)
 
@@ -125,7 +122,7 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
         case id if ScalaLexUtil.isWsComment(id) =>
           collector match {
             case x :: xs if ScalaLexUtil.isWsComment(x.id) | x.id == ScalaTokenId.Dot =>
-              // * do not add more, combined all ws comment tokens
+            // * do not add more, combined all ws comment tokens
             case _ => collector = token :: collector
           }
 
@@ -141,7 +138,7 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
         case _ => break = true
       }
 
-      collector map {_.id} match {
+      collector map { _.id } match {
         case List(a, b) if ScalaLexUtil.isWsComment(b) | b == ScalaTokenId.Dot => break = true
         case List(a, b, c) => break = true // collect no more than 3 tokens
         case _ =>
@@ -174,7 +171,6 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
     if (caseSensitive) theString.startsWith(prefix)
     else theString.toLowerCase.startsWith(prefix.toLowerCase)
   }
-
 
   def completeKeywords(proposals: java.util.List[CompletionProposal]) {
     // No keywords possible in the RHS of a call (except for "this"?)
@@ -230,6 +226,7 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
    * Determine if we're trying to complete the name for a "new" (in which case
    * we show available constructors.
    */
+  @deprecated("Use completeType", "1.6.0")
   def completeNew(proposals: java.util.List[CompletionProposal]): Boolean = {
     val ts = ScalaLexUtil.getTokenSequence(doc, th, lexOffset).getOrElse(return true)
     ts.move(lexOffset)
@@ -237,7 +234,7 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
       return true
     }
 
-    if (true /* && index ne null */) {
+    if (true /* && index ne null */ ) {
 
       if (ts.offset == lexOffset) {
         // We're looking at the offset to the RIGHT of the caret
@@ -293,7 +290,7 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
            */
           val cpInfo = ScalaSourceUtil.getClasspathInfo(pr.getSnapshot.getSource.getFileObject).getOrElse(return true)
           val tpElements = cpInfo.getClassIndex.getDeclaredTypes(prefix, NameKind.CASE_INSENSITIVE_PREFIX,
-                                                                 java.util.EnumSet.allOf(classOf[ClassIndex.SearchScope]))
+            java.util.EnumSet.allOf(classOf[ClassIndex.SearchScope]))
 
           val itr = tpElements.iterator
           while (itr.hasNext) {
@@ -301,7 +298,7 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
             val qname = tpElement.getQualifiedName
             val sname = qname.lastIndexOf(".") match {
               case -1 => qname
-              case i => qname.substring(i + 1, qname.length)
+              case i  => qname.substring(i + 1, qname.length)
             }
             if (sname.startsWith(prefix)) {
               val jElement = global.JavaElement(tpElement)
@@ -309,7 +306,7 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
               proposals.add(proposal)
             }
           }
-          
+
           return true
         }
       }
@@ -318,35 +315,37 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
     false
   }
 
-  /*
-   @Deprecated
-   def completeImport(proposals: java.util.List[CompletionProposal]): Boolean = {
-   val fqnPrefix = prefix match {
-   case null => return false
-   case x => x
-   }
+  def completeType(proposals: java.util.List[CompletionProposal]): Boolean = {
+    if (prefix.length < 1) {
+      return false
+    }
 
-   val cpInfo = ScalaSourceUtil.getClasspathInfo(fileObject).getOrElse(return false)
+    val cpInfo = ScalaSourceUtil.getClasspathInfo(pr.getSnapshot.getSource.getFileObject).getOrElse(return true)
+    val tpElements = cpInfo.getClassIndex.getDeclaredTypes(prefix, NameKind.CASE_INSENSITIVE_PREFIX,
+      java.util.EnumSet.allOf(classOf[ClassIndex.SearchScope]))
 
-   val lastDot = fqnPrefix.lastIndexOf('.')
-   val (fulledPath, lastPart) =  if (lastDot == -1) {
-   (fqnPrefix, "")
-   } else if (lastDot == fqnPrefix.length - 1) {
-   (fqnPrefix.substring(0, lastDot), "")
-   } else {
-   (fqnPrefix.substring(0, lastDot), fqnPrefix.substring(lastDot + 1, fqnPrefix.length))
-   }
+    var found = false
+    val itr = tpElements.iterator
+    while (itr.hasNext) {
+      val tpElement = itr.next
+      val qname = tpElement.getQualifiedName
+      val sname = qname.lastIndexOf(".") match {
+        case -1 => qname
+        case i  => qname.substring(i + 1, qname.length)
+      }
+      if (sname.startsWith(prefix)) {
+        val jElement = global.JavaElement(tpElement)
+        val proposal = TypeProposal(jElement, this)
+        proposals.add(proposal)
+        found = true
+      }
+    }
 
-   resolver.resolveQualifiedName("", fulledPath) match {
-   case None => false
-   case Some(x) =>
-   prefix = lastPart
-   completeSymbolMembers(x, proposals)
-   }
-   }
-   */
+    found
+  }
 
-  /** Compute the current method call at the given offset. Returns false if we're not in a method call.
+  /**
+   * Compute the current method call at the given offset. Returns false if we're not in a method call.
    * The argument index is returned in parameterIndexHolder[0] and the method being
    * called in methodHolder[0].
    */
@@ -384,14 +383,14 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
 
       var closestOpt = root.findItemsAt(th, astOffset1) match {
         case Nil => None
-        case xs => Some(xs.reverse.head)
+        case xs  => Some(xs.reverse.head)
       }
       var closestOffset = astOffset1 - 1
       while (closestOpt == None && closestOffset > 0) {
         closestOffset -= 1
         closestOpt = root.findItemsAt(th, closestOffset) match {
           case Nil => None
-          case xs => Some(xs.reverse.head)
+          case xs  => Some(xs.reverse.head)
         }
       }
 
@@ -472,29 +471,43 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
     true
   }
 
-  def completeLocals(proposals: java.util.List[CompletionProposal]) {
+  def completeScope(proposals: java.util.List[CompletionProposal]) {
     //pResult.toTyped
-    
+
     val pos = global.rangePos(pr.srcFile, lexOffset, lexOffset, lexOffset)
     val resp = new global.Response[List[global.Member]]
     global.askScopeCompletion(pos, resp)
     resp.get match {
       case Left(members) =>
-        for (global.ScopeMember(sym, tpe, accessible, viaImport) <- members
-             if startsWith(sym.nameString, prefix) && !sym.isConstructor
-        ) {
-          if (accessible) {
-            createSymbolProposal(sym) foreach {proposals add _}
+        for (global.ScopeMember(sym, tpe, accessible, viaImport) <- members if accessible && startsWith(sym.nameString, prefix)) {
+          if (!sym.isType && !sym.isClass && !sym.isTrait && !sym.isModule && !sym.isModuleClass && !sym.isTypeParameter) {
+            val s = sym
+            val t = tpe
+            val prio = try {
+              tpe match {
+                case _: global.TypeRef                      => 0
+                case _: global.MethodType if sym.isImplicit => 1
+                case _: global.MethodType                   => -1
+                case _: global.NullaryMethodType            => -1
+                case _: global.TypeVar                      => -3
+                case _                                      => 0
+              }
+            } catch { case _: Throwable => 0 }
+
+            createSymbolProposal(sym) foreach { proposal =>
+              proposal.setSortPrioOverride(prio)
+              proposal.setSmart(sym.isLocal)
+              proposals.add(proposal)
+            }
           }
         }
-      case Right(ex) => ScalaGlobal.resetLate(global, ex) // there may be scala.tools.nsc.FatalError: no context found for scala.tools.nsc.util.OffsetPosition@e302cef1
+      case Right(ex) => global.processGlobalException(ex) // there may be scala.tools.nsc.FatalError: no context found for scala.tools.nsc.util.OffsetPosition@e302cef1
     }
-    
   }
 
   def completeSymbolMembers(baseToken: Token[TokenId], proposals: java.util.List[CompletionProposal]): Boolean = {
     //pResult.toTyped
-    
+
     val offset = baseToken.offset(th)
     val endOffset = offset + baseToken.length - 1
     val pos = global.rangePos(pr.srcFile, offset, offset, endOffset)
@@ -502,57 +515,48 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
     global.askTypeCompletion(pos, resp)
     resp.get match {
       case Left(members) =>
-        for (global.TypeMember(sym, tpe, accessible, inherited, viaView) <- members 
-             if startsWith(sym.nameString, prefix) && !sym.isConstructor
-        ) {
-          if (accessible) {
-            createSymbolProposal(sym) foreach {proposal =>
-              proposal.getElement.asInstanceOf[global.ScalaElement].isInherited = inherited
-              proposal.getElement.asInstanceOf[global.ScalaElement].isImplicit = (viaView != global.NoSymbol)
-              proposals.add(proposal)
-            }
+        for (global.TypeMember(sym, tpe, accessible, inherited, viaView) <- members if accessible && startsWith(sym.nameString, prefix) && !sym.isConstructor) {
+          createSymbolProposal(sym) foreach { proposal =>
+            proposal.getElement.asInstanceOf[global.ScalaElement].isInherited = inherited
+            proposal.getElement.asInstanceOf[global.ScalaElement].isImplicit = (viaView != global.NoSymbol)
+            proposals.add(proposal)
           }
         }
-      case Right(ex) => ScalaGlobal.resetLate(global, ex)
+      case Right(ex) => global.processGlobalException(ex)
     }
-    
 
     // always return true ?
     true
   }
 
-  private def createSymbolProposal(sym: global.Symbol): Option[CompletionProposal] = {
-    var element: global.ScalaElement = null
-    var proposal: CompletionProposal = null
+  private def createSymbolProposal(sym: global.Symbol): Option[ScalaCompletionProposal] = {
     if (sym.isMethod) {
-      element = global.ScalaElement(sym, pr)
-      proposal = FunctionProposal(element, this)
+      val element = global.ScalaElement(sym, pr)
+      Some(FunctionProposal(element, this))
     } else if (sym.isVariable) {
-      element = global.ScalaElement(sym, pr)
-      proposal = PlainProposal(element, this)
+      val element = global.ScalaElement(sym, pr)
+      Some(PlainProposal(element, this))
     } else if (sym.isValue) {
-      element = global.ScalaElement(sym, pr)
-      proposal = PlainProposal(element, this)
+      val element = global.ScalaElement(sym, pr)
+      Some(PlainProposal(element, this))
     } else if (sym.isClass || sym.isTrait || sym.isModule || sym.isPackage) {
-      element = global.ScalaElement(sym, pr)
-      proposal = PlainProposal(element, this)
-    }
-
-    if (proposal ne null) Some(proposal) else None
+      val element = global.ScalaElement(sym, pr)
+      Some(PlainProposal(element, this))
+    } else None
   }
 
   private def getResultType(sym: global.Symbol): Option[global.Type] = {
-    global.askForResponse {() =>
+    global.askForResponse { () =>
       sym.tpe match {
         case null | global.ErrorType | global.NoType => None
         case tpe => tpe.resultType match {
-            case null => None
-            case x => Some(x)
-          }
+          case null => None
+          case x    => Some(x)
+        }
       }
     } get match {
-      case Left(x) => x
-      case Right(ex) => ScalaGlobal.resetLate(global, ex); None
+      case Left(x)   => x
+      case Right(ex) => global.processGlobalException(ex, None)
     }
   }
 
@@ -561,100 +565,97 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
 object ScalaCodeCompleter {
   // Dbl-space lines to keep formatter from collapsing pairs into a block
   private val REGEXP_WORDS = Array("\\0", "The NUL character (\\u0000)",
-                                   "\\t", "Tab (\\u0009)",
-                                   "\\n", "Newline (\\u000A)",
-                                   "\\v", "Vertical tab (\\u000B)",
-                                   "\\f", "Form feed (\\u000C)",
-                                   "\\r", "Carriage return (\\u000D)",
-                                   "\\x", "\\x<i>nn</i>: The latin character in hex <i>nn</i>",
-                                   "\\u", "\\u<i>xxxx</i>: The Unicode character in hex <i>xxxx</i>",
-                                   "\\c", "\\c<i>X</i>: The control character ^<i>X</i>",
-                                   // Character classes
-                                   "[]", "Any one character between the brackets",
-                                   "[^]", "Any one character not between the brackets",
-                                   "\\w", "Any ASCII word character; same as [0-9A-Za-z_]",
-                                   "\\W", "Not a word character; same as [^0-9A-Za-z_]",
-                                   "\\s", "Unicode space character",
-                                   "\\S", "Non-space character",
-                                   "\\d", "Digit character; same as [0-9]",
-                                   "\\D", "Non-digit character; same as [^0-9]",
-                                   "[\\b]", "Literal backspace",
-                                   // Match positions
-                                   "^", "Start of line",
-                                   "$", "End of line",
-                                   "\\b", "Word boundary (if not in a range specification)",
-                                   "\\B", "Non-word boundary",
-                                   // According to JavaScript The Definitive Guide, the following are not supported
-                                   // in JavaScript:
-                                   // \\a, \\e, \\l, \\u, \\L, \\U, \\E, \\Q, \\A, \\Z, \\z, and \\G
-                                   //
-                                   //"\\A", "Beginning of string",
-                                   //"\\z", "End of string",
-                                   //"\\Z", "End of string (except \\n)",
+    "\\t", "Tab (\\u0009)",
+    "\\n", "Newline (\\u000A)",
+    "\\v", "Vertical tab (\\u000B)",
+    "\\f", "Form feed (\\u000C)",
+    "\\r", "Carriage return (\\u000D)",
+    "\\x", "\\x<i>nn</i>: The latin character in hex <i>nn</i>",
+    "\\u", "\\u<i>xxxx</i>: The Unicode character in hex <i>xxxx</i>",
+    "\\c", "\\c<i>X</i>: The control character ^<i>X</i>",
+    // Character classes
+    "[]", "Any one character between the brackets",
+    "[^]", "Any one character not between the brackets",
+    "\\w", "Any ASCII word character; same as [0-9A-Za-z_]",
+    "\\W", "Not a word character; same as [^0-9A-Za-z_]",
+    "\\s", "Unicode space character",
+    "\\S", "Non-space character",
+    "\\d", "Digit character; same as [0-9]",
+    "\\D", "Non-digit character; same as [^0-9]",
+    "[\\b]", "Literal backspace",
+    // Match positions
+    "^", "Start of line",
+    "$", "End of line",
+    "\\b", "Word boundary (if not in a range specification)",
+    "\\B", "Non-word boundary",
+    // According to JavaScript The Definitive Guide, the following are not supported
+    // in JavaScript:
+    // \\a, \\e, \\l, \\u, \\L, \\U, \\E, \\Q, \\A, \\Z, \\z, and \\G
+    //
+    //"\\A", "Beginning of string",
+    //"\\z", "End of string",
+    //"\\Z", "End of string (except \\n)",
 
-                                   "*", "Zero or more repetitions of the preceding",
-                                   "+", "One or more repetitions of the preceding",
-                                   "{m,n}", "At least m and at most n repetitions of the preceding",
-                                   "?", "At most one repetition of the preceding; same as {0,1}",
-                                   "|", "Either preceding or next expression may match",
-                                   "()", "Grouping" //"[:alnum:]", "Alphanumeric character class",
-                                   //"[:alpha:]", "Uppercase or lowercase letter",
-                                   //"[:blank:]", "Blank and tab",
-                                   //"[:cntrl:]", "Control characters (at least 0x00-0x1f,0x7f)",
-                                   //"[:digit:]", "Digit",
-                                   //"[:graph:]", "Printable character excluding space",
-                                   //"[:lower:]", "Lowecase letter",
-                                   //"[:print:]", "Any printable letter (including space)",
-                                   //"[:punct:]", "Printable character excluding space and alphanumeric",
-                                   //"[:space:]", "Whitespace (same as \\s)",
-                                   //"[:upper:]", "Uppercase letter",
-                                   //"[:xdigit:]", "Hex digit (0-9, a-f, A-F)",
-  )    // Strings section 7.8
+    "*", "Zero or more repetitions of the preceding",
+    "+", "One or more repetitions of the preceding",
+    "{m,n}", "At least m and at most n repetitions of the preceding",
+    "?", "At most one repetition of the preceding; same as {0,1}",
+    "|", "Either preceding or next expression may match",
+    "()", "Grouping" //"[:alnum:]", "Alphanumeric character class",
+    //"[:alpha:]", "Uppercase or lowercase letter",
+    //"[:blank:]", "Blank and tab",
+    //"[:cntrl:]", "Control characters (at least 0x00-0x1f,0x7f)",
+    //"[:digit:]", "Digit",
+    //"[:graph:]", "Printable character excluding space",
+    //"[:lower:]", "Lowecase letter",
+    //"[:print:]", "Any printable letter (including space)",
+    //"[:punct:]", "Printable character excluding space and alphanumeric",
+    //"[:space:]", "Whitespace (same as \\s)",
+    //"[:upper:]", "Uppercase letter",
+    //"[:xdigit:]", "Hex digit (0-9, a-f, A-F)",
+    ) // Strings section 7.8
 
   private val STRING_ESCAPES = Array("\\0", "The NUL character (\\u0000)",
-                                     "\\b", "Backspace (0x08)",
-                                     "\\t", "Tab (\\u0009)",
-                                     "\\n", "Newline (\\u000A)",
-                                     "\\v", "Vertical tab (\\u000B)",
-                                     "\\f", "Form feed (\\u000C)",
-                                     "\\r", "Carriage return (\\u000D)",
-                                     "\\\"", "Double Quote (\\u0022)",
-                                     "\\'", "Single Quote (\\u0027)",
-                                     "\\\\", "Backslash (\\u005C)",
-                                     "\\x", "\\x<i>nn</i>: The latin character in hex <i>nn</i>",
-                                     "\\u", "\\u<i>xxxx</i>: The Unicode character in hex <i>xxxx</i>",
-                                     "\\", "\\<i>ooo</i>: The latin character in octal <i>ooo</i>",
-                                     // PENDING: Is this supported?
-                                     "\\c", "\\c<i>X</i>: The control character ^<i>X</i>"
-  )
-
+    "\\b", "Backspace (0x08)",
+    "\\t", "Tab (\\u0009)",
+    "\\n", "Newline (\\u000A)",
+    "\\v", "Vertical tab (\\u000B)",
+    "\\f", "Form feed (\\u000C)",
+    "\\r", "Carriage return (\\u000D)",
+    "\\\"", "Double Quote (\\u0022)",
+    "\\'", "Single Quote (\\u0027)",
+    "\\\\", "Backslash (\\u005C)",
+    "\\x", "\\x<i>nn</i>: The latin character in hex <i>nn</i>",
+    "\\u", "\\u<i>xxxx</i>: The Unicode character in hex <i>xxxx</i>",
+    "\\", "\\<i>ooo</i>: The latin character in octal <i>ooo</i>",
+    // PENDING: Is this supported?
+    "\\c", "\\c<i>X</i>: The control character ^<i>X</i>")
 
   private val scalaDocWords = Array("@augments",
-                                    "@class",
-                                    "@config",
-                                    "@constructor",
-                                    "@deprecated",
-                                    "@description",
-                                    "@event",
-                                    "@example",
-                                    "@exception",
-                                    "@fileOverview",
-                                    "@function",
-                                    "@ignore",
-                                    "@inherits",
-                                    "@memberOf",
-                                    "@name",
-                                    "@namespace",
-                                    "@param",
-                                    "@param",
-                                    "@private",
-                                    "@property",
-                                    "@return",
-                                    "@scope",
-                                    "@scope",
-                                    "@static",
-                                    "@type"
-  )
+    "@class",
+    "@config",
+    "@constructor",
+    "@deprecated",
+    "@description",
+    "@event",
+    "@example",
+    "@exception",
+    "@fileOverview",
+    "@function",
+    "@ignore",
+    "@inherits",
+    "@memberOf",
+    "@name",
+    "@namespace",
+    "@param",
+    "@param",
+    "@private",
+    "@property",
+    "@return",
+    "@scope",
+    "@scope",
+    "@static",
+    "@type")
 
   var callLineStart = -1
   var callMethod: ExecutableElement = _

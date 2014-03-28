@@ -64,7 +64,7 @@ import org.netbeans.modules.scala.refactoring.WhereUsedQueryConstants
 import scala.collection.mutable.HashSet
 /**
  * WhereUsedQueryUI from the Java refactoring module, only moderately modified for Ruby
- * 
+ *
  * @author Martin Matula, Jan Becicka
  */
 object WhereUsedRefactoringUI {
@@ -128,7 +128,7 @@ class WhereUsedRefactoringUI(query: WhereUsedQuery, name: String, kind: ElementK
       case _ => null
     }
   }
-    
+
   private def setForMethod {
     if (panel.isMethodFromBaseClass) {
       query.setRefactoringSource(Lookups.singleton(panel.getBaseMethod))
@@ -138,13 +138,13 @@ class WhereUsedRefactoringUI(query: WhereUsedQuery, name: String, kind: ElementK
     query.putValue(WhereUsedQueryConstants.FIND_OVERRIDING_METHODS, panel.isMethodOverriders)
     query.putValue(WhereUsedQuery.FIND_REFERENCES, panel.isMethodFindUsages)
   }
-    
+
   private def setForClass {
     query.putValue(WhereUsedQueryConstants.FIND_SUBCLASSES, panel.isClassSubTypes)
     query.putValue(WhereUsedQueryConstants.FIND_DIRECT_SUBCLASSES, panel.isClassSubTypesDirectOnly)
     query.putValue(WhereUsedQuery.FIND_REFERENCES, panel.isClassFindUsages)
   }
-    
+
   def checkParameters: Problem = {
     kind match {
       case ElementKind.METHOD =>
@@ -154,7 +154,7 @@ class WhereUsedRefactoringUI(query: WhereUsedQuery, name: String, kind: ElementK
         setForClass
         query.fastCheckParameters
       case _ => null
-    } 
+    }
   }
 
   def getRefactoring: AbstractRefactoring = {
@@ -176,7 +176,7 @@ class WhereUsedRefactoringUI(query: WhereUsedQuery, name: String, kind: ElementK
           if (panel.isMethodFindUsages) {
             description = getString("DSC_FindUsages")
           }
-                    
+
           if (panel.isMethodOverriders) {
             if (description ne null) {
               description += " " + getString("DSC_And") + " "
@@ -185,16 +185,16 @@ class WhereUsedRefactoringUI(query: WhereUsedQuery, name: String, kind: ElementK
             }
             description += getString("DSC_WhereUsedMethodOverriders")
           }
-                    
+
           description += " " + getString("DSC_WhereUsedOf", panel.getMethodDeclaringClass + '.' + name) //NOI18N
           return description
-        case _ => 
+        case _ =>
       }
     }
-  
+
     getString("DSC_WhereUsed", name)
   }
-    
+
   private var bundle: ResourceBundle = _
   private def getString(key: String): String = {
     if (bundle eq null) {
@@ -202,7 +202,7 @@ class WhereUsedRefactoringUI(query: WhereUsedQuery, name: String, kind: ElementK
     }
     bundle.getString(key)
   }
-    
+
   private def getString(key: String, value: String): String = {
     new MessageFormat(getString(key)).format(Array(value).asInstanceOf[Array[Object]])
   }
@@ -210,7 +210,7 @@ class WhereUsedRefactoringUI(query: WhereUsedQuery, name: String, kind: ElementK
   def getName: String = {
     new MessageFormat(NbBundle.getMessage(classOf[WhereUsedPanel], "LBL_WhereUsed")).format(Array(name).asInstanceOf[Array[Object]])
   }
-    
+
   def hasParameters: Boolean = {
     true
   }

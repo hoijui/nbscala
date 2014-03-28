@@ -38,22 +38,22 @@
  */
 package org.netbeans.modules.scala.editor.options
 
-import java.awt.{Container, Rectangle}
-import java.awt.event.{ActionEvent, ActionListener}
+import java.awt.{ Container, Rectangle }
+import java.awt.event.{ ActionEvent, ActionListener }
 import java.beans.PropertyChangeSupport
-import java.util.prefs.{AbstractPreferences, BackingStoreException, Preferences}
-import javax.swing.{ComboBoxModel, JCheckBox, JComboBox, JComponent, JEditorPane, JPanel, JTextField, JViewport}
-import javax.swing.event.{DocumentEvent, DocumentListener}
+import java.util.prefs.{ AbstractPreferences, BackingStoreException, Preferences }
+import javax.swing.{ ComboBoxModel, JCheckBox, JComboBox, JComponent, JEditorPane, JPanel, JTextField, JViewport }
+import javax.swing.event.{ DocumentEvent, DocumentListener }
 import javax.swing.text.EditorKit
 
-import org.netbeans.api.editor.mimelookup.{MimeLookup, MimePath}
+import org.netbeans.api.editor.mimelookup.{ MimeLookup, MimePath }
 import org.netbeans.api.editor.settings.SimpleValueNames
 
-import org.netbeans.modules.options.editor.spi.{PreferencesCustomizer, PreviewProvider}
+import org.netbeans.modules.options.editor.spi.{ PreferencesCustomizer, PreviewProvider }
 import org.netbeans.modules.scala.core.ScalaMimeResolver
-import org.netbeans.modules.scala.editor.{ScalaFormatter}
+import org.netbeans.modules.scala.editor.{ ScalaFormatter }
 import org.netbeans.spi.options.OptionsPanelController
-import org.openide.util.{Exceptions, HelpCtx, NbBundle}
+import org.openide.util.{ Exceptions, HelpCtx, NbBundle }
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -116,7 +116,7 @@ object FmtOptions {
     if (kitClass eq null) {
       kitClass = MimeLookup.getLookup(MimePath.get(mimePath)).lookup(classOf[EditorKit]) match {
         case null => classOf[EditorKit]
-        case kit => kit.getClass.asInstanceOf[Class[EditorKit]]
+        case kit  => kit.getClass.asInstanceOf[Class[EditorKit]]
       }
     }
     kitClass
@@ -129,7 +129,7 @@ object FmtOptions {
   def getEditorKit(mimePath: String): EditorKit = {
     val kit = MimeLookup.getLookup(MimePath.parse(mimePath)).lookup(classOf[EditorKit]) match {
       case null => MimeLookup.getLookup(MimePath.parse("text/plain")).lookup(classOf[EditorKit])
-      case x => x
+      case x    => x
     }
 
     // * Don't use the prototype instance straightaway
@@ -139,7 +139,7 @@ object FmtOptions {
   def flush {
     try {
       getPreferences.flush
-    } catch {case e: BackingStoreException => Exceptions.printStackTrace(e)}
+    } catch { case e: BackingStoreException => Exceptions.printStackTrace(e) }
   }
 
   def getCurrentProfileId: String = {
@@ -157,7 +157,7 @@ object FmtOptions {
     try {
       value.toInt
       true
-    } catch {case e: NumberFormatException => false}
+    } catch { case e: NumberFormatException => false }
   }
 
   def getLastValue(optionID: String): String = {
@@ -169,14 +169,12 @@ object FmtOptions {
   // * The defaults will be override by default preferences of all languages and defaultPreferences in
   // * [Editors]/[text]/[x-scala]/[Preferences]/[Defaults]
   private var defaults = Map(SimpleValueNames.TEXT_LIMIT_WIDTH -> "80",
-                             SimpleValueNames.EXPAND_TABS -> "true",
-                             SimpleValueNames.TAB_SIZE -> "2",
-                             SimpleValueNames.INDENT_SHIFT_WIDTH -> "2",
-                             continuationIndentSize -> "2",
-                             reformatComments -> "false",
-                             indentXml -> "true"
-  )
-
+    SimpleValueNames.EXPAND_TABS -> "true",
+    SimpleValueNames.TAB_SIZE -> "2",
+    SimpleValueNames.INDENT_SHIFT_WIDTH -> "2",
+    continuationIndentSize -> "2",
+    reformatComments -> "false",
+    indentXml -> "true")
 
   // Customizer section ---------------------------------------------------------
   object Customizer {
@@ -185,16 +183,15 @@ object FmtOptions {
     private val STORE = 1
     private val ADD_LISTENERS = 2
   }
-  
+
   class Customizer(preferences: Preferences,
                    id: String,
                    panel: JPanel,
                    apreviewText: String,
-                   forcedOptions: Array[String]*
-  ) extends ActionListener
-       with DocumentListener
-       with PreviewProvider
-       with PreferencesCustomizer {
+                   forcedOptions: Array[String]*) extends ActionListener
+      with DocumentListener
+      with PreviewProvider
+      with PreferencesCustomizer {
 
     import Customizer._
 
@@ -210,7 +207,7 @@ object FmtOptions {
 
     // * Initialize the preview preferences
     val forcedPrefs = new PreviewPreferences
-    forcedOptions foreach {option => forcedPrefs.put(option(0), option(1))}
+    forcedOptions foreach { option => forcedPrefs.put(option(0), option(1)) }
     val previewPrefs = new ProxyPreferences(preferences, forcedPrefs)
 
     // * Load and hook up all the components
@@ -224,7 +221,7 @@ object FmtOptions {
     protected def loadFrom(p: Preferences) {
       scan(LOAD, p)
     }
-    
+
     protected def storeTo(p: Preferences) {
       scan(STORE, p)
     }
@@ -251,7 +248,7 @@ object FmtOptions {
       try {
         val rm = previewPrefs.getInt(SimpleValueNames.TEXT_LIMIT_WIDTH, getDefaultAsInt(SimpleValueNames.TEXT_LIMIT_WIDTH))
         jep.putClientProperty("TextLimitLine", rm) //NOI18N
-      } catch {case e: NumberFormatException =>}
+      } catch { case e: NumberFormatException => }
 
       var rm = 30
       try {
@@ -273,7 +270,7 @@ object FmtOptions {
         }
 
         //pane.putClientProperty("TextLimitLine", rm); // NOI18N
-      } catch {case e:NumberFormatException =>}
+      } catch { case e: NumberFormatException => }
 
       jep.setIgnoreRepaint(true)
       jep.setText(previewText)
@@ -317,25 +314,25 @@ object FmtOptions {
 
     private def performOperation(operation: Int, jc: JComponent, optionID: String, p: Preferences) {
       operation match {
-        case LOAD => loadData(jc, optionID, p)
-        case STORE => storeData(jc, optionID, p)
+        case LOAD          => loadData(jc, optionID, p)
+        case STORE         => storeData(jc, optionID, p)
         case ADD_LISTENERS => addListener(jc)
-        case _ =>
+        case _             =>
       }
     }
 
     private def scan(what: Int, p: Preferences) {
       for (jc <- components) {
         jc.getClientProperty(OPTION_ID) match {
-          case x: String => performOperation(what, jc, x, p)
-          case xs: Array[String] => xs foreach {performOperation(what, jc, _, p)}
-          case _ =>
+          case x: String         => performOperation(what, jc, x, p)
+          case xs: Array[String] => xs foreach { performOperation(what, jc, _, p) }
+          case _                 =>
         }
       }
     }
 
     private def scan(container: Container, components: ArrayBuffer[JComponent]) {
-      container.getComponents foreach {c =>
+      container.getComponents foreach { c =>
         if (c.isInstanceOf[JComponent]) {
           val jc = c.asInstanceOf[JComponent]
           val o = jc.getClientProperty(OPTION_ID)
@@ -359,7 +356,7 @@ object FmtOptions {
 
         case checkBox: JCheckBox =>
           val df = getDefaultAsBoolean(optionID)
-          checkBox.setSelected( node.getBoolean(optionID, df))
+          checkBox.setSelected(node.getBoolean(optionID, df))
 
         case cb: JComboBox[_] =>
           val value = node.get(optionID, getDefaultAsString(optionID))
@@ -381,7 +378,7 @@ object FmtOptions {
           if (isInteger(optionID)) {
             try {
               text.toInt
-            } catch {case e: NumberFormatException => return}
+            } catch { case e: NumberFormatException => return }
           }
 
           // * watch out, tabSize, spacesPerTab, indentSize and expandTabToSpaces
@@ -390,9 +387,8 @@ object FmtOptions {
           // store formatting preferences to MimeLookup and not use NbPreferences.
           // The problem currently is that MimeLookup based Preferences do not support subnodes.
           if (!optionID.equals(tabSize) &&
-              !optionID.equals(spacesPerTab) && !optionID.equals(indentSize) &&
-              getDefaultAsString(optionID).equals(text)
-          ) {
+            !optionID.equals(spacesPerTab) && !optionID.equals(indentSize) &&
+            getDefaultAsString(optionID).equals(text)) {
             node.remove(optionID)
           } else {
             node.put(optionID, text)
@@ -409,8 +405,8 @@ object FmtOptions {
           if (getDefaultAsString(optionID).equals(value))
             node.remove(optionID)
           else
-            node.put(optionID,value)
-          
+            node.put(optionID, value)
+
         case _ =>
       }
     }
@@ -426,7 +422,7 @@ object FmtOptions {
 
         case cb: JComboBox[_] =>
           cb.addActionListener(this)
-          
+
         case _ =>
       }
     }
@@ -487,14 +483,13 @@ object FmtOptions {
 
   class Factory(id: String,
                 panelClass: Class[_ <: JPanel],
-                previewText:String,
-                forcedOptions: Array[String]*
-  ) extends PreferencesCustomizer.Factory {
-    
+                previewText: String,
+                forcedOptions: Array[String]*) extends PreferencesCustomizer.Factory {
+
     def create(preferences: Preferences): PreferencesCustomizer = {
       try {
         new Customizer(preferences, id, panelClass.newInstance, previewText, forcedOptions: _*)
-      } catch {case e: Exception => null}
+      } catch { case e: Exception => null }
     }
   } // End of CategorySupport.Factory class
 
@@ -556,7 +551,7 @@ object FmtOptions {
     }
 
     protected def getSpi(key: String): String = {
-      delegates.find{_.get(key, null) ne null}.map(_.get(key, null)).getOrElse(null)
+      delegates.find { _.get(key, null) ne null }.map(_.get(key, null)).getOrElse(null)
     }
 
     protected def removeSpi(key: String) {

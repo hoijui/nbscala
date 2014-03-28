@@ -53,13 +53,12 @@ import org.netbeans.modules.parsing.api.ParserManager
 import org.netbeans.modules.parsing.api.ResultIterator
 import org.netbeans.modules.parsing.api.Source
 
-
 import org.netbeans.modules.scala.core.ast.ScalaItems
-import org.netbeans.modules.scala.core.{ScalaMimeResolver, ScalaParserResult}
+import org.netbeans.modules.scala.core.{ ScalaMimeResolver, ScalaParserResult }
 
 import org.netbeans.modules.refactoring.api.AbstractRefactoring
 import org.netbeans.modules.refactoring.api.Problem
-import org.netbeans.modules.refactoring.spi.{RefactoringPlugin, ProgressProviderAdapter}
+import org.netbeans.modules.refactoring.spi.{ RefactoringPlugin, ProgressProviderAdapter }
 import org.openide.filesystems.FileObject;
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
@@ -67,15 +66,15 @@ import scala.collection.mutable.HashSet
 
 /**
  * Plugin implementation based on the one for Java refactoring.
- * 
+ *
  * @author Jan Becicka
  * @author Tor Norbye
  */
 abstract class ScalaRefactoringPlugin extends ProgressProviderAdapter with RefactoringPlugin {
-  protected var cancelled = false  
-  protected def isCancelled: Boolean = synchronized {cancelled}
+  protected var cancelled = false
+  protected def isCancelled: Boolean = synchronized { cancelled }
 
-  override def cancelRequest: Unit = synchronized {cancelled = true}
+  override def cancelRequest: Unit = synchronized { cancelled = true }
 
   def createProblem(result: Problem, isFatal: Boolean, message: String): Problem = {
     val problem = new Problem(isFatal, message)
@@ -109,7 +108,7 @@ abstract class ScalaRefactoringPlugin extends ProgressProviderAdapter with Refac
           RetoucheUtils.getClasspathInfoFor(Array[FileObject](null))
         }
         refactoring.getContext.add(cpInfo)
-        
+
         cpInfo
       case x => x
     }
@@ -117,13 +116,13 @@ abstract class ScalaRefactoringPlugin extends ProgressProviderAdapter with Refac
 
   protected def processFiles(fos: Set[FileObject], task: TransformTask): Seq[ModificationResult] = {
     val sources = new java.util.HashSet[Source](2 * fos.size)
-    
+
     for (fo <- fos if RetoucheUtils.isScalaFile(fo)) sources.add(Source.create(fo))
 
     try {
       ParserManager.parse(sources, task)
       return task.results
-    } catch {case ex: ParseException => throw new RuntimeException(ex)}
+    } catch { case ex: ParseException => throw new RuntimeException(ex) }
   }
 
   protected abstract class TransformTask extends UserTask {
@@ -151,5 +150,5 @@ abstract class ScalaRefactoringPlugin extends ProgressProviderAdapter with Refac
       }
     }
   }
-  
+
 }

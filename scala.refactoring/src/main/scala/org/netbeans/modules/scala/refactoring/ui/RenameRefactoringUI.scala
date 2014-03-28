@@ -66,7 +66,7 @@ import org.netbeans.modules.scala.refactoring.RetoucheUtils
  *
  * @todo There are a lot of constructors here; figure out which ones are unused, and
  *   nuke them!
- * 
+ *
  * @author Martin Matula, Jan Becicka
  */
 object RenameRefactoringUI {
@@ -154,7 +154,6 @@ object RenameRefactoringUI {
     NbBundle.getMessage(classOf[RenameRefactoringUI], key)
   }
 
-
 }
 
 class RenameRefactoringUI(refactoring: AbstractRefactoring,
@@ -163,15 +162,14 @@ class RenameRefactoringUI(refactoring: AbstractRefactoring,
                           dispOldName: String,
                           stripPrefix: String,
                           pkgRename: Boolean,
-                          fromListener: Boolean
-) extends RefactoringUI with RefactoringUIBypass {
+                          fromListener: Boolean) extends RefactoringUI with RefactoringUIBypass {
   import RenameRefactoringUI._
 
   private var newName: String = _
   private var panel: RenamePanel = _
   private var byPassFolder: FileObject = _
   private var byPassPakageRename: Boolean = _
-    
+
   def isQuery = false
 
   def getPanel(parent: ChangeListener): CustomRefactoringPanel = {
@@ -180,12 +178,12 @@ class RenameRefactoringUI(refactoring: AbstractRefactoring,
       if ((stripPrefix ne null) && name.startsWith(stripPrefix)) {
         name = name.substring(stripPrefix.length)
       }
-            
+
       var suffix = if (handle ne null) {
         handle.kind match {
           //if (kind.isClass() || kind.isInterface()) {
           case ElementKind.CLASS /* || kind == ElementKind.MODULE*/ =>
-            /*kind.isInterface() ? getString("LBL_Interface") : */getString("LBL_Class")
+            /*kind.isInterface() ? getString("LBL_Interface") : */ getString("LBL_Class")
           case ElementKind.METHOD =>
             getString("LBL_Method")
           case ElementKind.FIELD =>
@@ -200,19 +198,19 @@ class RenameRefactoringUI(refactoring: AbstractRefactoring,
         }
       } else ""
       suffix = suffix + " " + name // NOI18N
-            
+
       panel = new RenamePanel(name, parent, NbBundle.getMessage(classOf[RenamePanel], "LBL_Rename") + " " + suffix, !fromListener, fromListener && !byPassPakageRename)
     }
 
     panel
   }
-    
+
   private def getPanelName: String = {
     var name = panel.getNameValue
     if ((stripPrefix ne null) && !name.startsWith(stripPrefix)) {
       name = stripPrefix + name
     }
-        
+
     name
   }
 
@@ -224,10 +222,10 @@ class RenameRefactoringUI(refactoring: AbstractRefactoring,
         x.setSearchInComments(panel.searchJavadoc)
       case _ => // MoveClassRefactoring etc
     }
-    
+
     refactoring.checkParameters
   }
-    
+
   def checkParameters: Problem = {
     if (!panel.isUpdateReferences) return null
     newName = getPanelName
@@ -259,8 +257,8 @@ class RenameRefactoringUI(refactoring: AbstractRefactoring,
   def getHelpCtx: HelpCtx = {
     null
   }
-    
-  def isRefactoringBypassRequired: Boolean =  {
+
+  def isRefactoringBypassRequired: Boolean = {
     !panel.isUpdateReferences
   }
 

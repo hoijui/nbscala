@@ -46,7 +46,7 @@ import java.util.logging.Level
 import org.netbeans.modules.csl.api.OffsetRange
 import org.netbeans.modules.editor.NbEditorUtilities
 import org.netbeans.editor.BaseAction
-import org.openide.{DialogDescriptor, DialogDisplayer, NotifyDescriptor}
+import org.openide.{ DialogDescriptor, DialogDisplayer, NotifyDescriptor }
 import org.openide.util.NbBundle
 import org.openide.util.RequestProcessor
 import org.netbeans.editor.BaseDocument
@@ -64,7 +64,7 @@ import scala.collection.mutable.ArrayBuffer
  * @author schmidtm
  */
 class FixImportsAction extends BaseAction(NbBundle.getMessage(classOf[FixImportsAction], "fix-scala-imports"), 0)
-                          with Runnable {
+    with Runnable {
   private val log = Logger.getLogger(classOf[FixImportsAction].getName)
 
   var doc: BaseDocument = _
@@ -81,7 +81,7 @@ class FixImportsAction extends BaseAction(NbBundle.getMessage(classOf[FixImports
     assert(comp ne null)
     comp.getDocument match {
       case null =>
-      case x => 
+      case x =>
         doc = x.asInstanceOf[BaseDocument]
         RequestProcessor.getDefault.post(this)
     }
@@ -100,34 +100,34 @@ class FixImportsAction extends BaseAction(NbBundle.getMessage(classOf[FixImports
       val source = Source.create(fo)
       // FIXME can we move this out of task (?)
       ParserManager.parse(java.util.Collections.singleton(source), new UserTask {
-          @throws(classOf[Exception])
-          override def run(resultIterator: ResultIterator)  {
-            val pr = resultIterator.getParserResult.asInstanceOf[ScalaParserResult]
-            if (pr ne null) {
-              val errors = pr.getDiagnostics
-              if (errors eq null) {
-                log.log(Level.FINEST, "Could not get list of errors")
-                return
-              }
+        @throws(classOf[Exception])
+        override def run(resultIterator: ResultIterator) {
+          val pr = resultIterator.getParserResult.asInstanceOf[ScalaParserResult]
+          if (pr ne null) {
+            val errors = pr.getDiagnostics
+            if (errors eq null) {
+              log.log(Level.FINEST, "Could not get list of errors")
+              return
+            }
 
-              // loop over the list of errors, remove duplicates and
-              // populate list of missing imports.
-              val itr = errors.iterator
-              while (itr.hasNext) {
-                val error = itr.next
-                FixImportsHelper.checkMissingImport(error.getDescription) match {
-                  case Some(missingName) if !missingNames.contains(missingName) =>
-                    FixImportsHelper.calcOffsetRange(doc, error.getStartPosition, error.getEndPosition) match {
-                      case Some(range) => missingNames += (missingName -> range)
-                      case None =>
-                    }
-                  case _ =>
-                }
+            // loop over the list of errors, remove duplicates and
+            // populate list of missing imports.
+            val itr = errors.iterator
+            while (itr.hasNext) {
+              val error = itr.next
+              FixImportsHelper.checkMissingImport(error.getDescription) match {
+                case Some(missingName) if !missingNames.contains(missingName) =>
+                  FixImportsHelper.calcOffsetRange(doc, error.getStartPosition, error.getEndPosition) match {
+                    case Some(range) => missingNames += (missingName -> range)
+                    case None        =>
+                  }
+                case _ =>
               }
             }
           }
-        })
-    } catch {case ex: ParseException => Exceptions.printStackTrace(ex)}
+        }
+      })
+    } catch { case ex: ParseException => Exceptions.printStackTrace(ex) }
 
     // go over list of missing imports, fix it - if there is only one
     // candidate or populate choosers input list.
@@ -135,8 +135,8 @@ class FixImportsAction extends BaseAction(NbBundle.getMessage(classOf[FixImports
     var multipleCandidates: Map[String, List[ImportCandidate]] = Map()
     for ((missing, range) <- missingNames) {
       FixImportsHelper.getImportCandidate(fo, missing, range) match {
-        case Nil =>
-        case x :: Nil => FixImportsHelper.doImport(doc, missing, x.fqn, range)
+        case Nil              =>
+        case x :: Nil         => FixImportsHelper.doImport(doc, missing, x.fqn, range)
         case importCandidates => multipleCandidates += (missing -> importCandidates)
       }
     }
@@ -147,7 +147,7 @@ class FixImportsAction extends BaseAction(NbBundle.getMessage(classOf[FixImports
       for (ImportCandidate(missing, fqn, range, icon, importantsLevel) <- presentChooser(multipleCandidates)) {
         FixImportsHelper.doImport(doc, missing, fqn, range)
       }
-    } 
+    }
   }
 
   private def presentChooser(multipleCandidates: Map[String, List[ImportCandidate]]): Array[ImportCandidate] = {
@@ -169,7 +169,7 @@ class FixImportsAction extends BaseAction(NbBundle.getMessage(classOf[FixImports
         val selections = panel.getSelections
         for ((missing, candidates) <- multipleCandidates) {
           for (seletedFqn <- selections) {
-            candidates.find{_.fqn == seletedFqn} foreach {result += _}
+            candidates.find { _.fqn == seletedFqn } foreach { result += _ }
           }
         }
         result.toArray

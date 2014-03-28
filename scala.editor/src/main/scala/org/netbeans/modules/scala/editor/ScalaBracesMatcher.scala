@@ -41,8 +41,8 @@ package org.netbeans.modules.scala.editor
 
 import javax.swing.text.BadLocationException
 import org.netbeans.editor.BaseDocument
-import org.netbeans.modules.scala.core.lexer.{ScalaTokenId, ScalaLexUtil}
-import org.netbeans.spi.editor.bracesmatching.{BracesMatcher, MatcherContext}
+import org.netbeans.modules.scala.core.lexer.{ ScalaTokenId, ScalaLexUtil }
+import org.netbeans.spi.editor.bracesmatching.{ BracesMatcher, MatcherContext }
 
 /**
  *
@@ -52,14 +52,13 @@ class ScalaBracesMatcher(context: MatcherContext) extends BracesMatcher {
 
   @throws(classOf[InterruptedException])
   @throws(classOf[BadLocationException])
-  override 
-  def findOrigin: Array[Int] = {
+  override def findOrigin: Array[Int] = {
     var offset = context.getSearchOffset
     val doc = context.getDocument.asInstanceOf[BaseDocument]
 
     //doc.readLock
     try {
-      ScalaLexUtil.getTokenSequence(doc, offset) foreach {ts =>
+      ScalaLexUtil.getTokenSequence(doc, offset) foreach { ts =>
         ts.move(offset)
         if (!ts.moveNext) {
           return null
@@ -104,18 +103,18 @@ class ScalaBracesMatcher(context: MatcherContext) extends BracesMatcher {
             return Array(ts.offset, ts.offset + token.length)
           case ScalaTokenId.LBracket =>
             return Array(ts.offset, ts.offset + token.length)
-            //            } else if (id == ScalaTokenId.DO && !ScalaLexUtil.isEndmatchingDo(doc, ts.offset())) {
-            //                // No matching dot for "do" used in conditionals etc.
-            //                return OffsetRange.NONE;
+          //            } else if (id == ScalaTokenId.DO && !ScalaLexUtil.isEndmatchingDo(doc, ts.offset())) {
+          //                // No matching dot for "do" used in conditionals etc.
+          //                return OffsetRange.NONE;
           case ScalaTokenId.RBracket =>
             return Array(ts.offset, ts.offset + token.length)
-            //            } else if (id.primaryCategory().equals("keyword")) {
-            //                if (ScalaLexUtil.isBeginToken(id, doc, ts)) {
-            //                    return ScalaLexUtil.findEnd(doc, ts);
-            //                } else if ((id == ScalaTokenId.END) || ScalaLexUtil.isIndentToken(id)) { // Find matching block
-            //
-            //                    return ScalaLexUtil.findBegin(doc, ts);
-            //                }
+          //            } else if (id.primaryCategory().equals("keyword")) {
+          //                if (ScalaLexUtil.isBeginToken(id, doc, ts)) {
+          //                    return ScalaLexUtil.findEnd(doc, ts);
+          //                } else if ((id == ScalaTokenId.END) || ScalaLexUtil.isIndentToken(id)) { // Find matching block
+          //
+          //                    return ScalaLexUtil.findBegin(doc, ts);
+          //                }
           case _ =>
         }
       }
@@ -126,17 +125,15 @@ class ScalaBracesMatcher(context: MatcherContext) extends BracesMatcher {
     }
   }
 
-
   @throws(classOf[InterruptedException])
   @throws(classOf[BadLocationException])
-  override 
-  def findMatches: Array[Int] = {
+  override def findMatches: Array[Int] = {
     var offset = context.getSearchOffset
     val doc = context.getDocument.asInstanceOf[BaseDocument]
-    
+
     //doc.readLock
     try {
-      ScalaLexUtil.getTokenSequence(doc, offset) foreach {ts =>
+      ScalaLexUtil.getTokenSequence(doc, offset) foreach { ts =>
         ts.move(offset)
         if (!ts.moveNext) {
           return null
@@ -190,19 +187,19 @@ class ScalaBracesMatcher(context: MatcherContext) extends BracesMatcher {
           case ScalaTokenId.LBracket =>
             val range = ScalaLexUtil.findFwd(ts, ScalaTokenId.LBracket, ScalaTokenId.RBracket);
             return Array(range.getStart, range.getEnd)
-            //            } else if (id == ScalaTokenId.DO && !ScalaLexUtil.isEndmatchingDo(doc, ts.offset())) {
-            //                // No matching dot for "do" used in conditionals etc.
-            //                return OffsetRange.NONE;
+          //            } else if (id == ScalaTokenId.DO && !ScalaLexUtil.isEndmatchingDo(doc, ts.offset())) {
+          //                // No matching dot for "do" used in conditionals etc.
+          //                return OffsetRange.NONE;
           case ScalaTokenId.RBracket =>
             val range = ScalaLexUtil.findBwd(ts, ScalaTokenId.LBracket, ScalaTokenId.RBracket);
             return Array(range.getStart, range.getEnd)
-            //            } else if (id.primaryCategory().equals("keyword")) {
-            //                if (ScalaLexUtil.isBeginToken(id, doc, ts)) {
-            //                    return ScalaLexUtil.findEnd(doc, ts);
-            //                } else if ((id == ScalaTokenId.END) || ScalaLexUtil.isIndentToken(id)) { // Find matching block
-            //
-            //                    return ScalaLexUtil.findBegin(doc, ts);
-            //                }
+          //            } else if (id.primaryCategory().equals("keyword")) {
+          //                if (ScalaLexUtil.isBeginToken(id, doc, ts)) {
+          //                    return ScalaLexUtil.findEnd(doc, ts);
+          //                } else if ((id == ScalaTokenId.END) || ScalaLexUtil.isIndentToken(id)) { // Find matching block
+          //
+          //                    return ScalaLexUtil.findBegin(doc, ts);
+          //                }
           case _ =>
         }
       }

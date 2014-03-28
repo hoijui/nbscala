@@ -67,23 +67,22 @@ class ScalaParserResult private (snapshot: Snapshot) extends ParserResult(snapsh
 
   /**
    * @see http://forums.netbeans.org/topic43738.html
-   * The Result.invalidate method does not (AFAIK) mean that the outcome of 
-   * the parsing process is no longer valid. Result.invalidate is called 
-   * after invocation of each Task. The intention is to use this to ensure 
-   * that the Tasks are not keeping the results somewhere, which might lead 
-   * to memory leaks. E.g. Java creates a fresh new Result on each invocation 
-   * of getResult, wrapping the actual internal parsing data, which are kept 
-   * across invocations of getResult, and then may validate that all access 
-   * to the parsing data is done only from inside appropriate Tasks. It is 
-   * AFAIK safe to ignore the invalidate method if you do not need to check 
-   * that the tasks are behaving correctly. 
+   * The Result.invalidate method does not (AFAIK) mean that the outcome of
+   * the parsing process is no longer valid. Result.invalidate is called
+   * after invocation of each Task. The intention is to use this to ensure
+   * that the Tasks are not keeping the results somewhere, which might lead
+   * to memory leaks. E.g. Java creates a fresh new Result on each invocation
+   * of getResult, wrapping the actual internal parsing data, which are kept
+   * across invocations of getResult, and then may validate that all access
+   * to the parsing data is done only from inside appropriate Tasks. It is
+   * AFAIK safe to ignore the invalidate method if you do not need to check
+   * that the tasks are behaving correctly.
    */
-  override 
-  protected def invalidate {
+  override protected def invalidate {
     // do nothing
   }
 
-  /** 
+  /**
    * @TODO since only call rootScope will cause actual parsing, those parsing task
    * that won't get rootScope will not be truly parsed, I choose this approach because
    * the TaskListIndexer will re-parse all dependent source files, with bad scala
@@ -93,24 +92,23 @@ class ScalaParserResult private (snapshot: Snapshot) extends ParserResult(snapsh
    * other editor behavior, or, the performance of complier is not the bottleneck
    * any more, I'll add it back.
    */
-  override 
-  def getDiagnostics: java.util.List[_ <: Error] = _errors
+  override def getDiagnostics: java.util.List[_ <: Error] = _errors
 
   /**
-   * If toSemanticed procedure is cancelled, a new ScalaParserResult will be created, 
+   * If toSemanticed procedure is cancelled, a new ScalaParserResult will be created,
    * so it's safe to use 'val' instead of 'def' here.
-   * 
-   * In the theory, if a cancel request called, the parse should reparse later, but 
+   *
+   * In the theory, if a cancel request called, the parse should reparse later, but
    * that's not true for current parsing api (bug?). Anyway, when root is ScalaRootScope.EMPTY,
    * we may try to re-parse always for my best (XXX need more thinking).
    */
   lazy val rootScope: ScalaRootScope = _root synchronized {
     _root match {
       case None => toSemanticed
-        //case Some(ScalaRootScope.EMPTY) => toSemanticed
-      case _ =>
+      //case Some(ScalaRootScope.EMPTY) => toSemanticed
+      case _    =>
     }
-    
+
     // for some race conditions during cancel, the root may still be None,
     // so at lease return a ScalaRootScope.EMPTY
     _root getOrElse ScalaRootScope.EMPTY
@@ -120,21 +118,21 @@ class ScalaParserResult private (snapshot: Snapshot) extends ParserResult(snapsh
     _root = global.askForSemantic(srcFile)
     _errors = collectErrors(global.reporter)
   }
-  
+
   /**
-   * @Note _root synchronized call here will cause whole things blocked, why? 
-   *       The cause may happen when cancelSemantic and toSemanticed both synchronized 
+   * @Note _root synchronized call here will cause whole things blocked, why?
+   *       The cause may happen when cancelSemantic and toSemanticed both synchronized
    *       on _root
-   *       
+   *
    * Actually, we need not to care about the root that is fetched during cancelSemantic,
    * since NetBeans' parsing system should try to get a new one later.
-   * 
-   * Some other concerns: 
-   * Although the unit may have been ahead to typed phase during autocompletion, 
-   * the typed trees may not be correct for semantic analysis, it's better to reset 
+   *
+   * Some other concerns:
+   * Although the unit may have been ahead to typed phase during autocompletion,
+   * the typed trees may not be correct for semantic analysis, it's better to reset
    * the unit to get the best error report.
    * An example is that when try completing on x. and then press esc, the error won't
-   * be reported if do not call reset here 
+   * be reported if do not call reset here
    */
   private[core] def tryCancelSemantic() {
     // only reset when global confirmed that the target srcFile is exactly the working one
@@ -158,7 +156,7 @@ class ScalaParserResult private (snapshot: Snapshot) extends ParserResult(snapsh
 
             val isLineError = (end == -1)
             val error = DefaultError.createDefaultError("SYNTAX_ERROR", msg, msg, fo, offset, end, isLineError, severity)
-            //error.setParameters(Array(offset, msg))                
+            //error.setParameters(Array(offset, msg))
 
             errs.add(error)
           } else {
@@ -170,17 +168,11 @@ class ScalaParserResult private (snapshot: Snapshot) extends ParserResult(snapsh
     }
   }
 
-  lazy val rootScopeForDebug: ScalaRootScope = {
-    ScalaGlobal.getGlobal(fo, true).compileSourceForDebug(srcFile)
-  }
-  
-  override 
-  def toString = "ParserResult of " + fo.getNameExt + ", root is " + (_root match {
-      case None => "None"
-      case Some(ScalaRootScope.EMPTY) => "Empty"
-      case _ => "Ok"
-    }
-  )
+  override def toString = "ParserResult of " + fo.getNameExt + ", root is " + (_root match {
+    case None                       => "None"
+    case Some(ScalaRootScope.EMPTY) => "Empty"
+    case _                          => "Ok"
+  })
 }
 
 object ScalaParserResult {
@@ -189,7 +181,7 @@ object ScalaParserResult {
   // ----- for debug
   private val debug = false
   private val unreleasedResults = new WeakHashMap[ScalaParserResult, String]
-  
+
   def apply(snapshot: Snapshot) = {
     val pr = new ScalaParserResult(snapshot)
     if (debug) {

@@ -43,10 +43,10 @@ import org.netbeans.api.lexer.TokenHierarchy
 
 import org.netbeans.api.language.util.ast.AstItem
 
-import org.netbeans.modules.scala.core.lexer.{ScalaTokenId}
+import org.netbeans.modules.scala.core.lexer.{ ScalaTokenId }
 
 abstract class ScalaSymbolResolver {
-  
+
   val global: ScalaGlobal
   import global._
 
@@ -70,6 +70,6 @@ abstract class ScalaSymbolResolver {
         root.findFirstItemWithName(lastPart)
       case None => None
     }
-    
+
   }
 }

@@ -13,9 +13,9 @@
     <packaging>pom</packaging>
     <version>1.0</version>
     <name>org-netbeans-libs-scala-local</name>
-    <description>Install local jars ie. scala runtime jars to local repository. 
-    The contain the original libraries with some patch
-    TODO: Patch description.</description>
+    <description>Install local jars ie. scala runtime jars to local repository.
+        The contain the original libraries with some patch
+        TODO: Patch description.</description>
 
     <build>
         <plugins>
@@ -38,7 +38,7 @@
                             <packaging>jar</packaging>
                         </configuration>
                     </execution>
-                    
+
                     <execution>
                         <id>install-scala-compiler</id>
                         <goals>
@@ -54,7 +54,7 @@
                             <packaging>jar</packaging>
                         </configuration>
                     </execution>
-                    
+
                     <execution>
                         <id>install-scala-reflect</id>
                         <goals>
@@ -101,11 +101,26 @@
                             <version>${sbt.version}</version>
                             <packaging>jar</packaging>
                         </configuration>
+                    </execution>-->
+
+                    <execution>
+                        <id>install-scala-scalariform</id>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                        <phase>process-resources</phase> <!--use process-resources phase to.force re-installation-->
+                        <configuration>
+                            <file>${project.basedir}/lib/scalariform/scalariform.jar</file>
+                            <groupId>org.scalariform</groupId>
+                            <artifactId>scalariform</artifactId>
+                            <version>${scalariform.version}</version>
+                            <packaging>jar</packaging>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
 
-        </plugins> 
+        </plugins>
     </build>
 
 </project>
