@@ -113,9 +113,9 @@ class ShowTypeAction extends BaseAction(NbBundle.getMessage(classOf[ShowTypeActi
     if (t == null || t.symbol == null) "No suitiable info available"
     else {
       t.symbol.toString + ": " + describeType(t.symbol.tpe.normalize) + "\n\n" +
-      t.symbol.toString + ": " + describeType(t.tpe) + "\n\n" + 
-      t.symbol.toString + ": " + describeType(t.tpe.typeSymbol.typeSignature) + "\n\n" + 
-      g.show(t) + "\n\n" + g.showRaw(t)
+        t.symbol.toString + ": " + describeType(t.tpe) + "\n\n" +
+        t.symbol.toString + ": " + describeType(t.tpe.typeSymbol.typeSignature) + "\n\n" +
+        g.show(t) + "\n\n" + g.showRaw(t)
     }
   }
 

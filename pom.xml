@@ -373,7 +373,7 @@
         <module>scala.stdplatform</module>
         <module>scala.project</module>
         <module>scala.refactoring</module>
-        <module>scala.kit</module>
+        <!--<module>scala.kit</module>-->
     </modules>
 
 </project>

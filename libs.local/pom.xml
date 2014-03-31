@@ -28,8 +28,8 @@
                         <goals>
                             <goal>install-file</goal>
                         </goals>
-                        <phase>process-resources</phase>  
-                        use process-resources phase to.force re-installation 
+                        <phase>process-resources</phase>
+                        use process-resources phase to.force re-installation
                         <configuration>
                             <file>${project.basedir}/lib/scala-library.jar</file>
                             <groupId>org.scala-lang</groupId>
@@ -45,7 +45,7 @@
                             <goal>install-file</goal>
                         </goals>
                         <phase>process-resources</phase>
-                        use process-resources phase to.force re-installation 
+                        use process-resources phase to.force re-installation
                         <configuration>
                             <file>${project.basedir}/lib/scala-compiler.jar</file>
                             <groupId>org.scala-lang</groupId>
@@ -61,7 +61,7 @@
                             <goal>install-file</goal>
                         </goals>
                         <phase>process-resources</phase>
-                        use process-resources phase to.force re-installation 
+                        use process-resources phase to.force re-installation
                         <configuration>
                             <file>${project.basedir}/lib/scala-reflect.jar</file>
                             <groupId>org.scala-lang</groupId>
@@ -77,7 +77,7 @@
                             <goal>install-file</goal>
                         </goals>
                         <phase>process-resources</phase>
-                        use process-resources phase to.force re-installation 
+                        use process-resources phase to.force re-installation
                         <configuration>
                             <file>${project.basedir}/lib/continuations.jar</file>
                             <groupId>org.scala-lang.plugins</groupId>
@@ -93,7 +93,7 @@
                             <goal>install-file</goal>
                         </goals>
                         <phase>process-resources</phase>
-                        <!--use process-resources phase to.force re-installation--> 
+                        <!--use process-resources phase to.force re-installation-->
                         <configuration>
                             <file>${project.basedir}/lib/sbt/sbt-launch.jar</file>
                             <groupId>org.scala-sbt</groupId>
@@ -101,7 +101,7 @@
                             <version>${sbt.version}</version>
                             <packaging>jar</packaging>
                         </configuration>
-                    </execution>-->
+                    </execution>
 
                     <execution>
                         <id>install-scala-scalariform</id>
