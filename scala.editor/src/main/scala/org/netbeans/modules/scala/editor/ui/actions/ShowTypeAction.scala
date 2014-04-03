@@ -93,7 +93,7 @@ class ShowTypeAction extends BaseAction(NbBundle.getMessage(classOf[ShowTypeActi
 
   def describeTreeType(g: ScalaGlobal, t: ScalaGlobal#Tree): String = {
     import g._
-    def describeType(t: ScalaGlobal#Type): String = {
+    def describeType(t: ScalaGlobal#Type): String = g.ask { () =>
       t match {
         case NoType => ""
         case tr @ TypeRef(RefinedType(types, scope), sym, arg) =>
@@ -107,6 +107,7 @@ class ShowTypeAction extends BaseAction(NbBundle.getMessage(classOf[ShowTypeActi
           (if (scope.isEmpty) "" else "{ " + scope.map(sym => g.show(sym) + ": " + describeType(sym.typeSignature)).mkString("; ") + " }")
         case SingleType(pre, ident) =>
           (if (pre != NoType) describeType(pre) + "." else "") + describeType(ident.tpe)
+        //        case ClassInfoType(parents, decls, tpeSymbol) =>
         case other => other.toString
       }
     }
@@ -115,7 +116,8 @@ class ShowTypeAction extends BaseAction(NbBundle.getMessage(classOf[ShowTypeActi
       t.symbol.toString + ": " + describeType(t.symbol.tpe.normalize) + "\n\n" +
         t.symbol.toString + ": " + describeType(t.tpe) + "\n\n" +
         t.symbol.toString + ": " + describeType(t.tpe.typeSymbol.typeSignature) + "\n\n" +
-        g.show(t) + "\n\n" + g.showRaw(t)
+        g.show(t) + "\n\n" +
+        g.showRaw(t)
     }
   }
 
