@@ -21,9 +21,9 @@
         </dependency>
 
         <dependency><!-- myself -->
-            <groupId>org.scala-lang</groupId>
-            <artifactId>scala-continuations</artifactId>
-            <version>${scala.version}</version>
+            <groupId>org.scala-lang.plugins</groupId>
+            <artifactId>scala-continuations-library_2.11</artifactId>
+            <version>1.0.2</version>
         </dependency>
         <!-- needed to ensure, the libs are deployed in the repostiory before anything else -->
         <dependency>
