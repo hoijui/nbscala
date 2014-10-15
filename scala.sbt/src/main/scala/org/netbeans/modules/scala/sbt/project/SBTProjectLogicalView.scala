@@ -58,6 +58,7 @@ class SBTProjectLogicalView(project: SBTProject) extends LogicalViewProvider {
     override def getActions(arg0: Boolean): Array[Action] = Array(
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_SBT_CONSOLE, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_OpenSbtAction"), null),
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_SBT_RELOAD, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_ReloadSbtAction"), null),
+      ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_SBT_UPDATE_CLASSIFIERS, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_UpdateClassifierSbtAction"), null),
       null,
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_SCALA_CONSOLE, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_OpenScalaAction"), null),
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_BUILD, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_BuildAction"), null),
@@ -65,6 +66,9 @@ class SBTProjectLogicalView(project: SBTProject) extends LogicalViewProvider {
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_REBUILD, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_RebuildAction"), null),
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_RUN, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_RunAction"), null),
       ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_DEBUG, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_DebugAction"), null),
+      null,
+      ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_TEST, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_TestAction"), null),
+      ProjectSensitiveActions.projectCommandAction(SBTActionProvider.COMMAND_TEST_ONLY, NbBundle.getMessage(classOf[SBTActionProvider], "CTL_TestOnlyAction"), null),
       null,
       CommonProjectActions.newFileAction,
       CommonProjectActions.copyProjectAction,

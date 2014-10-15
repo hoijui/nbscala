@@ -60,26 +60,26 @@
         -->
         <netbeans.version>RELEASE80</netbeans.version>
 
-        <scala.version>2.10.3</scala.version> <!-- use nbscala patched scala runtime @see libs.local-->
+        <scala.version>2.11.3</scala.version>
         <sbt.version>0.13.1</sbt.version>
         <scalariform.version>0.1.5</scalariform.version>
 
         <!-- module versions -->
-        <libs.scala.version>2.10.3.0</libs.scala.version>
-        <libs.sbt.version>0.13.1.0</libs.sbt.version>
-        <libs.scalariform.version>0.1.5.0</libs.scalariform.version>
+        <libs.scala.version>2.11.3.0</libs.scala.version>
+        <libs.sbt.version>0.13.5.0</libs.sbt.version>
+        <libs.scalariform.version>0.1.5.1</libs.scalariform.version>
         <libs.xtc.version>1.15.1</libs.xtc.version>
-        <scala.debugger.version>1.6.3.0</scala.debugger.version>
-        <scala.debugger.projects.version>1.6.3.1</scala.debugger.projects.version>
-        <scala.core.version>1.6.3.0</scala.core.version>
-        <scala.editor.version>1.6.3.0</scala.editor.version>
-        <scala.console.version>1.6.3.0</scala.console.version>
-        <scala.maven.version>1.6.3.0</scala.maven.version>
-        <scala.platform.version>1.6.3.0</scala.platform.version>
-        <scala.sbt.version>1.6.3.1</scala.sbt.version>
-        <scala.stdplatform.version>1.6.3.0</scala.stdplatform.version>
-        <scala.project.version>1.6.3.0</scala.project.version>
-        <scala.refactoring.version>1.6.3.0</scala.refactoring.version>
+        <scala.debugger.version>1.7.0.0</scala.debugger.version>
+        <scala.debugger.projects.version>1.7.0.0</scala.debugger.projects.version>
+        <scala.core.version>1.7.0.0</scala.core.version>
+        <scala.editor.version>1.7.0.0</scala.editor.version>
+        <scala.console.version>1.7.0.0</scala.console.version>
+        <scala.maven.version>1.7.0.0</scala.maven.version>
+        <scala.platform.version>1.7.0.0</scala.platform.version>
+        <scala.sbt.version>1.7.0.0</scala.sbt.version>
+        <scala.stdplatform.version>1.7.0.0</scala.stdplatform.version>
+        <scala.project.version>1.7.0.0</scala.project.version>
+        <scala.refactoring.version>1.7.0.0</scala.refactoring.version>
     </properties>
 
     <repositories>
@@ -128,7 +128,7 @@
                 <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>nbm-maven-plugin</artifactId>
-                    <version>3.11.1</version>
+                    <version>3.13.3</version>
                     <extensions>true</extensions>
                     <configuration>
                         <brandingToken>${brandingToken}</brandingToken>
@@ -208,13 +208,6 @@
                             <arg>-Xmax-classfile-name</arg>
                             <arg>143</arg> <!-- to avoid 'error: File name too long' in Linux/ecryptfs -->
                         </args>
-                        <compilerPlugins>
-                            <complierPlugin>
-                                <groupId>org.scala-lang.plugins</groupId>
-                                <artifactId>continuations</artifactId>
-                                <version>${scala.version}</version>
-                            </complierPlugin>
-                        </compilerPlugins>
                     </configuration>
                 </plugin>
 
@@ -358,8 +351,10 @@
         <module>libs.local</module>
         <module>libs.scala.compiler</module>
         <module>libs.scala.continuations</module>
+        <module>libs.scala.continuations.plugin</module>
         <module>libs.scala.library</module>
         <module>libs.scala.reflect</module>
+        <module>libs.scala.xml</module>
         <module>libs.scalariform</module>
         <module>libs.sbt</module>
         <module>libs.xtc</module>

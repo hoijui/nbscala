@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.1//EN" "http://www.netbeans.org/dtds/filesystem-1_1.dtd">
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
 <filesystem>
     <folder name="Services">
         <folder name="MIMEResolver">
@@ -16,7 +16,7 @@
         <folder name="FontsColors">
             <folder name="Twilight">
                 <folder name="Defaults">
-                    <file name="org-netbeans-modules-defaults-highlight-colorings.xml" url="Twilight/editor.xml">
+                    <file name="org-netbeans-modules-defaults-highlight-colorings.xml" url="Twilight/fontsColors.xml">
                         <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.defaults.Bundle"/>
                         <attr name="nbeditor-settings-ColoringType" stringvalue="highlight"/>
                     </file>
@@ -27,7 +27,41 @@
             </folder>
             <folder name="EmacsStandard">
                 <folder name="Defaults">
-                    <file name="org-netbeans-modules-defaults-token-colorings.xml" url="EmacsStandard/defaults.xml">
+                    <file name="org-netbeans-modules-defaults-highlight-colorings.xml" url="EmacsStandard/fontsColors.xml">
+                        <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.defaults.Bundle"/>
+                        <attr name="nbeditor-settings-ColoringType" stringvalue="highlight"/>
+                    </file>
+                </folder>
+            </folder>
+            <folder name="SolarizedLight">
+                <folder name="Defaults">
+                    <file name="org-netbeans-modules-defaults-highlight-colorings.xml" url="SolarizedLight/fontsColors.xml">
+                        <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.defaults.Bundle"/>
+                        <attr name="nbeditor-settings-ColoringType" stringvalue="highlight"/>
+                    </file>
+                    <file name="org-netbeans-modules-defaults-token-colorings.xml" url="SolarizedLight/defaults.xml">
+                        <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.defaults.Bundle"/>
+                    </file>
+                </folder>
+            </folder>
+            <folder name="SolarizedDark">
+                <folder name="Defaults">
+                    <file name="org-netbeans-modules-defaults-highlight-colorings.xml" url="SolarizedDark/fontsColors.xml">
+                        <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.defaults.Bundle"/>
+                        <attr name="nbeditor-settings-ColoringType" stringvalue="highlight"/>
+                    </file>
+                    <file name="org-netbeans-modules-defaults-token-colorings.xml" url="SolarizedDark/defaults.xml">
+                        <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.defaults.Bundle"/>
+                    </file>
+                </folder>
+            </folder>
+            <folder name="Darcula">
+                <folder name="Defaults">
+                    <file name="org-netbeans-modules-defaults-highlight-colorings.xml" url="Darcula/fontsColors.xml">
+                        <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.defaults.Bundle"/>
+                        <attr name="nbeditor-settings-ColoringType" stringvalue="highlight"/>
+                    </file>
+                    <file name="org-netbeans-modules-defaults-token-colorings.xml" url="Darcula/defaults.xml">
                         <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.defaults.Bundle"/>
                     </file>
                 </folder>
@@ -79,6 +113,27 @@
                             </file>
                         </folder>
                     </folder>
+                    <folder name="SolarizedLight">
+                        <folder name="Defaults">
+                            <file name="colorings.xml" url="SolarizedLight/fontsColors.xml">
+                                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.scala.editor.Bundle"/>
+                            </file>
+                        </folder>
+                    </folder>
+                    <folder name="SolarizedDark">
+                        <folder name="Defaults">
+                            <file name="colorings.xml" url="SolarizedDark/fontsColors.xml">
+                                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.scala.editor.Bundle"/>
+                            </file>
+                        </folder>
+                    </folder>
+                    <folder name="Darcula">
+                        <folder name="Defaults">
+                            <file name="colorings.xml" url="Darcula/fontsColors.xml">
+                                <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.scala.editor.Bundle"/>
+                            </file>
+                        </folder>
+                    </folder>
                 </folder>
 
                 <file name="org-netbeans-modules-scala-editor-overridden-IsOverriddenAnnotationHandlerFactory.instance"/>
@@ -120,60 +175,9 @@
                         <attr name="originalFile" stringvalue="Actions/Scala/org-netbeans-modules-scala-editor-ui-actions-ResetGlobalAction.instance"/>
                         <attr name="position" intvalue="800"/>
                     </file>
-                    <file name="org-netbeans-modules-scala-editor-imports-FixImportsAction.shadow">
-                        <attr name="originalFile" stringvalue="Actions/Scala/org-netbeans-modules-scala-editor-imports-FixImportsAction.instance"/>
-                        <attr name="position" intvalue="801"/>
-                    </file>
-
-                </folder>
-                <folder name="Toolbars">
-                    <folder name="Default">
-                        <file name="Separator-before-comment.instance">
-                            <attr name="instanceClass" stringvalue="javax.swing.JSeparator"/>
-                            <attr name="position" intvalue="19100"/>
-                        </file>
-                        <file name="comment">
-                            <attr name="position" intvalue="19200"/>
-                        </file>
-                        <file name="uncomment">
-                            <attr name="position" intvalue="19300"/>
-                        </file>
-                    </folder>
-                </folder>
-
-                <folder name="CodeTemplates">
-                    <folder name="Defaults">
-                        <file name="codeTemplates.xml" url="codeTemplates.xml">
-                            <attr name="SystemFileSystem.localizingBundle" stringvalue="org.netbeans.modules.scala.editor.Bundle"/>
-                        </file>
-                    </folder>
-                </folder>
-                <folder name="Keybindings">
-                    <folder name="NetBeans">
-                        <folder name="Defaults">
-                            <file name="org-netbeans-modules-scala-editor-keybindings.xml" url="keyBindings.xml"/>
-                            <!--
-                            <file name="org-netbeans-modules-javascript-editing-keybindings-mac.xml" url="keybindings-mac.xml">
-                                <attr name="nbeditor-settings-targetOS" stringvalue="OS_MAC"/>
-                            </file>
-                            -->
-                        </folder>
-                    </folder>
-                </folder>
-
-                <!-- tell the parsing API that scala files should be handled by the java indexer -->
-                <file name="JavaIndexer.shadow">
-                    <attr name="originalFile" stringvalue="Editors/text/x-java/JavaIndexer.instance"/>
-                </file>
-
-                <folder name="Popup">
-                    <file name="org-netbeans-modules-scala-editor-ui-actions-ResetGlobalAction.shadow">
-                        <attr name="originalFile" stringvalue="Actions/Scala/org-netbeans-modules-scala-editor-ui-actions-ResetGlobalAction.instance"/>
-                        <attr name="position" intvalue="800"/>
-                    </file>
                     <file name="org-netbeans-modules-scala-editor-ui-actions-ShowTypeAction.shadow">
                         <attr name="originalFile" stringvalue="Actions/Scala/org-netbeans-modules-scala-editor-ui-actions-ShowTypeAction.instance"/>
-                        <attr name="position" intvalue="800"/>
+                        <attr name="position" intvalue="801"/>
                     </file>
                     <file name="org-netbeans-modules-scala-editor-imports-FixImportsAction.shadow">
                         <attr name="originalFile" stringvalue="Actions/Scala/org-netbeans-modules-scala-editor-imports-FixImportsAction.instance"/>
