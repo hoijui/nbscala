@@ -439,7 +439,7 @@ abstract class JavaStubGenerator extends scala.reflect.internal.transform.Erasur
    * The Java signature of type 'info', for symbol sym. The symbol is used to give the right return
    *  type for constructors.
    */
-  private def javaSig(sym0: Symbol, info: Type): Option[String] = beforeErasure {
+  private def javaSig(sym0: Symbol, info: Type): Option[String] = enteringErasure {
     val isTraitSignature = sym0.enclClass.isTrait
 
     def superSig(parents: List[Type]) = {
@@ -470,8 +470,8 @@ abstract class JavaStubGenerator extends scala.reflect.internal.transform.Erasur
     // Anything which could conceivably be a module (i.e. isn't known to be
     // a type parameter or similar) must go through here or the signature is
     // likely to end up with Foo<T>.Empty where it needs Foo<T>.Empty$.
-    def fullNameInSig(sym: Symbol) = beforeIcode(sym.javaBinaryName)
-    //"L" + beforeIcode(sym.javaBinaryName)
+    def fullNameInSig(sym: Symbol) = enteringIcode(sym.javaBinaryName)
+    //"L" + enteringIcode(sym.javaBinaryName)
 
     def jsig(tp0: Type, existentiallyBound: List[Symbol] = Nil, toplevel: Boolean = false, primitiveOK: Boolean = true): String = {
       val tp = tp0.dealias
@@ -557,7 +557,7 @@ abstract class JavaStubGenerator extends scala.reflect.internal.transform.Erasur
           boxedSig(parent)
         case ClassInfoType(parents, _, _) =>
           superSig(parents)
-        case AnnotatedType(_, atp, _) =>
+        case AnnotatedType(_, atp) =>
           jsig(atp, existentiallyBound, toplevel, primitiveOK)
         case BoundedWildcardType(bounds) =>
           println("something's wrong: " + sym0 + ":" + sym0.tpe + " has a bounded wildcard type")
@@ -603,7 +603,7 @@ abstract class JavaStubGenerator extends scala.reflect.internal.transform.Erasur
             if (!parents.isEmpty) traverse(parents.head)
           case ClassInfoType(parents, _, _) =>
             parents foreach traverse
-          case AnnotatedType(_, atp, _) =>
+          case AnnotatedType(_, atp) =>
             traverse(atp)
           case _ => mapOver(tp)
         }
@@ -630,7 +630,7 @@ abstract class JavaStubGenerator extends scala.reflect.internal.transform.Erasur
   // more rigorous way up front rather than catching it after the fact,
   // but that will be more involved.
   private def dotCleanup(sig: String): String = {
-    var last: Char = '\0'
+    var last: Char = '\u0000'
     sig map {
       case '.' if last != '>' =>
         last = '.'; '$'

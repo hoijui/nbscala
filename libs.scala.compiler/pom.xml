@@ -57,10 +57,13 @@
                         <publicPackage>ch.epfl.lamp.util</publicPackage>
                         <publicPackage>scala.reflect.macros.runtime</publicPackage>
                         <publicPackage>scala.reflect.macros.util</publicPackage>
+                        <publicPackage>scala.reflect.macros.whitebox</publicPackage>
+                        <publicPackage>scala.reflect.macros.blackbox</publicPackage>
                         <publicPackage>scala.reflect.reify</publicPackage>
                         <publicPackage>scala.reflect.reify.codegen</publicPackage>
                         <publicPackage>scala.reflect.reify.phases</publicPackage>
                         <publicPackage>scala.reflect.reify.utils</publicPackage>
+                        <publicPackage>scala.reflect.internal.tpe</publicPackage>
                         <publicPackage>scala.tools.ant</publicPackage>
                         <publicPackage>scala.tools.ant.sabbus</publicPackage>
                         <publicPackage>scala.tools.ant.templates</publicPackage>

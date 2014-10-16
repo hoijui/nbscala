@@ -48,13 +48,16 @@ class SBTActionProvider(project: SBTProject) extends ActionProvider {
     COMMAND_SBT_CONSOLE,
     COMMAND_SCALA_CONSOLE,
     COMMAND_SBT_RELOAD,
+    COMMAND_SBT_UPDATE_CLASSIFIERS,
     COMMAND_BUILD,
     COMMAND_REBUILD,
     COMMAND_CLEAN,
     COMMAND_RUN,
     COMMAND_DEBUG,
     COMMAND_RUN_SINGLE,
-    COMMAND_DEBUG_SINGLE)
+    COMMAND_DEBUG_SINGLE,
+    COMMAND_TEST,
+    COMMAND_TEST_ONLY)
 
   @throws(classOf[IllegalArgumentException])
   def isActionEnabled(command: String, context: Lookup): Boolean = {
@@ -76,6 +79,12 @@ class SBTActionProvider(project: SBTProject) extends ActionProvider {
         val sbtResolver = project.getLookup.lookup(classOf[SBTResolver])
         sbtResolver.isResolvedOrResolving = false
         sbtResolver.triggerSbtResolution
+
+      case COMMAND_SBT_UPDATE_CLASSIFIERS =>
+        ProjectManager.getDefault.saveProject(project)
+        LifecycleManager.getDefault.saveAll
+        val commands = selectProject ::: List("updateClassifiers")
+        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
 
       case COMMAND_BUILD =>
         ProjectManager.getDefault.saveProject(project)
@@ -134,6 +143,18 @@ class SBTActionProvider(project: SBTProject) extends ActionProvider {
             "run-main " + clazz)
           SBTConsoleTopComponent.openNewInstance(rootProject, commands, isDebug = true)()
         }
+
+      case COMMAND_TEST =>
+        ProjectManager.getDefault.saveProject(project)
+        LifecycleManager.getDefault.saveAll
+        val commands = selectProject ::: List("test")
+        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
+
+      case COMMAND_TEST_ONLY => // TODO
+        ProjectManager.getDefault.saveProject(project)
+        LifecycleManager.getDefault.saveAll
+        val commands = selectProject ::: List("test-only")
+        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
 
       case _ =>
     }
@@ -237,12 +258,16 @@ object SBTActionProvider {
   val COMMAND_SBT_CONSOLE = "sbt.console"
   val COMMAND_SCALA_CONSOLE = "scala.console"
   val COMMAND_SBT_RELOAD = "sbt.reload"
+  val COMMAND_SBT_UPDATE_CLASSIFIERS = "sbt.updateclassifiers"
 
   val COMMAND_BUILD = ActionProvider.COMMAND_BUILD // compile
   val COMMAND_REBUILD = ActionProvider.COMMAND_REBUILD // clean and compile
   val COMMAND_CLEAN = ActionProvider.COMMAND_CLEAN // clean
   val COMMAND_RUN = ActionProvider.COMMAND_RUN
   val COMMAND_DEBUG = ActionProvider.COMMAND_DEBUG
+
+  val COMMAND_TEST = ActionProvider.COMMAND_TEST
+  val COMMAND_TEST_ONLY = ActionProvider.COMMAND_TEST_SINGLE
 
   val COMMAND_RUN_SINGLE = ActionProvider.COMMAND_RUN_SINGLE
   val COMMAND_DEBUG_SINGLE = ActionProvider.COMMAND_DEBUG_SINGLE

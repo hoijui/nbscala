@@ -19,6 +19,17 @@
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version>
         </dependency>
+
+        <dependency><!-- myself -->
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-parser-combinators_2.11</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+        <dependency><!-- myself -->
+            <groupId>org.scala-lang.modules</groupId>
+            <artifactId>scala-swing_2.11</artifactId>
+            <version>1.0.1</version>
+        </dependency>
         <!-- needed to ensure, the libs are deployed in the repostiory before anything else -->
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -70,12 +81,11 @@
                         <publicPackage>scala.reflect.macros.internal</publicPackage>
                         <publicPackage>scala.runtime</publicPackage>
                         <publicPackage>scala.sys</publicPackage>
-                        <publicPackage>scala.sys.process</publicPackage>                        
+                        <publicPackage>scala.sys.process</publicPackage>
                         <publicPackage>scala.testing</publicPackage>
                         <publicPackage>scala.text</publicPackage>
                         <publicPackage>scala.util</publicPackage>
                         <publicPackage>scala.util.automata</publicPackage>
-                        <publicPackage>scala.util.continuations</publicPackage>
                         <publicPackage>scala.util.control</publicPackage>
                         <publicPackage>scala.util.grammar</publicPackage>
                         <publicPackage>scala.util.hashing</publicPackage>
