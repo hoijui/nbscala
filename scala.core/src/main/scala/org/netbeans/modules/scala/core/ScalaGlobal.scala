@@ -397,9 +397,10 @@ object ScalaGlobal {
 
     // ----- need to create a new global:
 
-    val settings = new Settings
-    settings.YmethodInfer.value = true
-    settings.feature.value = true
+    val settings = project.getLookup.lookup(classOf[CompilerSettings]) match {
+      case null => new Settings()
+      case s    => s.settings
+    }
     if (debug) {
       settings.Yidedebug.value = true
       settings.debug.value = true

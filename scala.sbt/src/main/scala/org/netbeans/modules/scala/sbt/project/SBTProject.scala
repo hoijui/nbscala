@@ -6,6 +6,7 @@ import javax.swing.ImageIcon
 import org.netbeans.api.project.Project
 import org.netbeans.api.project.ProjectInformation
 import org.netbeans.api.project.ProjectManager
+import org.netbeans.modules.scala.core.CompilerSettings
 import org.netbeans.modules.scala.sbt.classpath.SBTClassPathProvider
 import org.netbeans.modules.scala.sbt.classpath.SBTSources
 import org.netbeans.modules.scala.sbt.queries.SBTBinaryForSourceQuery
@@ -15,6 +16,7 @@ import org.openide.filesystems.FileObject
 import org.openide.util.ImageUtilities
 import org.openide.util.Lookup
 import org.openide.util.lookup.Lookups
+import scala.tools.nsc.Settings
 
 /**
  *
@@ -22,6 +24,8 @@ import org.openide.util.lookup.Lookups
  */
 class SBTProject(projectDir: FileObject, state: ProjectState) extends Project {
   // TODO @see org.netbeans.api.project.ProjectUtil for more providers
+
+  private lazy val log = java.util.logging.Logger.getLogger(this.getClass.getName)
   private lazy val lookup: Lookup = Lookups.fixed(
     this,
     new Info(),
@@ -33,7 +37,10 @@ class SBTProject(projectDir: FileObject, state: ProjectState) extends Project {
     new SBTActionProvider(this),
     new SBTSourceForBinaryQuery(this),
     new SBTBinaryForSourceQuery(this),
-    new ScalariformPrefs(this))
+    new ScalariformPrefs(this),
+    compilerSettings)
+
+  lazy val compilerSettings = new CompilerSettings(new Settings)
 
   override def getProjectDirectory = projectDir
 

@@ -14,7 +14,7 @@ import scala.collection.JavaConversions._
  * @author Caoyuan Deng
  */
 @throws(classOf[IOException])
-class DirWatcher(fileName: String) extends TimerTask {
+class DirWatcher(filesToWatch: String*) extends TimerTask {
   private val listeners = new EventListenerList()
   private var folders = Set[FileObject]()
 
@@ -30,6 +30,7 @@ class DirWatcher(fileName: String) extends TimerTask {
     try {
       for {
         folder <- folders
+        fileName <- filesToWatch
         file = folder.getFileObject(fileName) if file != null
       } {
         file.lastModified.getTime match {
@@ -99,7 +100,10 @@ class DirWatcher(fileName: String) extends TimerTask {
   }
 }
 
-sealed abstract class FileChangeEvent(file: FileObject, lastModified: Long) extends ChangeEvent()
-final case class FileAdded(file: FileObject, lastModified: Long) extends FileChangeEvent(file, lastModified)
-final case class FileDeleted(file: FileObject, lastModified: Long) extends FileChangeEvent(file, lastModified)
-final case class FileModified(file: FileObject, lastModified: Long) extends FileChangeEvent(file, lastModified)
+sealed trait FileChangeEvent extends ChangeEvent() {
+  def file: FileObject
+  def lastModified: Long
+}
+final case class FileAdded(file: FileObject, lastModified: Long) extends FileChangeEvent
+final case class FileDeleted(file: FileObject, lastModified: Long) extends FileChangeEvent
+final case class FileModified(file: FileObject, lastModified: Long) extends FileChangeEvent
