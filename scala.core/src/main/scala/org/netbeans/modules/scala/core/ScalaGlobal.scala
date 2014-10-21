@@ -418,6 +418,8 @@ object ScalaGlobal {
     // in case of `fo` is in standard libaray jar
     val inStdLib = bootCp == null || compCp == null
 
+    log.info("Scala plugin: " + settings.plugin)
+
     log.info("scala.home: " + System.getProperty("scala.home"))
 
     // ----- set bootclasspath, classpath
@@ -439,7 +441,7 @@ object ScalaGlobal {
     val pluginJarsDir = ScalaExecution.getPluginJarsDir
     log.info("Bundled plugin jars dir is: " + pluginJarsDir)
     settings.pluginsDir.value = pluginJarsDir map (_.getAbsolutePath) getOrElse ""
-    settings.plugin.value = Nil
+    //    settings.plugin.value = Nil
 
     // ----- set sourcepath, outpath
 
