@@ -411,6 +411,8 @@ object ScalaGlobal {
       settings.verbose.value = false
     }
 
+    settings.YclasspathImpl.value = "flat"
+
     val bootCp = ClassPath.getClassPath(fo, ClassPath.BOOT)
     val compCp = ClassPath.getClassPath(fo, ClassPath.COMPILE)
     val srcCp = ClassPath.getClassPath(fo, ClassPath.SOURCE)
