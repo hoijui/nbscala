@@ -60,12 +60,12 @@
         -->
         <netbeans.version>RELEASE80</netbeans.version>
 
-        <scala.version>2.11.5</scala.version>
-        <sbt.version>0.13.6</sbt.version>
+        <scala.version>2.11.6</scala.version>
+        <sbt.version>0.13.7</sbt.version>
         <scalariform.version>0.1.5</scalariform.version>
 
         <!-- module versions -->
-        <libs.scala.version>2.11.5.0</libs.scala.version>
+        <libs.scala.version>2.11.6.0</libs.scala.version>
         <libs.sbt.version>0.13.7.0</libs.sbt.version>
         <libs.scalariform.version>0.1.5.1</libs.scalariform.version>
         <libs.xtc.version>1.15.1</libs.xtc.version>
