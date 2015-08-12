@@ -60,13 +60,13 @@
         -->
         <netbeans.version>RELEASE80</netbeans.version>
 
-        <scala.version>2.11.6</scala.version>
-        <sbt.version>0.13.7</sbt.version>
+        <scala.version>2.11.7</scala.version>
+        <sbt.version>0.13.8</sbt.version>
         <scalariform.version>0.1.5</scalariform.version>
 
         <!-- module versions -->
-        <libs.scala.version>2.11.6.0</libs.scala.version>
-        <libs.sbt.version>0.13.7.0</libs.sbt.version>
+        <libs.scala.version>2.11.7.0</libs.scala.version>
+        <libs.sbt.version>0.13.8.0</libs.sbt.version>
         <libs.scalariform.version>0.1.5.1</libs.scalariform.version>
         <libs.xtc.version>1.15.1</libs.xtc.version>
         <scala.debugger.version>1.7.0.0</scala.debugger.version>
@@ -119,6 +119,11 @@
             <version>4.10</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+          <groupId>org.scala-lang.modules</groupId>
+          <artifactId>scala-java8-compat_2.11</artifactId>
+          <version>0.5.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -161,8 +166,8 @@
                     <version>3.0</version>
                     <configuration>
                         <!-- NetBeans 7.2+ requires JDK 7 -->
-                        <source>1.6</source>
-                        <target>1.6</target>
+                        <source>1.8</source>
+                        <target>1.8</target>
                     </configuration>
                 </plugin>
 
@@ -179,7 +184,7 @@
                 <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>3.1.6</version>
+                    <version>3.2.2</version>
                     <executions>
                         <execution>
                             <phase>process-resources</phase> <!-- to support mix java/scala -->
@@ -194,6 +199,7 @@
                         <scalaVersion>${scala.version}</scalaVersion>
                         <recompileMode>incremental</recompileMode>
                         <useZincServer>true</useZincServer>
+                        <compilerPlugins></compilerPlugins>
                         <jvmArgs>
                             <!--<jvmArg>-Xbootclasspath/p:${settings.localRepository}/org/scala-lang/scala-reflect/${scala.version}/scala-reflect-${scala.version}.jar</jvmArg>-->
                             <jvmArg>-Xms64m</jvmArg>
@@ -201,7 +207,9 @@
                             <jvmArg>-Xss64m</jvmArg> <!-- to avoid StackOverFlowError -->
                         </jvmArgs>
                         <args>
-                            <arg>-target:jvm-1.6</arg>
+                            <arg>-target:jvm-1.8</arg>
+                            <arg>-Ybackend:GenBCode</arg>
+                            <arg>-Ydelambdafy:method</arg>
                             <arg>-deprecation</arg>
 <!--                            <arg>-dependencyfile</arg>
                             <arg>${project.build.directory}/.scala_dependencies</arg>-->
@@ -322,54 +330,68 @@
                      </profile>
                  </profiles>
 
-                 To pack a zip file for plugins.netbeans.org:
-                 mvn nbm:autoupdate
-                 cd target/netbeans_site
-                 zip nbscala-version.zip *.nbm
-            -->
-        </profile>
+           To pack a zip file for plugins.netbeans.org:
+           mvn nbm:autoupdate
+           cd target/netbeans_site
+           zip nbscala-version.zip *.nbm
+      -->
+    </profile>
 
-        <profile>
-            <id>run-ide</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <nbm.run.arguments></nbm.run.arguments>
-            </properties>
-        </profile>
-        <profile>
-            <id>debug-ide</id>
-            <properties>
-                <nbm.run.arguments>-J-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8888</nbm.run.arguments>
-                <!--nbm.run.arguments>-J-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8888</nbm.run.arguments-->
-            </properties>
-        </profile>
-    </profiles>
+    <profile>
+      <id>scala-java8-compat</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.scala-lang.modules</groupId>
+          <artifactId>scala-java8-compat_2.11</artifactId>
+          <version>0.5.0</version>
+        </dependency>
+      </dependencies>
+    </profile>
 
-    <modules>
-        <module>libs.local</module>
-        <module>libs.scala.compiler</module>
-        <module>libs.scala.continuations</module>
-        <module>libs.scala.continuations.plugin</module>
-        <module>libs.scala.library</module>
-        <module>libs.scala.reflect</module>
-        <module>libs.scala.xml</module>
-        <module>libs.scalariform</module>
-        <module>libs.sbt</module>
-        <module>libs.xtc</module>
-        <module>scala.core</module>
-        <module>scala.editor</module>
-        <module>scala.console</module>
-        <module>scala.debugger.projects</module>
-        <module>scala.debugger</module>
-        <module>scala.maven</module>
-        <module>scala.platform</module>
-        <module>scala.sbt</module>
-        <module>scala.stdplatform</module>
-        <module>scala.project</module>
-        <module>scala.refactoring</module>
-        <!--<module>scala.kit</module>-->
-    </modules>
+    <profile>
+      <id>run-ide</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <nbm.run.arguments></nbm.run.arguments>
+      </properties>
+    </profile>
+    <profile>
+      <id>debug-ide</id>
+      <properties>
+        <nbm.run.arguments>-J-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8888</nbm.run.arguments>
+        <!--nbm.run.arguments>-J-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8888</nbm.run.arguments-->
+      </properties>
+    </profile>
+  </profiles>
+
+  <modules>
+    <module>libs.local</module>
+    <module>libs.scala.compiler</module>
+    <module>libs.scala.continuations</module>
+    <module>libs.scala.continuations.plugin</module>
+    <module>libs.scala.library</module>
+    <module>libs.scala.reflect</module>
+    <module>libs.scala.xml</module>
+    <module>libs.scalariform</module>
+    <module>libs.sbt</module>
+    <module>libs.xtc</module>
+    <module>scala.core</module>
+    <module>scala.editor</module>
+    <module>scala.console</module>
+    <module>scala.debugger.projects</module>
+    <module>scala.debugger</module>
+    <module>scala.maven</module>
+    <module>scala.platform</module>
+    <module>scala.sbt</module>
+    <module>scala.stdplatform</module>
+    <module>scala.project</module>
+    <module>scala.refactoring</module>
+    <!--<module>scala.kit</module>-->
+  </modules>
 
 </project>
