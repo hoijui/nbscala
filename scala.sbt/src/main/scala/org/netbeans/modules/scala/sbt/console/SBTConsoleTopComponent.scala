@@ -18,9 +18,9 @@ import javax.swing.UIManager
 import javax.swing.text.DefaultCaret
 import org.netbeans.api.extexecution.ExecutionDescriptor
 import org.netbeans.api.extexecution.ExecutionService
-import org.netbeans.api.extexecution.ExternalProcessBuilder
-import org.netbeans.api.progress.ProgressHandleFactory
+import org.netbeans.api.progress.ProgressHandle
 import org.netbeans.api.project.Project
+import org.netbeans.modules.extexecution.base.ExternalProcessBuilder
 import org.netbeans.modules.scala.core.ScalaExecution
 import org.netbeans.modules.scala.console.AnsiConsoleOutputStream
 import org.netbeans.modules.scala.console.ConsoleInputOutput
@@ -39,6 +39,18 @@ import scala.collection.mutable
  *
  * @author Caoyuan Deng
  */
+object SBTConsoleSettings {
+  val SbtMaxHeapSizeKey = "SBT_MAX_HEAP_MB"
+  val SbtInitialHeapSizeKey = "SBT_INIT_HEAP_MB"
+  val SbtMaxPermGenSizeKey = "SBT_MAX_PERMGEN_MB"
+  val SbtAdditionalArgsKey = "SBT_ADDTIONAL_ARGS"
+
+  val DefaultMaxHeapSizeMB = "512"
+  val DefaultInitialHeapSizeMB = "128"
+  val DefaultMaxPermGenSizeMB = "128"
+  val DefaultAdditionalArgs = "-XX:+UseCodeCacheFlushing -XX:+CMSClassUnloadingEnabled"
+}
+
 class SBTConsoleTopComponent private (project: Project, val isDebug: Boolean) extends TopComponent {
   import SBTConsoleTopComponent._
   import SBTConsoleSettings._
@@ -222,9 +234,7 @@ class SBTConsoleTopComponent private (project: Project, val isDebug: Boolean) ex
     val pipedIn = new PipedInputStream()
     val console = new SbtConsoleTerminal(
       textView, pipedIn,
-      NbBundle.getMessage(classOf[SBTConsoleTopComponent],
-        "SBTConsoleWelcome") + "\n" +
-        "sbt-launch=" + sbtLaunchJar.getOrElse("none") + "\n")
+      NbBundle.getMessage(classOf[SBTConsoleTopComponent], "SBTConsoleWelcome") + "\n" + "sbt-launch=" + sbtLaunchJar.getOrElse("none") + "\n")
 
     if (ScalaExecution.isWindows) {
       console.terminalInput.terminalId = TerminalInput.JLineWindows
@@ -259,18 +269,6 @@ class SBTConsoleTopComponent private (project: Project, val isDebug: Boolean) ex
 
 }
 
-object SBTConsoleSettings {
-  val SbtMaxHeapSizeKey = "SBT_MAX_HEAP_MB"
-  val SbtInitialHeapSizeKey = "SBT_INIT_HEAP_MB"
-  val SbtMaxPermGenSizeKey = "SBT_MAX_PERMGEN_MB"
-  val SbtAdditionalArgsKey = "SBT_ADDTIONAL_ARGS"
-
-  val DefaultMaxHeapSizeMB = "512"
-  val DefaultInitialHeapSizeMB = "128"
-  val DefaultMaxPermGenSizeMB = "128"
-  val DefaultAdditionalArgs = "-XX:+UseCodeCacheFlushing -XX:+CMSClassUnloadingEnabled"
-}
-
 object SBTConsoleTopComponent {
   private val log = Logger.getLogger(this.getClass.getName)
 
@@ -281,10 +279,6 @@ object SBTConsoleTopComponent {
 
   private val projectToDefault = new mutable.WeakHashMap[Project, SBTConsoleTopComponent]()
   def defaultFor(project: Project) = projectToDefault.get(project)
-
-  val defaultFg = Color.BLACK
-  val defaultBg = Color.WHITE
-  val linkFg = Color.BLUE
 
   /**
    * path to the icon used by the component and its open action
@@ -335,7 +329,7 @@ object SBTConsoleTopComponent {
     val runnableTask = new Runnable() {
       def run {
 
-        val progressHandle = ProgressHandleFactory.createHandle("Running sbt commnad...",
+        val progressHandle = ProgressHandle.createHandle("Running sbt commnad...",
           new Cancellable() {
             def cancel: Boolean = false // XXX todo possible for a AWT Event dispatch thread?
           })

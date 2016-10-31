@@ -35,6 +35,11 @@
             <artifactId>org-netbeans-libs-scala-reflect</artifactId>
             <version>${libs.scala.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.netbeans.modules</groupId>
+            <artifactId>org-netbeans-libs-scala-xml</artifactId>
+            <version>${libs.scala.version}</version>
+        </dependency>
 
         <!-- myself -->
         <dependency>
@@ -60,6 +65,7 @@
                 <artifactId>nbm-maven-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
+                    <author>Caoyuan Deng</author>
                     <codeNameBase>org.netbeans.libs.scalariform/1</codeNameBase>
                     <licenseName>The MIT Licence</licenseName>
                     <licenseFile>license.txt</licenseFile>
