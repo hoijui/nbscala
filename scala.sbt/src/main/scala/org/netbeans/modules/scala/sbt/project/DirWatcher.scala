@@ -100,7 +100,10 @@ class DirWatcher(filesToWatch: String*) extends TimerTask {
   }
 }
 
-sealed abstract class FileChangeEvent(file: FileObject, lastModified: Long) extends ChangeEvent(())
-final case class FileAdded(file: FileObject, lastModified: Long) extends FileChangeEvent(file, lastModified)
-final case class FileDeleted(file: FileObject, lastModified: Long) extends FileChangeEvent(file, lastModified)
-final case class FileModified(file: FileObject, lastModified: Long) extends FileChangeEvent(file, lastModified)
+sealed trait FileChangeEvent extends ChangeEvent {
+  def file: FileObject
+  def lastModified: Long
+}
+final case class FileAdded(file: FileObject, lastModified: Long) extends ChangeEvent(()) with FileChangeEvent
+final case class FileDeleted(file: FileObject, lastModified: Long) extends ChangeEvent(()) with FileChangeEvent
+final case class FileModified(file: FileObject, lastModified: Long) extends ChangeEvent(()) with FileChangeEvent

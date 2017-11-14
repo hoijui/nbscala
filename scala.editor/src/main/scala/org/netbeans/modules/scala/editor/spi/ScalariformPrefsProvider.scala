@@ -1,7 +1,7 @@
 package org.netbeans.modules.scala.editor.spi
 
-import scalariform.formatter.preferences.IFormattingPreferences
+//import scalariform.formatter.preferences.IFormattingPreferences
 
 trait ScalariformPrefsProvider {
-  def formatPreferences: IFormattingPreferences
+  //  def formatPreferences: IFormattingPreferences
 }

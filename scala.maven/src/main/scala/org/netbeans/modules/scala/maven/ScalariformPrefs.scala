@@ -12,10 +12,10 @@ import org.openide.filesystems.FileRenameEvent
 import org.openide.filesystems.FileUtil
 import org.openide.util.Lookup
 import org.openide.util.lookup.Lookups
-import scalariform.formatter.preferences.AllPreferences
-import scalariform.formatter.preferences.FormattingPreferences
-import scalariform.formatter.preferences.IFormattingPreferences
-import scalariform.formatter.preferences.PreferenceDescriptor
+//import scalariform.formatter.preferences.AllPreferences
+//import scalariform.formatter.preferences.FormattingPreferences
+//import scalariform.formatter.preferences.IFormattingPreferences
+//import scalariform.formatter.preferences.PreferenceDescriptor
 
 object ScalariformPrefs {
   val groupId = "org.scalariform"
@@ -25,47 +25,47 @@ object ScalariformPrefs {
 }
 
 class ScalariformPrefs(project: Project) extends ScalariformPrefsProvider {
-  import ScalariformPrefs._
-
-  private var preference: IFormattingPreferences = _
-
-  private val watchingFiles: Array[File] = {
-    val pomFo = project.getProjectDirectory.getFileObject("pom.xml")
-    val pomFile = FileUtil.normalizeFile(FileUtil.toFile(pomFo))
-    if (pomFile != null) Array(pomFile.getParentFile) else Array()
-  }
-  private val openedProjectUpdater = new Updater(this, watchingFiles)
-
-  def formatPreferences = {
-    if (preference == null) {
-      var prefs = Map[PreferenceDescriptor[_], Any]()
-      for (pref <- AllPreferences.preferences) {
-        PluginPropertyUtils.getPluginProperty(project, groupId, artifactId, pref.key, goal, null) match {
-          case null =>
-          case v =>
-            pref.preferenceType.parseValue(v) match {
-              case Right(value) => prefs += (pref -> value)
-              case Left(ex)     =>
-            }
-        }
-      }
-      preference = new FormattingPreferences(prefs)
-    }
-
-    preference
-  }
-
-  def resetCache() {
-    preference = null
-  }
-
-  def attachUpdater() {
-    openedProjectUpdater.attachAll()
-  }
-
-  def detachUpdater() {
-    openedProjectUpdater.detachAll()
-  }
+//  import ScalariformPrefs._
+//
+//  private var preference: IFormattingPreferences = _
+//
+//  private val watchingFiles: Array[File] = {
+//    val pomFo = project.getProjectDirectory.getFileObject("pom.xml")
+//    val pomFile = FileUtil.normalizeFile(FileUtil.toFile(pomFo))
+//    if (pomFile != null) Array(pomFile.getParentFile) else Array()
+//  }
+//  private val openedProjectUpdater = new Updater(this, watchingFiles)
+//
+//  def formatPreferences = {
+//    if (preference == null) {
+//      var prefs = Map[PreferenceDescriptor[_], Any]()
+//      for (pref <- AllPreferences.preferences) {
+//        PluginPropertyUtils.getPluginProperty(project, groupId, artifactId, pref.key, goal, null) match {
+//          case null =>
+//          case v =>
+//            pref.preferenceType.parseValue(v) match {
+//              case Right(value) => prefs += (pref -> value)
+//              case Left(ex)     =>
+//            }
+//        }
+//      }
+//      preference = new FormattingPreferences(prefs)
+//    }
+//
+//    preference
+//  }
+//
+//  def resetCache() {
+//    preference = null
+//  }
+//
+//  def attachUpdater() {
+//    openedProjectUpdater.attachAll()
+//  }
+//
+//  def detachUpdater() {
+//    openedProjectUpdater.detachAll()
+//  }
 
 }
 
@@ -80,20 +80,20 @@ class Updater(prefs: ScalariformPrefs, fileProvider: Array[File]) extends FileCh
   def fileChanged(fileEvent: FileEvent) {
     if (lastTime < fileEvent.getTime) {
       lastTime = System.currentTimeMillis
-      prefs.resetCache
+//      prefs.resetCache
     }
   }
 
   def fileDataCreated(fileEvent: FileEvent) {
     if (lastTime < fileEvent.getTime) {
       lastTime = System.currentTimeMillis
-      prefs.resetCache
+//      prefs.resetCache
     }
   }
 
   def fileDeleted(fileEvent: FileEvent) {
     lastTime = System.currentTimeMillis
-    prefs.resetCache
+//    prefs.resetCache
   }
 
   def fileFolderCreated(fileEvent: FileEvent) {

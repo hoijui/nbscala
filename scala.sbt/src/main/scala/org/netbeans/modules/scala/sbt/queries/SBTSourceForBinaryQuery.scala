@@ -119,8 +119,9 @@ class SBTSourceForBinaryQuery(project: Project) extends SourceForBinaryQueryImpl
               val (sources, javadoc) = try {
                 val srcs = fo.getParent.getParent.getFileObject("srcs")
                 val docs = fo.getParent.getParent.getFileObject("docs")
-                val sources = if (srcs != null) srcs.getFileObject(fo.getName + "-sources." + fo.getExt) else null
-                val javadoc = if (docs != null) docs.getFileObject(fo.getName + "-javadoc." + fo.getExt) else null
+                //try to find the jars in the same folder like couriser does if srcs and docs are null
+                val sources = if (srcs != null) srcs.getFileObject(fo.getName + "-sources." + fo.getExt) else fo.getParent.getFileObject(fo.getName + "-sources." + fo.getExt)
+                val javadoc = if (docs != null) docs.getFileObject(fo.getName + "-javadoc." + fo.getExt) else fo.getParent.getFileObject(fo.getName + "-javadoc." + fo.getExt)
                 (sources, javadoc)
               } catch {
                 case _: Throwable => (null, null)

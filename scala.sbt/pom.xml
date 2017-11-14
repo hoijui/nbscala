@@ -40,6 +40,10 @@
         </dependency>
         <dependency>
             <groupId>org.netbeans.api</groupId>
+            <artifactId>org-netbeans-modules-csl-types</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-modules-editor</artifactId>
         </dependency>
         <dependency>
@@ -168,10 +172,10 @@
             <groupId>org.netbeans.modules</groupId>
             <artifactId>org-netbeans-modules-scala-editor</artifactId>
         </dependency>
-        <dependency>
+<!--        <dependency>
             <groupId>org.netbeans.modules</groupId>
             <artifactId>org-netbeans-libs-scalariform</artifactId>
-        </dependency>
+        </dependency>-->
 
         <!-- sbt-launcher.jar contains a redundant copy of scala runtime packages, which may be conflict
              on standard scala runtime dependencies, and causes something like:

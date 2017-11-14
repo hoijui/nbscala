@@ -22,13 +22,13 @@
 
         <dependency><!-- myself -->
             <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-parser-combinators_2.11</artifactId>
-            <version>1.0.2</version>
+            <artifactId>scala-parser-combinators_2.12</artifactId>
+            <version>1.0.4</version>
         </dependency>
         <dependency><!-- myself -->
             <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-swing_2.11</artifactId>
-            <version>1.0.1</version>
+            <artifactId>scala-swing_2.12</artifactId>
+            <version>2.0.0-M2</version>
         </dependency>
         <!-- needed to ensure, the libs are deployed in the repostiory before anything else -->
         <dependency>
@@ -81,6 +81,7 @@
                         <publicPackage>scala.reflect</publicPackage>
                         <publicPackage>scala.reflect.macros.internal</publicPackage>
                         <publicPackage>scala.runtime</publicPackage>
+                        <publicPackage>scala.runtime.java8</publicPackage>
                         <publicPackage>scala.sys</publicPackage>
                         <publicPackage>scala.sys.process</publicPackage>
                         <publicPackage>scala.testing</publicPackage>

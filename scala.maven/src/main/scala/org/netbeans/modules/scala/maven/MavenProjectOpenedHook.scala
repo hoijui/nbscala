@@ -10,14 +10,14 @@ class MavenProjectOpenedHook(project: Project) extends ProjectOpenedHook {
   protected def projectOpened() {
     val prefs = project.getLookup.lookup(classOf[ScalariformPrefs])
     if (prefs != null) {
-      prefs.attachUpdater
+//      prefs.attachUpdater
     }
   }
 
   protected def projectClosed() {
     val prefs = project.getLookup.lookup(classOf[ScalariformPrefs])
     if (prefs != null) {
-      prefs.detachUpdater
+//      prefs.detachUpdater
     }
   }
 

@@ -470,7 +470,7 @@ abstract class JavaStubGenerator extends scala.reflect.internal.transform.Erasur
     // Anything which could conceivably be a module (i.e. isn't known to be
     // a type parameter or similar) must go through here or the signature is
     // likely to end up with Foo<T>.Empty where it needs Foo<T>.Empty$.
-    def fullNameInSig(sym: Symbol) = enteringIcode(sym.javaBinaryName)
+    def fullNameInSig(sym: Symbol) = sym.javaBinaryName
     //"L" + enteringIcode(sym.javaBinaryName)
 
     def jsig(tp0: Type, existentiallyBound: List[Symbol] = Nil, toplevel: Boolean = false, primitiveOK: Boolean = true): String = {

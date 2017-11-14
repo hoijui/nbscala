@@ -12,13 +12,13 @@ import org.netbeans.modules.parsing.api.Source
 import org.netbeans.modules.parsing.impl.Utilities
 import org.netbeans.modules.scala.core.ScalaMimeResolver
 import org.netbeans.modules.scala.editor.options.CodeStyle
-import org.netbeans.modules.scala.editor.spi.ScalariformPrefsProvider
-import scalariform.formatter.preferences.AlignParameters
-import scalariform.formatter.preferences.AlignSingleLineCaseStatements
-import scalariform.formatter.preferences.FormattingPreferences
-import scalariform.formatter.preferences.IndentSpaces
-import scalariform.formatter.preferences.RewriteArrowSymbols
-import scalariform.parser.ScalaParserException
+//import org.netbeans.modules.scala.editor.spi.ScalariformPrefsProvider
+//import scalariform.formatter.preferences.AlignParameters
+//import scalariform.formatter.preferences.AlignSingleLineCaseStatements
+//import scalariform.formatter.preferences.FormattingPreferences
+//import scalariform.formatter.preferences.IndentSpaces
+//import scalariform.formatter.preferences.RewriteArrowSymbols
+//import scalariform.parser.ScalaParserException
 
 class ScalaReformatter(source: Source, context: Context) extends ReformatTask {
   private val log = Logger.getLogger(this.getClass.getName)
@@ -35,16 +35,16 @@ class ScalaReformatter(source: Source, context: Context) extends ReformatTask {
     val cs = CodeStyle.get(doc)
 
     val project = FileOwnerQuery.getOwner(fo)
-    val prefs = if (project != null) {
-      val formPrefsProvider = project.getLookup.lookup(classOf[ScalariformPrefsProvider])
-      if (formPrefsProvider != null) {
-        formPrefsProvider.formatPreferences
-      } else {
-        ScalaReformatter.defaultPreferences(cs.indentSize)
-      }
-    } else {
-      ScalaReformatter.defaultPreferences(cs.indentSize)
-    }
+    //    val prefs = if (project != null) {
+    //      val formPrefsProvider = project.getLookup.lookup(classOf[ScalariformPrefsProvider])
+    //      if (formPrefsProvider != null) {
+    //        formPrefsProvider.formatPreferences
+    //      } else {
+    //        ScalaReformatter.defaultPreferences(cs.indentSize)
+    //      }
+    //    } else {
+    //      ScalaReformatter.defaultPreferences(cs.indentSize)
+    //    }
 
     val indentRegions = context.indentRegions
     java.util.Collections.reverse(indentRegions)
@@ -56,13 +56,13 @@ class ScalaReformatter(source: Source, context: Context) extends ReformatTask {
       val length = end - start
       if (start >= 0 && length > 0) {
         val text = doc.getText(start, length)
-        val formattedText = try {
+        val formattedText: String = /*try {
           scalariform.formatter.ScalaFormatter.format(text, prefs)
         } catch {
           case ex: ScalaParserException =>
             log.warning(ex.getMessage)
             null
-        }
+        }*/ null
 
         if (formattedText != null && formattedText.length > 0) {
           val diffs = HuntDiff.diff(new StringReader(text), new StringReader(formattedText), ScalaReformatter.diffOptions)
@@ -170,11 +170,11 @@ object ScalaReformatter {
     }
   }
 
-  def defaultPreferences(indentSize: Int) = FormattingPreferences()
-    .setPreference(IndentSpaces, indentSize)
-    .setPreference(RewriteArrowSymbols, false)
-    .setPreference(AlignParameters, true)
-    .setPreference(AlignSingleLineCaseStatements, true)
+  //  def defaultPreferences(indentSize: Int) = FormattingPreferences()
+  //    .setPreference(IndentSpaces, indentSize)
+  //    .setPreference(RewriteArrowSymbols, false)
+  //    .setPreference(AlignParameters, true)
+  //    .setPreference(AlignSingleLineCaseStatements, true)
 }
 
 object DiffComparator extends java.util.Comparator[Diff] {

@@ -13,10 +13,10 @@ import org.netbeans.modules.scala.core.ProjectResources
 import org.netbeans.modules.scala.sbt.console.SBTConsoleTopComponent
 import org.openide.filesystems.FileUtil
 import scala.collection.mutable.ArrayBuffer
-import scalariform.formatter.preferences.AllPreferences
-import scalariform.formatter.preferences.FormattingPreferences
-import scalariform.formatter.preferences.IFormattingPreferences
-import scalariform.formatter.preferences.PreferenceDescriptor
+//import scalariform.formatter.preferences.AllPreferences
+//import scalariform.formatter.preferences.FormattingPreferences
+//import scalariform.formatter.preferences.IFormattingPreferences
+//import scalariform.formatter.preferences.PreferenceDescriptor
 
 case class ProjectContext(
   name: String,
@@ -33,8 +33,8 @@ case class ProjectContext(
   testCps: Array[File],
   mainDepPrjs: Array[File],
   testDepPrjs: Array[File],
-  aggPrjs: Array[File],
-  scalariformPrefs: IFormattingPreferences)
+  aggPrjs: Array[File] /* ,
+  scalariformPrefs: IFormattingPreferences */ )
 
 /**
  *
@@ -146,7 +146,7 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
     val testDepPrjs = new ArrayBuffer[File]()
     val aggPrjs = new ArrayBuffer[File]()
 
-    var scalatiformPrefs = Map[PreferenceDescriptor[_], Any]()
+    //    var scalatiformPrefs = Map[PreferenceDescriptor[_], Any]()
 
     val projectFo = project.getProjectDirectory
     val projectDir = FileUtil.toFile(projectFo)
@@ -241,20 +241,20 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
                 case _ =>
               }
 
-            case entry @ <scalariform>{ _* }</scalariform> =>
-              val scope = (entry \ "@scope").text.trim.toLowerCase
-              if (scope == "compile") {
-                val k = (entry \ "@key").text
-                AllPreferences.preferencesByKey.get(k) match {
-                  case Some(key) =>
-                    val v = (entry \ "@value").text
-                    key.preferenceType.parseValue(v) match {
-                      case Right(value) => scalatiformPrefs += (key -> value)
-                      case Left(ex)     =>
-                    }
-                  case _ =>
-                }
-              }
+            //            case entry @ <scalariform>{ _* }</scalariform> =>
+            //              val scope = (entry \ "@scope").text.trim.toLowerCase
+            //              if (scope == "compile") {
+            //                val k = (entry \ "@key").text
+            //                AllPreferences.preferencesByKey.get(k) match {
+            //                  case Some(key) =>
+            //                    val v = (entry \ "@value").text
+            //                    key.preferenceType.parseValue(v) match {
+            //                      case Right(value) => scalatiformPrefs += (key -> value)
+            //                      case Left(ex)     =>
+            //                    }
+            //                  case _ =>
+            //                }
+            //              }
 
             case _ =>
           }
@@ -282,8 +282,8 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
       testCps map FileUtil.normalizeFile toArray,
       mainDepPrjs map FileUtil.normalizeFile toArray,
       testDepPrjs map FileUtil.normalizeFile toArray,
-      aggPrjs map FileUtil.normalizeFile toArray,
-      new FormattingPreferences(scalatiformPrefs))
+      aggPrjs map FileUtil.normalizeFile toArray /* ,
+      new FormattingPreferences(scalatiformPrefs) */ )
   }
 
   def addPropertyChangeListener(propertyChangeListener: PropertyChangeListener) {
@@ -363,8 +363,8 @@ object SBTResolver {
     Array[File](),
     Array[File](),
     Array[File](),
-    Array[File](),
-    FormattingPreferences())
+    Array[File]() /* ,
+    FormattingPreferences() */ )
 
   val dirWatcher = new DirWatcher(DESCRIPTOR_FILE_NAME, COMPILER_SETTINGS_FILE_NAME)
 

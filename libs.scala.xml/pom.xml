@@ -22,8 +22,8 @@
 
         <dependency><!-- myself -->
             <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-xml_2.11</artifactId>
-            <version>1.0.2</version>
+            <artifactId>scala-xml_2.12</artifactId>
+            <version>1.0.5</version>
         </dependency>
         <!-- needed to ensure, the libs are deployed in the repostiory before anything else -->
         <dependency>
