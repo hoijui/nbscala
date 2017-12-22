@@ -115,7 +115,7 @@ class AnnotationsHolder(file: DataObject, ec: EditorCookie.Observable) extends P
     }
   }
 
-  def setNewAnnotations(as: List[IsOverriddenAnnotation]): Unit = synchronized {
+  def setNewAnnotations(as: Seq[IsOverriddenAnnotation]): Unit = synchronized {
     val toRemove = new ArrayBuffer[IsOverriddenAnnotation] ++= annotations
     val toAdd = new ArrayBuffer[IsOverriddenAnnotation] ++= as
 

@@ -52,10 +52,10 @@
         </dependency>
 
         <!-- subproject dependencies -->
-        <dependency>
+<!--        <dependency>
             <groupId>org.netbeans.modules</groupId>
             <artifactId>org-netbeans-libs-sbt</artifactId>
-        </dependency>
+        </dependency>-->
     </dependencies>
 
     <build>

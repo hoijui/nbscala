@@ -8,13 +8,13 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import org.netbeans.modules.scala.core.ProjectResources
 import org.netbeans.modules.scala.core.ScalaSourceUtil
-import org.netbeans.modules.scala.sbt.console.SBTConsoleTopComponent
+//import org.netbeans.modules.scala.sbt.console.SBTConsoleTopComponent
 import org.apache.tools.ant.module.api.support.ActionUtils
 import org.netbeans.api.debugger.jpda.DebuggerStartException
 import org.netbeans.api.debugger.jpda.JPDADebugger
 import org.netbeans.api.language.util.ast.AstDfn
 import org.netbeans.api.project.ProjectManager
-import org.netbeans.modules.scala.console.shell.ScalaConsoleTopComponent
+//import org.netbeans.modules.scala.console.shell.ScalaConsoleTopComponent
 import org.netbeans.spi.project.ActionProvider
 import org.openide.DialogDescriptor
 import org.openide.DialogDisplayer
@@ -44,8 +44,8 @@ class SBTActionProvider(project: SBTProject) extends ActionProvider {
    * SBTProjectLogicalView.getActions
    */
   def getSupportedActions() = Array(
-    COMMAND_SBT_CONSOLE,
-    COMMAND_SCALA_CONSOLE,
+    //    COMMAND_SBT_CONSOLE,
+    //    COMMAND_SCALA_CONSOLE,
     COMMAND_SBT_RELOAD,
     COMMAND_SBT_UPDATE_CLASSIFIERS,
     COMMAND_BUILD,
@@ -67,95 +67,98 @@ class SBTActionProvider(project: SBTProject) extends ActionProvider {
     val rootProject = project.getRootProject
 
     command match {
-      case COMMAND_SCALA_CONSOLE =>
-        ScalaConsoleTopComponent.openInstance(project, Nil)()
-
-      case COMMAND_SBT_CONSOLE =>
-        val commands = selectProject
-        SBTConsoleTopComponent.openNewInstance(rootProject, commands, isDebug = false)()
+      //      case COMMAND_SCALA_CONSOLE =>
+      //        ScalaConsoleTopComponent.openInstance(project, Nil)()
+      //
+      //      case COMMAND_SBT_CONSOLE =>
+      //        val commands = selectProject
+      //        SBTConsoleTopComponent.openNewInstance(rootProject, commands, isDebug = false)()
 
       case COMMAND_SBT_RELOAD =>
         val sbtResolver = project.getLookup.lookup(classOf[SBTResolver])
         sbtResolver.isResolvedOrResolving = false
         sbtResolver.triggerSbtResolution
 
-      case COMMAND_SBT_UPDATE_CLASSIFIERS =>
-        ProjectManager.getDefault.saveProject(project)
-        LifecycleManager.getDefault.saveAll
-        val commands = selectProject ::: List("updateClassifiers")
-        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
-
-      case COMMAND_BUILD =>
-        ProjectManager.getDefault.saveProject(project)
-        LifecycleManager.getDefault.saveAll
-        val commands = selectProject ::: List("compile")
-        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
-
-      case COMMAND_REBUILD =>
-        ProjectManager.getDefault.saveProject(project)
-        LifecycleManager.getDefault.saveAll
-        val commands = selectProject ::: List("clean", "compile")
-        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
-
-      case COMMAND_CLEAN =>
-        ProjectManager.getDefault.saveProject(project)
-        LifecycleManager.getDefault.saveAll
-        val commands = selectProject ::: List("clean")
-        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
-
-      case COMMAND_RUN =>
-        ProjectManager.getDefault.saveProject(project)
-        LifecycleManager.getDefault.saveAll
-        val commands = selectProject ::: List(
-          //"set fork := false",
-          //"set javaOptions := Nil",
-          "run")
-        SBTConsoleTopComponent.openNewInstance(rootProject, commands, isDebug = false)()
-
-      case COMMAND_DEBUG =>
-        ProjectManager.getDefault.saveProject(project)
-        LifecycleManager.getDefault.saveAll
-        val commands = selectProject ::: List(
-          //"set fork := true",
-          //"set javaOptions := List(\"" + debugOpts(5005) + "\")",
-          "run ")
-        SBTConsoleTopComponent.openNewInstance(rootProject, commands, isDebug = true)()
-
-      case COMMAND_RUN_SINGLE =>
-        ProjectManager.getDefault.saveProject(project)
-        LifecycleManager.getDefault.saveAll
-        findMainClass(context) foreach { clazz =>
-          val commands = selectProject ::: List(
-            //"set fork := false",
-            //"set javaOptions := Nil",
-            "run-main " + clazz)
-          SBTConsoleTopComponent.openNewInstance(rootProject, commands, isDebug = false)()
-        }
-
-      case COMMAND_DEBUG_SINGLE =>
-        ProjectManager.getDefault.saveProject(project)
-        LifecycleManager.getDefault.saveAll
-        findMainClass(context) foreach { clazz =>
-          val commands = selectProject ::: List(
-            //"set fork := true",
-            //"set javaOptions := List(\"" + debugOpts(5005) + "\")",
-            "run-main " + clazz)
-          SBTConsoleTopComponent.openNewInstance(rootProject, commands, isDebug = true)()
-        }
-
-      case COMMAND_TEST =>
-        ProjectManager.getDefault.saveProject(project)
-        LifecycleManager.getDefault.saveAll
-        val commands = selectProject ::: List("test")
-        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
-
-      case COMMAND_TEST_ONLY => // TODO
-        ProjectManager.getDefault.saveProject(project)
-        LifecycleManager.getDefault.saveAll
-        val commands = selectProject ::: List("test-only")
-        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
+      //      case COMMAND_SBT_UPDATE_CLASSIFIERS =>
+      //        ProjectManager.getDefault.saveProject(project)
+      //        LifecycleManager.getDefault.saveAll
+      //        val commands = selectProject ::: List("updateClassifiers")
+      //        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
+      //
+      //      case COMMAND_BUILD =>
+      //        ProjectManager.getDefault.saveProject(project)
+      //        LifecycleManager.getDefault.saveAll
+      //        val commands = selectProject ::: List("compile")
+      //        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
+      //
+      //      case COMMAND_REBUILD =>
+      //        ProjectManager.getDefault.saveProject(project)
+      //        LifecycleManager.getDefault.saveAll
+      //        val commands = selectProject ::: List("clean", "compile")
+      //        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
+      //
+      //      case COMMAND_CLEAN =>
+      //        ProjectManager.getDefault.saveProject(project)
+      //        LifecycleManager.getDefault.saveAll
+      //        val commands = selectProject ::: List("clean")
+      //        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
+      //
+      //      case COMMAND_RUN =>
+      //        ProjectManager.getDefault.saveProject(project)
+      //        LifecycleManager.getDefault.saveAll
+      //        val commands = selectProject ::: List(
+      //          //"set fork := false",
+      //          //"set javaOptions := Nil",
+      //          "run")
+      //        SBTConsoleTopComponent.openNewInstance(rootProject, commands, isDebug = false)()
+      //
+      //      case COMMAND_DEBUG =>
+      //        ProjectManager.getDefault.saveProject(project)
+      //        LifecycleManager.getDefault.saveAll
+      //        val commands = selectProject ::: List(
+      //          //"set fork := true",
+      //          //"set javaOptions := List(\"" + debugOpts(5005) + "\")",
+      //          "run ")
+      //        SBTConsoleTopComponent.openNewInstance(rootProject, commands, isDebug = true)()
+      //
+      //      case COMMAND_RUN_SINGLE =>
+      //        ProjectManager.getDefault.saveProject(project)
+      //        LifecycleManager.getDefault.saveAll
+      //        findMainClass(context) foreach { clazz =>
+      //          val commands = selectProject ::: List(
+      //            //"set fork := false",
+      //            //"set javaOptions := Nil",
+      //            "run-main " + clazz)
+      //          SBTConsoleTopComponent.openNewInstance(rootProject, commands, isDebug = false)()
+      //        }
+      //
+      //      case COMMAND_DEBUG_SINGLE =>
+      //        ProjectManager.getDefault.saveProject(project)
+      //        LifecycleManager.getDefault.saveAll
+      //        findMainClass(context) foreach { clazz =>
+      //          val commands = selectProject ::: List(
+      //            //"set fork := true",
+      //            //"set javaOptions := List(\"" + debugOpts(5005) + "\")",
+      //            "run-main " + clazz)
+      //          SBTConsoleTopComponent.openNewInstance(rootProject, commands, isDebug = true)()
+      //        }
+      //
+      //      case COMMAND_TEST =>
+      //        ProjectManager.getDefault.saveProject(project)
+      //        LifecycleManager.getDefault.saveAll
+      //        val commands = selectProject ::: List("test")
+      //        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
+      //
+      //      case COMMAND_TEST_ONLY => // TODO
+      //        ProjectManager.getDefault.saveProject(project)
+      //        LifecycleManager.getDefault.saveAll
+      //        val commands = selectProject ::: List("test-only")
+      //        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false)()
 
       case _ =>
+        val msg = "Attempted an SBT action but we no longer run the console in NetBeans"
+        log.log(Level.WARNING, msg)
+        DialogDisplayer.getDefault.notify(new NotifyDescriptor.Message(msg, NotifyDescriptor.ERROR_MESSAGE))
     }
   }
 
@@ -254,8 +257,8 @@ class SBTActionProvider(project: SBTProject) extends ActionProvider {
 }
 
 object SBTActionProvider {
-  val COMMAND_SBT_CONSOLE = "sbt.console"
-  val COMMAND_SCALA_CONSOLE = "scala.console"
+  //  val COMMAND_SBT_CONSOLE = "sbt.console"
+  //  val COMMAND_SCALA_CONSOLE = "scala.console"
   val COMMAND_SBT_RELOAD = "sbt.reload"
   val COMMAND_SBT_UPDATE_CLASSIFIERS = "sbt.updateclassifiers"
 

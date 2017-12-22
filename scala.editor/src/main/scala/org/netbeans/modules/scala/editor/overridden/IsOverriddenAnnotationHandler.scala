@@ -160,8 +160,8 @@ object IsOverriddenAnnotationHandler {
    } */
 
   private def getPosition(doc: StyledDocument, offset: Int): Position = {
+    var pos: Position = null
     val task = new Runnable {
-      var pos: Position = _
       def run {
         if (offset < 0 || offset >= doc.getLength) return
         try {
@@ -172,7 +172,7 @@ object IsOverriddenAnnotationHandler {
 
     doc.render(task)
 
-    task.pos
+    pos
   }
 
 }
@@ -184,7 +184,7 @@ class IsOverriddenAnnotationHandler(file: FileObject) extends ParserResultTask[S
 
   private var cancelled: Boolean = _
 
-  private var results: List[IsOverriddenAnnotation] = Nil
+  private var results: Seq[IsOverriddenAnnotation] = Nil
 
   override def getPriority: Int = 0
 
@@ -226,14 +226,14 @@ class IsOverriddenAnnotationHandler(file: FileObject) extends ParserResultTask[S
     }
   }
 
-  private def newAnnotations(as: List[IsOverriddenAnnotation]) {
+  private def newAnnotations(as: Seq[IsOverriddenAnnotation]) {
     AnnotationsHolder(file) match {
       case null =>
       case x    => x.setNewAnnotations(as)
     }
   }
 
-  protected def process(pr: ScalaParserResult): List[IsOverriddenAnnotation] = {
+  protected def process(pr: ScalaParserResult): Seq[IsOverriddenAnnotation] = {
     synchronized {
       if (isCancelled) return Nil
     }
@@ -260,50 +260,48 @@ class IsOverriddenAnnotationHandler(file: FileObject) extends ParserResultTask[S
 
     Log.log(Level.FINE, "reverseSourceRoots: {0}", reverseSourceRoots) //NOI18N
 
-    val annotations = new ArrayBuffer[IsOverriddenAnnotation]
-    global.askForResponse { () =>
-      for {
+    val annotations = global.askForResponse[Seq[IsOverriddenAnnotation]] { () =>
+      var res = Vector[IsOverriddenAnnotation]()
+      try for {
         (idToken, items) <- root.idTokenToItems
-        item <- items if item.isInstanceOf[global.ScalaDfn]
-        sym = item.asInstanceOf[global.ScalaDfn].symbol if sym != global.NoSymbol
+        item @ (a: global.ScalaDfn) <- items
+        sym = item.symbol if sym != global.NoSymbol
         pos = getPosition(doc, item.idOffset(th)) if pos ne null
+        overridees = sym.allOverriddenSymbols if overridees.nonEmpty
       } {
-        if (isCancelled) return Nil
+        val seenMethods = new HashSet[global.Symbol]
+        val descs = overridees filter (seenMethods add _) map (x => new ElementDescription(global.ScalaElement(x, pr)))
 
-        val overridees = sym.allOverriddenSymbols
-        if (!overridees.isEmpty) {
-          val seenMethods = new HashSet[global.Symbol]
-          val descs = overridees filter (seenMethods add _) map (x =>
-            new ElementDescription(global.ScalaElement(x, pr)))
+        if (!descs.isEmpty) {
+          val tooltip = new StringBuffer
+          var wasOverrides = false
 
-          if (!descs.isEmpty) {
-            val tooltip = new StringBuffer
-            var wasOverrides = false
+          var newline = false
 
-            var newline = false
-
-            for (desc <- descs) {
-              if (newline) {
-                tooltip.append("\n") //NOI18N
-              }
-
-              newline = true
-
-              if (desc.handle.symbol.hasFlag(Flags.DEFERRED)) {
-                tooltip.append(NbBundle.getMessage(classOf[IsOverriddenAnnotationHandler], "TP_Implements", desc.getDisplayName))
-              } else {
-                tooltip.append(NbBundle.getMessage(classOf[IsOverriddenAnnotationHandler], "TP_Overrides", desc.getDisplayName))
-                wasOverrides = true
-              }
+          for (desc <- descs) {
+            if (newline) {
+              tooltip.append("\n") //NOI18N
             }
 
-            annotations += (new IsOverriddenAnnotation(doc, pos, if (wasOverrides) AnnotationType.OVERRIDES else AnnotationType.IMPLEMENTS, tooltip.toString, descs))
+            newline = true
+
+            if (desc.handle.symbol.hasFlag(Flags.DEFERRED)) {
+              tooltip.append(NbBundle.getMessage(classOf[IsOverriddenAnnotationHandler], "TP_Implements", desc.getDisplayName))
+            } else {
+              tooltip.append(NbBundle.getMessage(classOf[IsOverriddenAnnotationHandler], "TP_Overrides", desc.getDisplayName))
+              wasOverrides = true
+            }
           }
+
+          res :+= new IsOverriddenAnnotation(doc, pos, if (wasOverrides) AnnotationType.OVERRIDES else AnnotationType.IMPLEMENTS, tooltip.toString, descs)
         }
+      } catch {
+        case scala.util.control.NonFatal(ex) => global.processGlobalException(ex)
       }
-    } get match {
-      case Left(_)   =>
-      case Right(ex) => global.processGlobalException(ex)
+      res
+    }.get match {
+      case Left(ann) => ann
+      case Right(ex) => global.processGlobalException(ex, Seq())
     }
 
     /* for (td <- v.type2Declaration.keySet) {

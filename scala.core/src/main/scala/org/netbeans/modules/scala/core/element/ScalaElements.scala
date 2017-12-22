@@ -134,13 +134,15 @@ trait ScalaElements { self: ScalaGlobal =>
 
       getDoc foreach { srcDoc =>
         if (isJava) {
-          _javaElement foreach { x =>
-            try {
-              val docComment: String = JavaSourceUtil.getDocComment(JavaSourceUtil.getCompilationInfoForScalaFile(parserResult.getSnapshot.getSource.getFileObject), x)
-              if (docComment.length > 0) {
-                return new StringBuilder(docComment.length + 5).append("/**").append(docComment).append("*/").toString
-              }
-            } catch { case ex: IOException => Exceptions.printStackTrace(ex) }
+          _javaElement match {
+            case Some(x) =>
+              try {
+                val docComment: String = JavaSourceUtil.getDocComment(JavaSourceUtil.getCompilationInfoForScalaFile(parserResult.getSnapshot.getSource.getFileObject), x)
+                if (docComment.length > 0) {
+                  return new StringBuilder(docComment.length + 5).append("/**").append(docComment).append("*/").toString
+                }
+              } catch { case ex: IOException => Exceptions.printStackTrace(ex) }
+            case _ =>
           }
         } else {
           return ScalaSourceUtil.getDocComment(srcDoc, getOffset)
@@ -170,10 +172,12 @@ trait ScalaElements { self: ScalaGlobal =>
       if (!isLoaded) load
 
       if (isJava) {
-        _javaElement foreach { x =>
-          try {
-            return JavaSourceUtil.getOffset(JavaSourceUtil.getCompilationInfoForScalaFile(parserResult.getSnapshot.getSource.getFileObject), x)
-          } catch { case ex: IOException => Exceptions.printStackTrace(ex) }
+        _javaElement match {
+          case Some(x) =>
+            try {
+              return JavaSourceUtil.getOffset(JavaSourceUtil.getCompilationInfoForScalaFile(parserResult.getSnapshot.getSource.getFileObject), x)
+            } catch { case ex: IOException => Exceptions.printStackTrace(ex) }
+          case _ =>
         }
       } else {
         val pos = symbol.pos

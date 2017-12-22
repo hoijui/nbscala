@@ -389,10 +389,11 @@ object ScalaGlobal {
         case None => return globalForStdLib
       }
     } else {
-      for {
+      val g = for {
         globalToSrcCp <- projectToGlobals.get(project)
         (global, _) <- globalToSrcCp find (_._2.contains(fo))
-      } return global
+      } yield global
+      if (g.isDefined) return g.get
     }
 
     // ----- need to create a new global:

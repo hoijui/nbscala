@@ -111,7 +111,7 @@ import org.openide.util.Task;
 import org.openide.util.TaskListener;
 
 import org.netbeans.api.language.util.ast.AstDfn;
-import org.netbeans.modules.scala.console.shell.ScalaConsoleTopComponent;
+//import org.netbeans.modules.scala.console.shell.ScalaConsoleTopComponent;
 import org.netbeans.modules.scala.core.ScalaParserResult;
 import org.netbeans.modules.scala.core.ast.ScalaRootScope;
 
@@ -142,8 +142,8 @@ public class J2SEActionProvider implements ActionProvider {
         COMMAND_DELETE,
         COMMAND_COPY,
         COMMAND_MOVE,
-        COMMAND_RENAME,
-        COMMAND_SCALA_CONSOLE
+        COMMAND_RENAME/*,
+        COMMAND_SCALA_CONSOLE*/
     };
 
     private static final String[] platformSensitiveActions = {
@@ -305,11 +305,11 @@ public class J2SEActionProvider implements ActionProvider {
     }
 
     public void invokeAction(final String command, final Lookup context) throws IllegalArgumentException {
-        if (COMMAND_SCALA_CONSOLE.equals(command)) {
-            scala.collection.immutable.List<String> nil = scala.collection.immutable.List$.MODULE$.empty();
-            ScalaConsoleTopComponent.openInstance(project, nil, false, null);
-            return;
-        }
+//        if (COMMAND_SCALA_CONSOLE.equals(command)) {
+//            scala.collection.immutable.List<String> nil = scala.collection.immutable.List$.MODULE$.empty();
+//            ScalaConsoleTopComponent.openInstance(project, nil, false, null);
+//            return;
+//        }
 
         if (COMMAND_DELETE.equals(command)) {
             DefaultProjectOperations.performDefaultDeleteOperation(project);

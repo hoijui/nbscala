@@ -117,13 +117,13 @@
                         </configuration>
                     </execution>-->
 
-                    <execution>
+<!--                    <execution>
                         <id>install-scala-sbt-launch</id>
                         <goals>
                             <goal>install-file</goal>
                         </goals>
                         <phase>process-resources</phase>
-                        <!--use process-resources phase to.force re-installation-->
+                        use process-resources phase to.force re-installation
                         <configuration>
                             <file>${project.basedir}/lib/sbt/sbt-launch.jar</file>
                             <groupId>org.scala-sbt</groupId>
@@ -131,7 +131,7 @@
                             <version>${sbt.version}</version>
                             <packaging>jar</packaging>
                         </configuration>
-                    </execution>
+                    </execution>-->
 
                     <execution>
                         <id>install-scala-scalariform</id>

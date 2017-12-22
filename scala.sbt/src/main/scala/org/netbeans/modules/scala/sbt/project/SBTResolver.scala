@@ -10,7 +10,9 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import org.netbeans.api.java.classpath.ClassPath
 import org.netbeans.modules.scala.core.ProjectResources
-import org.netbeans.modules.scala.sbt.console.SBTConsoleTopComponent
+//import org.netbeans.modules.scala.sbt.console.SBTConsoleTopComponent
+import org.openide.DialogDisplayer
+import org.openide.NotifyDescriptor
 import org.openide.filesystems.FileUtil
 import scala.collection.mutable.ArrayBuffer
 //import scalariform.formatter.preferences.AllPreferences
@@ -66,10 +68,11 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
       val rootProject = project.getRootProject
       def rootResolver = rootProject.getLookup.lookup(classOf[SBTResolver])
       if (rootProject == project || !rootResolver.isResolvedOrResolving) {
-        val commands = List("netbeans")
-        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false) { _ =>
-          pcs.firePropertyChange(SBT_RESOLVED, null, null)
-        }
+        DialogDisplayer.getDefault.notify(new NotifyDescriptor.Message("Please generate netbeans configuration in sbt", NotifyDescriptor.INFORMATION_MESSAGE))
+        //        val commands = List("netbeans")
+        //        SBTConsoleTopComponent.openInstance(rootProject, commands, isDebug = false) { _ =>
+        //          pcs.firePropertyChange(SBT_RESOLVED, null, null)
+        //        }
       }
     }
   }

@@ -54,10 +54,10 @@
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-modules-extexecution</artifactId>
         </dependency>
-        <dependency>
+<!--        <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-modules-extexecution-base</artifactId>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>org.netbeans.api</groupId>
             <artifactId>org-netbeans-modules-java-platform</artifactId>
@@ -160,10 +160,10 @@
             <groupId>org.netbeans.modules</groupId>
             <artifactId>org-netbeans-libs-scala-xml</artifactId>
         </dependency>
-        <dependency>
+<!--        <dependency>
             <groupId>org.netbeans.modules</groupId>
             <artifactId>org-netbeans-modules-scala-console</artifactId>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>org.netbeans.modules</groupId>
             <artifactId>org-netbeans-modules-scala-core</artifactId>
@@ -187,11 +187,11 @@
              If in the future, we need compile dependencies on sbt's package, we should put the runtime only
              sbt-launcher.jar to a standardalone module.
         -->
-        <dependency>
+<!--        <dependency>
             <groupId>org.netbeans.modules</groupId>
             <artifactId>org-netbeans-libs-sbt</artifactId>
             <scope>runtime</scope>
-        </dependency>
+        </dependency>-->
     </dependencies>
 
     <build>
@@ -231,10 +231,10 @@
                             <id>org.netbeans.modules:org-netbeans-modules-options-editor</id>
                             <type>impl</type>
                         </dependency>
-                        <dependency>
+<!--                        <dependency>
                             <id>org.netbeans.api:org-netbeans-modules-extexecution-base</id>
                             <type>impl</type>
-                        </dependency>
+                        </dependency>-->
                     </moduleDependencies>
                 </configuration>
             </plugin>

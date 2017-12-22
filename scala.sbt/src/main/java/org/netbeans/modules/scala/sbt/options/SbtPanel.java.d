@@ -1,11 +1,11 @@
 package org.netbeans.modules.scala.sbt.options;
 
-import static org.netbeans.modules.scala.sbt.console.SBTConsoleSettings.*;
+//import static org.netbeans.modules.scala.sbt.console.SBTConsoleSettings.*;
 import java.util.prefs.Preferences;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import org.netbeans.modules.scala.sbt.console.SBTConsoleTopComponent;
+//import org.netbeans.modules.scala.sbt.console.SBTConsoleTopComponent;
 
 final class SbtPanel extends javax.swing.JPanel implements DocumentListener {
 

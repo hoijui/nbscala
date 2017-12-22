@@ -49,14 +49,14 @@ import scala.collection.mutable.HashSet
  */
 class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsTokens) {
 
-  protected val _idTokenToItems = new HashMap[Token[TokenId], List[AstItem]]
+  protected val _idTokenToItems = new HashMap[Token[TokenId], Seq[AstItem]]
   private var _sortedTokens = Array[Token[TokenId]]()
   private var _isTokensSorted = false
   private val _importingItems = new HashSet[AstItem]
 
   def contains(idToken: Token[TokenId]): Boolean = _idTokenToItems.contains(idToken)
 
-  def idTokenToItems: HashMap[Token[TokenId], List[AstItem]] = {
+  def idTokenToItems: HashMap[Token[TokenId], Seq[AstItem]] = {
     _idTokenToItems
   }
 
@@ -84,18 +84,18 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
     if (items exists { _.symbol == item.symbol }) {
       if (item.resultType ne null) {
         // * it has exlicit assigned resultType, always add it
-        _idTokenToItems += (idToken -> (item :: items))
+        _idTokenToItems += (idToken -> (item +: items))
         _isTokensSorted = false
         true
       } else false // * don't add item with same symbol and resultType eq null
     } else {
-      _idTokenToItems += (idToken -> (item :: items))
+      _idTokenToItems += (idToken -> (item +: items))
       _isTokensSorted = false
       true
     }
   }
 
-  final def findItemsAt(th: TokenHierarchy[_], offset: Int): List[AstItem] = {
+  final def findItemsAt(th: TokenHierarchy[_], offset: Int): Seq[AstItem] = {
     val tokens = sortedTokens(th)
 
     var lo = 0
@@ -115,7 +115,7 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
     Nil
   }
 
-  final def findNeastItemsAt(th: TokenHierarchy[_], offset: Int): List[AstItem] = {
+  final def findNeastItemsAt(th: TokenHierarchy[_], offset: Int): Seq[AstItem] = {
     val tokens = sortedTokens(th)
 
     var lo = 0
@@ -142,40 +142,32 @@ class AstRootScope(boundsTokens: Array[Token[TokenId]]) extends AstScope(boundsT
     } else Nil
   }
 
-  final def findItemsAt(token: Token[TokenId]): List[AstItem] = {
+  final def findItemsAt(token: Token[TokenId]): Seq[AstItem] = {
     _idTokenToItems.get(token).getOrElse(Nil)
   }
 
-  def findAllDfnSyms[A <: AnyRef](clazz: Class[A]): List[A] = {
-    findAllDfnsOf(clazz).map { _.symbol }.asInstanceOf[List[A]]
+  def findAllDfnSyms[A <: AnyRef](clazz: Class[A]): Seq[A] = {
+    findAllDfnsOf(clazz).map { _.symbol }.asInstanceOf[Seq[A]]
   }
 
-  def findAllDfnsOf[A <: AnyRef](clazz: Class[A]): List[AstDfn] = {
-    var result: List[AstDfn] = Nil
-    for (
+  def findAllDfnsOf[A <: AnyRef](clazz: Class[A]): Seq[AstDfn] = {
+    val result = for (
       items <- _idTokenToItems.valuesIterator;
       item <- items if item.isInstanceOf[AstDfn] && clazz.isInstance(item.symbol)
-    ) {
-      result = item.asInstanceOf[AstDfn] :: result
-    }
-    result
+    ) yield item.asInstanceOf[AstDfn]
+    result.toVector
   }
 
   def findDfnOf(item: AstItem): Option[AstDfn] = {
     item match {
       case dfn: AstDfn => Some(dfn)
       case ref: AstRef =>
-        samePlaceItems(ref) foreach {
-          case refx: AstRef =>
-            _idTokenToItems.valuesIterator foreach { xs =>
-              xs foreach {
-                case x: AstDfn if x.isReferredBy(refx) => return Some(x)
-                case _                                 =>
-              }
-            }
-          case _ =>
+        val refs = samePlaceItems(ref).iterator.flatMap {
+          case refx: AstRef => _idTokenToItems.valuesIterator.flatMap(_.collectFirst { case x: AstDfn if x.isReferredBy(refx) => x })
+          case _            => None
         }
-        None
+        if (refs.nonEmpty) return Some(refs.next)
+        else return None
     }
   }
 

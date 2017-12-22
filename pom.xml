@@ -61,15 +61,15 @@
         <netbeans.version>RELEASE82</netbeans.version>
 
         <scala.version>2.12.4</scala.version>
-        <sbt.version>0.13.16</sbt.version>
+        <!--<sbt.version>0.13.16</sbt.version>-->
         <scalariform.version>0.1.8</scalariform.version>
 
         <!-- module versions -->
-        <libs.sbt.version>0.13.16.1</libs.sbt.version>
+        <!--<libs.sbt.version>0.13.16.1</libs.sbt.version>-->
         <libs.scala.version>2.12.4.1</libs.scala.version>
         <libs.scalariform.version>0.1.8.2</libs.scalariform.version>
         <libs.xtc.version>1.15.2</libs.xtc.version>
-        <scala.console.version>1.8.1.0</scala.console.version>
+        <!--<scala.console.version>1.8.1.0</scala.console.version>-->
         <scala.core.version>1.8.1.0</scala.core.version>
         <scala.debugger.version>1.8.1.0</scala.debugger.version>
         <scala.debugger.projects.version>1.8.1.1</scala.debugger.projects.version>
@@ -265,10 +265,7 @@
             <!-- @see http://maven.apache.org/general.html#tools-jar-dependency -->
             <id>dependency-of-default-tools-jar</id>
             <activation>
-                <property>
-                    <name>java.vendor</name>
-                    <value>Sun Microsystems Inc.</value>
-                </property>
+              <jdk>(,1.8]</jdk>
             </activation>
 
             <dependencies>
@@ -281,27 +278,13 @@
                 </dependency>
             </dependencies>
         </profile>
-
         <profile>
-            <!-- The following code includes tools.jar for JDKs on Windows, Linux and Solaris (it is already included in the runtime for Mac OS X and some free JDKs). -->
-            <!-- @see http://maven.apache.org/general.html#tools-jar-dependency -->
-            <id>dependency-of-default-tools-jar-openjdk</id>
-            <activation>
-                <property>
-                    <name>java.vendor</name>
-                    <value>Oracle Corporation</value>
-                </property>
-            </activation>
-
-            <dependencies>
-                <dependency>
-                    <groupId>com.sun</groupId>
-                    <artifactId>tools</artifactId>
-                    <version>1.4.2</version>
-                    <scope>system</scope>
-                    <systemPath>${java.home}/../lib/tools.jar</systemPath>
-                </dependency>
-            </dependencies>
+          <id>jigsaw</id>
+          <activation>
+            <jdk>[1.9,)</jdk>
+          </activation>
+          <!-- No dependencies needed by Jigsaw -->
+          <dependencies/>
         </profile>
 
         <profile>
@@ -353,7 +336,7 @@
             -->
         </profile>
 
-<!--        <profile>
+        <!--        <profile>
           <id>scala-java8-compat</id>
           <activation>
             <activeByDefault>true</activeByDefault>
@@ -420,26 +403,26 @@
                 <artifactId>org-netbeans-libs-scala-xml</artifactId>
                 <version>${libs.scala.version}</version>
             </dependency>
-<!--            <dependency>
+            <!--            <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>org-netbeans-libs-scalariform</artifactId>
                 <version>${libs.scalariform.version}</version>
             </dependency>-->
-            <dependency>
+            <!--            <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>org-netbeans-libs-sbt</artifactId>
                 <version>${libs.sbt.version}</version>
-            </dependency>
+            </dependency>-->
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>org-netbeans-libs-xtc</artifactId>
                 <version>${libs.xtc.version}</version>
             </dependency>
-            <dependency>
+            <!--            <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>org-netbeans-modules-scala-console</artifactId>
                 <version>${scala.console.version}</version>
-            </dependency>
+            </dependency>-->
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>org-netbeans-modules-scala-core</artifactId>
@@ -630,11 +613,6 @@
             <dependency>
                 <groupId>org.netbeans.api</groupId>
                 <artifactId>org-netbeans-modules-extexecution</artifactId>
-                <version>${netbeans.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.netbeans.api</groupId>
-                <artifactId>org-netbeans-modules-extexecution-base</artifactId>
                 <version>${netbeans.version}</version>
             </dependency>
             <dependency>
@@ -974,9 +952,9 @@
         <module>libs.scala.reflect</module>
         <module>libs.scala.xml</module>
         <!--<module>libs.scalariform</module>-->
-        <module>libs.sbt</module>
+        <!--<module>libs.sbt</module>-->
         <module>libs.xtc</module>
-        <module>scala.console</module>
+        <!--<module>scala.console</module>-->
         <module>scala.core</module>
         <module>scala.debugger</module>
         <module>scala.debugger.projects</module>

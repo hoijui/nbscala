@@ -152,15 +152,15 @@ trait ScalaUtils { self: ScalaGlobal =>
       } else if (symbol.isError) {
         "<error>"
       } else {
-        var paths: List[String] = Nil
+        var paths: Seq[String] = Nil
         var owner = symbol.owner
         // remove type parameter part at the beginnig, for example: scala.Array[T0] will be: scala.Array.T0
         if (!symbol.isTypeParameterOrSkolem) {
-          paths = symbol.nameString :: paths
+          paths = symbol.nameString +: paths
         }
         while (!owner.nameString.equals("<none>") && !owner.nameString.equals("<root>")) {
           if (!symbol.isTypeParameterOrSkolem) {
-            paths = owner.nameString :: paths
+            paths = owner.nameString +: paths
           }
           owner = owner.owner
         }
@@ -385,7 +385,7 @@ trait ScalaUtils { self: ScalaGlobal =>
     }
 
     /** Concatenate strings separated by spaces */
-    private def compose(ss: List[String], fm: HtmlFormatter) {
+    private def compose(ss: Seq[String], fm: HtmlFormatter) {
       val itr = ss.filter("" !=).iterator
       while (itr.hasNext) {
         fm.appendText(itr.next)
@@ -670,7 +670,7 @@ trait ScalaUtils { self: ScalaGlobal =>
       }
     }
 
-    def askForImportantItem(items: List[AstItem]): ScalaItem = {
+    def askForImportantItem(items: Seq[AstItem]): ScalaItem = {
       askForResponse { () =>
         importantItem(items)
       } get match {
@@ -682,7 +682,7 @@ trait ScalaUtils { self: ScalaGlobal =>
     /**
      * @Note use only under compiler thread.
      */
-    def importantItem(items: List[AstItem]): ScalaItem = {
+    def importantItem(items: Seq[AstItem]): ScalaItem = {
       try {
         items.map {
           case item: ScalaItem =>
