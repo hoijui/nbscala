@@ -170,15 +170,7 @@ class SBTConsoleTopComponent private (project: Project, val isDebug: Boolean) ex
     args += s"-XX:MaxPermSize=${maxPermGenSize}m"
 
     //args += "-Dsbt.log.noformat=true"
-    /**
-     * @Note:
-     * jline's UnitTerminal will hang in my Mac OS, when call "stty(...)", why?
-     * Also, from Scala-2.7.1, jline is used for scala shell, we should
-     * disable it here by add "-Djline.terminal=jline.UnsupportedTerminal"?
-     * And jline may cause terminal unresponsed after netbeans quited.
-     */
-    args += "-Djline.terminal=unix"
-    args += "-Djline.WindowsTerminal.directConsole=false"
+    args ++= jlineArgs
 
     // TODO - turn off verifier?
 
@@ -307,27 +299,27 @@ object SBTConsoleTopComponent {
    * Obtain the SBTConsoleTopComponent instance by project
    */
   private def openInstance(project: Project, commands: List[String], isForceNew: Boolean, isDebug: Boolean, background: Boolean)(postAction: String => Unit) {
-    val (tc, isNewCreated) = if (isDebug) {
-      (SBTConsoleTopComponent(project, isDebug), true)
-    } else {
-      projectToDefault.get(project) match {
-        case None =>
-          val default = SBTConsoleTopComponent(project, isDebug)
-          projectToDefault.put(project, default)
-          (default, true)
-        case Some(tc) =>
-          if (isForceNew || tc.isRunningCommand) {
-            (SBTConsoleTopComponent(project, isDebug), true)
-          } else {
-            (tc, false)
-          }
-      }
-    }
-
-    tc.isRunningCommand = true
 
     val runnableTask = new Runnable() {
       def run {
+        val (tc, isNewCreated) = if (isDebug) {
+          (SBTConsoleTopComponent(project, isDebug), true)
+        } else {
+          projectToDefault.get(project) match {
+            case None =>
+              val default = SBTConsoleTopComponent(project, isDebug)
+              projectToDefault.put(project, default)
+              (default, true)
+            case Some(tc) =>
+              if (isForceNew || tc.isRunningCommand) {
+                (SBTConsoleTopComponent(project, isDebug), true)
+              } else {
+                (tc, false)
+              }
+          }
+        }
+
+        tc.isRunningCommand = true
 
         val progressHandle = ProgressHandle.createHandle("Running sbt commnad...",
           new Cancellable() {
@@ -359,6 +351,29 @@ object SBTConsoleTopComponent {
     }
 
     SwingUtilities.invokeLater(runnableTask)
+  }
+
+  /**
+   * @Note:
+   * jline's UnixTerminal will hang in my Mac OS, when call "stty(...)", why?
+   * Also, from Scala-2.7.1, jline is used for scala shell, we should
+   * disable it here by add "-Djline.terminal=jline.UnsupportedTerminal"?
+   * And jline may cause terminal unresponsed after netbeans quited.
+   *
+   * By default jline uses WindowsTerminal on Windows, UnixTerminal otherwise,
+   * and UnsupportedTerminal if neither of these work.
+   * The only thing we really want is to set jline.WindowsTerminal.directConsole
+   * on Windows and the rest is handled for us.
+   */
+  private lazy val jlineArgs: Seq[String] = {
+    val os = System.getProperty("os.name").toLowerCase
+
+    val isWindows = "windows.*".r
+
+    os match {
+      case isWindows() => Seq("-Djline.WindowsTerminal.directConsole=false")
+      case _           => Seq()
+    }
   }
 
   class SbtConsoleTerminal(_area: JTextPane, pipedIn: PipedInputStream, welcome: String) extends ConsoleTerminal(_area, pipedIn, welcome) {
