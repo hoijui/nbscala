@@ -76,11 +76,11 @@ class ScalaSourceFile private (val fileObject: FileObject) extends SourceFile {
 
   def doc = source.getDocument(false).asInstanceOf[BaseDocument]
   def tokenHierarchy: TokenHierarchy[_] = snapshot.getTokenHierarchy
-  def content = snapshot.getText.toString.toCharArray
+  override def content = snapshot.getText.toString.toCharArray
 
-  def length = content.length
+  override def length = snapshot.getText.length
   def start = 0
-  def isSelfContained = true
+  override def isSelfContained = true
 
   override def identifier(pos: Position) =
     if (pos.isDefined && pos.source == this && pos.point != -1) {
@@ -97,10 +97,10 @@ class ScalaSourceFile private (val fileObject: FileObject) extends SourceFile {
     idx < length && notCRLF0 && p(content(idx))
   }
 
-  def isLineBreak(idx: Int) = charAtIsEOL(idx)(isLineBreakChar)
+  override def isLineBreak(idx: Int) = charAtIsEOL(idx)(isLineBreakChar)
 
   /** True if the index is included by an EOL sequence. */
-  def isEndOfLine(idx: Int) = (content isDefinedAt idx) && PartialFunction.cond(content(idx)) {
+  override def isEndOfLine(idx: Int) = (content isDefinedAt idx) && PartialFunction.cond(content(idx)) {
     case CR | LF => true
   }
 
@@ -119,13 +119,13 @@ class ScalaSourceFile private (val fileObject: FileObject) extends SourceFile {
   }
   private lazy val lineIndices: Array[Int] = calculateLineIndices(content)
 
-  def lineToOffset(index: Int): Int = lineIndices(index)
+  override def lineToOffset(index: Int): Int = lineIndices(index)
 
   /**
    * Convert offset to line in this source file
    * Lines are numbered from 0
    */
-  def offsetToLine(offset: Int): Int = {
+  override def offsetToLine(offset: Int): Int = {
     val lines = lineIndices
     def findLine(lo: Int, hi: Int): Int = {
       val mid = (lo + hi) / 2
@@ -139,6 +139,9 @@ class ScalaSourceFile private (val fileObject: FileObject) extends SourceFile {
     }
     findLine(0, lines.length - 1) // use (lines.length - 1) instead of lines.length here
   }
+
+  override def lineCount: Int = lineIndices.length - 1
+  override def lines(start: Int, end: Int): Iterator[String] = snapshot.getText.subSequence(start, end).toString.split("\r\n|\n|\r").iterator
 
   override def hashCode = fileObject.hashCode
 

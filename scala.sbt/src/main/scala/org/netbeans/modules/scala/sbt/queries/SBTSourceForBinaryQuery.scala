@@ -2,7 +2,9 @@ package org.netbeans.modules.scala.sbt.queries
 
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import java.io.File
 import java.net.URL
+import java.util.logging.Logger
 import javax.swing.event.ChangeListener
 import org.netbeans.spi.java.queries.SourceForBinaryQueryImplementation2
 import org.openide.filesystems.FileObject
@@ -28,6 +30,7 @@ import scala.collection.mutable
  * @author Caoyuan Deng
  */
 class SBTSourceForBinaryQuery(project: Project) extends SourceForBinaryQueryImplementation2 with JavadocForBinaryQueryImplementation {
+  private val log = Logger.getLogger(getClass.getName)
   private val cache = new mutable.HashMap[String, SrcResult]()
   private val cache2 = new mutable.HashMap[String, SrcResult]()
   private lazy val sbtResolver = {
@@ -116,13 +119,16 @@ class SBTSourceForBinaryQuery(project: Project) extends SourceForBinaryQueryImpl
             val artifacts = sbtResolver.getResolvedClassPath(ClassPath.COMPILE, isTest = false) map FileUtil.toFileObject filter { fo =>
               fo != null && FileUtil.isArchiveFile(fo)
             } map { fo =>
+              log.info(s"finding sources and javadoc for $fo")
+              val alternatives = sourcesAlternatives(fo)
+              alternatives foreach { case (src, doc) => log.info(s"src: $src - ${src.exists} || doc: $doc - ${doc.exists}") }
+
               val (sources, javadoc) = try {
-                val srcs = fo.getParent.getParent.getFileObject("srcs")
-                val docs = fo.getParent.getParent.getFileObject("docs")
-                //try to find the jars in the same folder like couriser does if srcs and docs are null
-                val sources = if (srcs != null) srcs.getFileObject(fo.getName + "-sources." + fo.getExt) else fo.getParent.getFileObject(fo.getName + "-sources." + fo.getExt)
-                val javadoc = if (docs != null) docs.getFileObject(fo.getName + "-javadoc." + fo.getExt) else fo.getParent.getFileObject(fo.getName + "-javadoc." + fo.getExt)
-                (sources, javadoc)
+                alternatives.filter(t => t._1.exists || t._2.exists).sortBy { //prioritze them by both entries existing
+                  case (src, doc) if src.exists && doc.exists => -2
+                  case (src, doc) if src.exists || doc.exists => -1
+                  case _                                      => 0
+                }.headOption.map(t => (FileUtil.toFileObject(t._1), FileUtil.toFileObject(t._2))).getOrElse((null, null))
               } catch {
                 case _: Throwable => (null, null)
               }
@@ -148,6 +154,20 @@ class SBTSourceForBinaryQuery(project: Project) extends SourceForBinaryQueryImpl
 
       case _ => Array[FileObject]()
     }
+  }
+
+  private def sourcesAlternatives(fo: FileObject): Seq[(File, File)] = {
+    val foFile = FileUtil.toFile(fo)
+    Seq(
+      //original ivy style
+      new File(foFile.getParentFile.getParentFile, "srcs/" + fo.getName + "-sources." + fo.getExt) ->
+        new File(foFile.getParentFile.getParentFile, "docs/" + fo.getName + "-javadoc." + fo.getExt),
+      //coursier style
+      new File(foFile.getParentFile, fo.getName + "-sources." + fo.getExt) ->
+        new File(foFile.getParentFile, fo.getName + "-javadoc." + fo.getExt),
+      //new ivy style
+      new File(foFile.getParentFile, "srcs/" + fo.getName + "-sources." + fo.getExt) ->
+        new File(foFile.getParentFile, "docs/" + fo.getName + "-javadoc." + fo.getExt))
   }
 
   private def getSourceRoots2(url: URL): Array[FileObject] = {

@@ -100,7 +100,7 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
     with ScalaUtils {
   override def forInteractive = true
 
-  override def logError(msg: String, t: Throwable) {}
+  override def logError(msg: String, t: Throwable): Unit = log1.log(Level.WARNING, msg, t)
 
   private val log1 = Logger.getLogger(this.getClass.getName)
 
@@ -284,6 +284,8 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
 object ScalaGlobal {
   private val log = Logger.getLogger(this.getClass.getName)
 
+  val COMPILER_SETTINGS_FILE_NAME = ".nb_compiler_settings"
+
   /** index of globals */
   private val Global = 0
   private val GlobalForTest = 1
@@ -398,10 +400,18 @@ object ScalaGlobal {
 
     // ----- need to create a new global:
 
-    val settings = project.getLookup.lookup(classOf[CompilerSettings]) match {
-      case null => new Settings()
-      case s    => s.settings
-    }
+    val settingsFile = project.getProjectDirectory.getFileObject(COMPILER_SETTINGS_FILE_NAME)
+    val settings = if (settingsFile != null && settingsFile.isData) {
+      log.info("Loading compiler settings file")
+      val newSettings = new scala.tools.nsc.Settings()
+      newSettings processArgumentString settingsFile.asText("utf-8")
+      newSettings
+    } else new Settings()
+
+    //    val settings = project.getLookup.lookup(classOf[CompilerSettings]) match {
+    //      case null => new Settings()
+    //      case s    => s.settings
+    //    }
     if (debug) {
       settings.Yidedebug.value = true
       settings.debug.value = true

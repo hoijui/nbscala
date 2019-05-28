@@ -328,8 +328,8 @@ object ScalaSourceUtil {
     val resp = new global.Response[global.Position]
     global.askLinkPos(symbol.asInstanceOf[global.Symbol], srcFile, resp)
     resp get match {
-      case Left(x)   => x.start
-      case Right(ex) => 0
+      case Left(global.NoPosition) | Right(_) => 0
+      case Left(x)                            => x.start
     }
   }
 
