@@ -60,7 +60,7 @@ import org.netbeans.modules.scala.core.ast.ScalaDfns
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 /**
  * Virtual java source
@@ -119,7 +119,7 @@ class ScalaVirtualSourceProvider extends VirtualSourceProvider {
     val root = FileUtil.toFileObject(sourceRoot)
     val timeStamps = TimeStamps.forRoot(root.toURL, false)
 
-    for (file <- files) {
+    for (file <- files.asScala) {
       val fo = FileUtil.toFileObject(file)
       // JavaIndexer tends to reindex all dependent (via VirtualSources calculating) files
       // when dependee source file is modified, it's not neccessary for VirtualSource in my opinion,
@@ -232,7 +232,7 @@ class ScalaVirtualSourceProvider extends VirtualSourceProvider {
                   }
                 }
 
-              } get match {
+              }.get match {
                 case Left(_)   =>
                 case Right(ex) => globalx.processGlobalException(ex)
               }

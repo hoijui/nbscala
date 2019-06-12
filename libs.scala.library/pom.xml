@@ -74,6 +74,8 @@
                         <publicPackage>scala.concurrent.forkjoin</publicPackage>
                         <publicPackage>scala.concurrent.impl</publicPackage>
                         <publicPackage>scala.concurrent.util</publicPackage>
+                        <publicPackage>scala.jdk</publicPackage>
+                        <publicPackage>scala.jdk.javaapi</publicPackage>
                         <publicPackage>scala.io</publicPackage>
                         <publicPackage>scala.math</publicPackage>
                         <publicPackage>scala.parallel</publicPackage>

@@ -13,7 +13,7 @@ import org.openide.nodes.Children
 import org.openide.nodes.Node
 import org.openide.util.ChangeSupport
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 class SbtFilesNodeFactory extends NodeFactory {
   def createNodes(project: Project): NodeList[_] = new SbtFilesNodeFactory.SbtFilesNodeList(project)
@@ -28,7 +28,7 @@ object SbtFilesNodeFactory {
     private val cs = new ChangeSupport(this)
 
     override def keys: java.util.List[FileObject] =
-      project.getProjectDirectory.getChildren.filter(_.hasExt("sbt")).toList
+      project.getProjectDirectory.getChildren.filter(_.hasExt("sbt")).toSeq.asJava
 
     override def node(key: FileObject): Node = new SbtFileNode(key)
 

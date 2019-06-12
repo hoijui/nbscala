@@ -47,7 +47,7 @@ import org.netbeans.modules.csl.spi.ParserResult
 import org.netbeans.modules.parsing.api.Snapshot
 import org.netbeans.modules.scala.core.ast.ScalaRootScope
 import scala.collection.mutable.WeakHashMap
-import scala.tools.nsc.reporters.Reporter
+import reflect.internal.Reporter
 
 /**
  *

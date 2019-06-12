@@ -75,6 +75,7 @@ import org.netbeans.modules.parsing.api.ResultIterator
 import org.netbeans.modules.parsing.api.Source
 import org.netbeans.modules.parsing.spi.ParseException
 import org.openide.util.NbBundle
+import scala.collection.Seq
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashSet
 
@@ -521,7 +522,7 @@ class RenameRefactoringPlugin(rename: RenameRefactoring) extends ScalaRefactorin
           } finally {
             if (doc ne null) doc.readUnlock
           }
-        } get match {
+        }.get match {
           case Left(_)   =>
           case Right(ex) => global.processGlobalException(ex)
         }

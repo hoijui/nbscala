@@ -53,6 +53,7 @@ import org.netbeans.spi.java.classpath.support.ClassPathSupport
 import org.openide.filesystems.{ FileObject, FileUtil }
 import org.openide.text.NbDocument
 import org.openide.util.{ Exceptions }
+import scala.collection.Seq
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
@@ -327,7 +328,7 @@ object ScalaSourceUtil {
     val srcFile = ScalaSourceFile.sourceFileOf(foOfSymmbol)
     val resp = new global.Response[global.Position]
     global.askLinkPos(symbol.asInstanceOf[global.Symbol], srcFile, resp)
-    resp get match {
+    resp.get match {
       case Left(global.NoPosition) | Right(_) => 0
       case Left(x)                            => x.start
     }
@@ -547,7 +548,7 @@ object ScalaSourceUtil {
           clazzName = fqn.toString
       }
 
-    } get match {
+    }.get match {
       case Left(_)   =>
       case Right(ex) => global.processGlobalException(ex)
     }
@@ -717,7 +718,7 @@ object ScalaSourceUtil {
         case (List(x), returnType) => true // todo
         case x                     => false
       }
-    } get match {
+    }.get match {
       case Left(x)   => x
       case Right(ex) => global.processGlobalException(ex, false)
     }

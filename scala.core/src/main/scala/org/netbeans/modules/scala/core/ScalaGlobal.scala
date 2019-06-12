@@ -60,7 +60,7 @@ import org.netbeans.modules.scala.core.element.JavaElements
 import org.netbeans.modules.scala.core.interactive.Global
 import scala.collection.mutable
 import scala.tools.nsc.Settings
-import scala.tools.nsc.reporters.Reporter
+import reflect.internal.Reporter
 import scala.reflect.internal.util.{ Position, SourceFile }
 
 /**
@@ -98,7 +98,7 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
     with ScalaElements
     with JavaElements
     with ScalaUtils {
-  override def forInteractive = true
+  //  override def forInteractive = true
 
   override def logError(msg: String, t: Throwable): Unit = log1.log(Level.WARNING, msg, t)
 

@@ -39,7 +39,7 @@
 
 package org.netbeans.modules.scala.hints
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 import scala.collection.mutable
 import scala.collection.immutable
@@ -102,7 +102,7 @@ class ClassNotFoundRule extends ScalaErrorRule with NbBundler {
     }
 
     new Hint(this, error.getDescription, context.getFileObject, rangeOpt.get,
-      hintfixes, DEFAULT_PRIORITY) :: Nil
+      hintfixes.asJava, DEFAULT_PRIORITY) :: Nil
 
   }
 
@@ -112,7 +112,7 @@ class ClassNotFoundRule extends ScalaErrorRule with NbBundler {
       case None    => return mutable.ListBuffer[HintFix]()
     }
     val typeNames: mutable.Set[ElementHandle[TypeElement]] = pathInfo.getClassIndex.getDeclaredTypes(missing, ClassIndex.NameKind.SIMPLE_NAME,
-      java.util.EnumSet.allOf(classOf[ClassIndex.SearchScope]))
+      java.util.EnumSet.allOf(classOf[ClassIndex.SearchScope])).asScala
     val toRet = mutable.ListBuffer[HintFix]()
     for (
       typeName <- typeNames;
@@ -177,7 +177,7 @@ class ClassNotFoundRule extends ScalaErrorRule with NbBundler {
             //TODO
             false
           }
-          case wsComment if ScalaLexUtil.WS_COMMENTS.contains(wsComment) => false
+          case wsComment: TokenId if ScalaLexUtil.WS_COMMENTS.contains(wsComment) => false
           case _ => false
         }
       }

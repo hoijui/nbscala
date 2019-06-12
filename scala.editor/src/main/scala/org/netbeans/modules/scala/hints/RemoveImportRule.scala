@@ -52,7 +52,7 @@ import org.netbeans.modules.csl.api.RuleContext
 import org.netbeans.modules.scala.editor.util.NbBundler
 import org.netbeans.modules.scala.core.ast.ScalaRootScope
 import org.netbeans.modules.scala.core.ScalaParserResult
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import scala.collection.mutable
 import scala.collection.immutable
 import scala.tools.nsc.symtab._
@@ -119,7 +119,10 @@ class RemoveImportRule() extends ScalaAstRule with NbBundler {
     val content = pr.getSnapshot.getText
     val doc = pr.getSnapshot.getSource.getDocument(false).asInstanceOf[BaseDocument]
     val importings = scope.importingItems.asInstanceOf[Set[global.ScalaItem]]
-    val usages = scope.idTokenToItems.values.flatten filter (!importings.contains(_)) map (_.symbol.asInstanceOf[global.Symbol].fullName)
+    val usages = scope.idTokenToItems.values.flatten.filter {
+      case i: global.ScalaItem => !importings.contains(i)
+      case _                   => false
+    }.map(_.symbol.asInstanceOf[global.Symbol].fullName).toSeq
 
     val implicits = new mutable.HashSet[String]
     val unused = new mutable.HashMap[String, global.ScalaItem]
@@ -148,7 +151,7 @@ class RemoveImportRule() extends ScalaAstRule with NbBundler {
       }
     }
 
-    (unused filter { xy => !implicits.contains(xy._1) } values) map { item =>
+    (unused.filter { xy => !implicits.contains(xy._1) }.values).map { item =>
       var offset = item.idOffset(th)
       var endOffset = item.idEndOffset(th)
       var text = item.idToken.text
@@ -163,7 +166,7 @@ class RemoveImportRule() extends ScalaAstRule with NbBundler {
 
       val rangeOpt = context.calcOffsetRange(offset, endOffset)
       new Hint(this, "Remove Unused " + text, context.getFileObject, rangeOpt.get, new java.util.ArrayList() /**new RemoveImportFix(context, offset, endOffset, text)) */ , DEFAULT_PRIORITY)
-    } toList
+    }.toList
   }
 
   //debug method

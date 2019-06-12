@@ -174,7 +174,7 @@ class WhereUsedPanel(name: String, element: ScalaItems#ScalaItem, parent: Change
                 labelText = NbBundle.getMessage(classOf[WhereUsedPanel], "DSC_VariableUsages", sName) // NOI18N
             }
 
-          } get
+          }.get
 
           val modifiers = modif
           val isBaseClassText = m_isBaseClassText
@@ -220,7 +220,7 @@ class WhereUsedPanel(name: String, element: ScalaItems#ScalaItem, parent: Change
                     c_usages.setVisible(false)
                     c_directOnly.setVisible(false)
                 }
-              } get
+              }.get
 
               if (currentProject ne null) {
                 scope.setModel(new DefaultComboBoxModel(Array(allProjects, currentProject).asInstanceOf[Array[JLabel]]))

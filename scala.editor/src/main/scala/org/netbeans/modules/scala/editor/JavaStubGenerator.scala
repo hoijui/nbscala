@@ -588,24 +588,24 @@ abstract class JavaStubGenerator extends scala.reflect.internal.transform.Erasur
     UnitClass -> "void")
 
   private object NeedsSigCollector extends TypeCollector(false) {
-    def traverse(tp: Type) {
+    def apply(tp: Type) {
       if (!result) {
         tp match {
           case st: SubType =>
-            traverse(st.supertype)
+            apply(st.supertype)
           case TypeRef(pre, sym, args) =>
-            if (sym == ArrayClass) args foreach traverse
+            if (sym == ArrayClass) args foreach apply
             else if (sym.isTypeParameterOrSkolem || sym.isExistentiallyBound || !args.isEmpty) result = true
-            else if (!sym.owner.isPackageClass) traverse(pre)
+            else if (!sym.owner.isPackageClass) apply(pre)
           case PolyType(_, _) | ExistentialType(_, _) =>
             result = true
           case RefinedType(parents, decls) =>
-            if (!parents.isEmpty) traverse(parents.head)
+            if (!parents.isEmpty) apply(parents.head)
           case ClassInfoType(parents, _, _) =>
-            parents foreach traverse
+            parents foreach apply
           case AnnotatedType(_, atp) =>
-            traverse(atp)
-          case _ => mapOver(tp)
+            apply(atp)
+          case _ => foldOver(tp.typeSymbol :: Nil)
         }
       }
     }

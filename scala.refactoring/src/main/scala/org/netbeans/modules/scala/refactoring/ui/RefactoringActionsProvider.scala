@@ -70,6 +70,7 @@ import org.openide.nodes.Node;
 import org.openide.util.Lookup;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
+import scala.collection.Seq
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashSet
 
