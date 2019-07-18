@@ -62,6 +62,7 @@ import scala.collection.mutable
 import scala.tools.nsc.Settings
 import reflect.internal.Reporter
 import scala.reflect.internal.util.{ Position, SourceFile }
+import scala.util.chaining._
 
 /**
  *
@@ -69,6 +70,8 @@ import scala.reflect.internal.util.{ Position, SourceFile }
  */
 case class ScalaError(pos: Position, msg: String, severity: org.netbeans.modules.csl.api.Severity, force: Boolean)
 case class ErrorReporter(var errors: List[ScalaError] = Nil) extends Reporter {
+
+  private val log1 = Logger.getLogger(this.getClass.getName)
 
   override def reset {
     super.reset
@@ -78,7 +81,7 @@ case class ErrorReporter(var errors: List[ScalaError] = Nil) extends Reporter {
   def info0(pos: Position, msg: String, severity: Severity, force: Boolean) {
     val sev = toCslSeverity(severity)
     if ((sev ne null) && msg != "this code must be compiled with the Scala continuations plugin enabled") {
-      errors ::= ScalaError(pos, msg, sev, force)
+      errors ::= ScalaError(pos, msg, sev, force).tap(s => log1.info(s.toString))
     }
   }
 
@@ -90,7 +93,7 @@ case class ErrorReporter(var errors: List[ScalaError] = Nil) extends Reporter {
   }
 }
 
-class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String = "") extends Global(_settings, _reporter, projectName)
+class ScalaGlobal(_settings: Settings, val errorReporter: ErrorReporter, projectName: String = "") extends Global(_settings, errorReporter, projectName)
     with ScalaAstVisitor
     with ScalaItems
     with ScalaDfns
@@ -120,10 +123,7 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
   }
 
   private def resetReporter {
-    reporter match {
-      case x: ErrorReporter => x.reset
-      case _                =>
-    }
+    errorReporter.reset
   }
 
   def askForReload(srcFiles: List[SourceFile]) {
