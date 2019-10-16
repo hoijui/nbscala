@@ -114,7 +114,7 @@ abstract class ScalaCompletionProposals {
         if (strike) fm.deprecated(false)
         if (emphasize) fm.emphasis(false)
 
-      } get match {
+      }.get match {
         case Left(_)   =>
         case Right(ex) => processGlobalException(ex)
       }
@@ -147,7 +147,7 @@ abstract class ScalaCompletionProposals {
           case _ =>
         }
 
-      } get match {
+      }.get match {
         case Left(_)   =>
         case Right(ex) => processGlobalException(ex)
       }
@@ -242,7 +242,7 @@ abstract class ScalaCompletionProposals {
           case _                             =>
         }
 
-      } get match {
+      }.get match {
         case Left(x)   =>
         case Right(ex) => processGlobalException(ex)
       }
@@ -258,7 +258,7 @@ abstract class ScalaCompletionProposals {
           case _                              => Nil
         }
 
-      } get match {
+      }.get match {
         case Left(x)   => x
         case Right(ex) => ScalaGlobal.resetLate(completer.global, ex); Nil
       }

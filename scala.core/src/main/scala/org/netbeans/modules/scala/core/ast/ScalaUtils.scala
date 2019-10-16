@@ -68,7 +68,7 @@ trait ScalaUtils { self: ScalaGlobal =>
         if (symbol.isDeprecated) modifiers.add(Modifier.DEPRECATED)
 
         modifiers
-      } get match {
+      }.get match {
         case Left(x)   => x
         case Right(ex) => processGlobalException(ex, modifiers)
       }
@@ -107,7 +107,7 @@ trait ScalaUtils { self: ScalaGlobal =>
           ElementKind.OTHER
         }
 
-      } get match {
+      }.get match {
         case Left(x) => x
         case Right(ex) =>
           // java.lang.Error: no-symbol does not have owner
@@ -129,7 +129,7 @@ trait ScalaUtils { self: ScalaGlobal =>
             processGlobalException(ex)
             EmptyScope
         }
-      } get match {
+      }.get match {
         case Left(x)   => x
         case Right(ex) => processGlobalException(ex, EmptyScope)
       }
@@ -212,7 +212,7 @@ trait ScalaUtils { self: ScalaGlobal =>
             fm.appendText(": ")
             htmlTypeName(symbol, fm)
         }
-      } get match {
+      }.get match {
         case Left(_)   =>
         case Right(ex) => processGlobalException(ex)
       }
@@ -378,7 +378,7 @@ trait ScalaUtils { self: ScalaGlobal =>
             if (sym.hasRawInfo) fm.appendText(sym.infoString(sym.rawInfo))
         }
 
-      } get match {
+      }.get match {
         case Left(x)   =>
         case Right(ex) => processGlobalException(ex)
       }
@@ -386,7 +386,7 @@ trait ScalaUtils { self: ScalaGlobal =>
 
     /** Concatenate strings separated by spaces */
     private def compose(ss: Seq[String], fm: HtmlFormatter) {
-      val itr = ss.filter("" !=).iterator
+      val itr = ss.filter("".!=).iterator
       while (itr.hasNext) {
         fm.appendText(itr.next)
         if (itr.hasNext) fm.appendText(" ")
@@ -664,7 +664,7 @@ trait ScalaUtils { self: ScalaGlobal =>
             case _                  => true
           }
         } else false
-      } get match {
+      }.get match {
         case Left(x)   => x
         case Right(ex) => processGlobalException(ex, false)
       }
@@ -673,7 +673,7 @@ trait ScalaUtils { self: ScalaGlobal =>
     def askForImportantItem(items: Seq[AstItem]): ScalaItem = {
       askForResponse { () =>
         importantItem(items)
-      } get match {
+      }.get match {
         case Left(x)   => x
         case Right(ex) => processGlobalException(ex, items.head.asInstanceOf[ScalaItem])
       }
@@ -735,7 +735,7 @@ trait ScalaUtils { self: ScalaGlobal =>
         val sb = new StringBuilder
         typeSimpleSig_(tpe, sb)
         sb.toString
-      } get match {
+      }.get match {
         case Left(x)   => x
         case Right(ex) => processGlobalException(ex, "<error>")
       }
@@ -760,7 +760,7 @@ trait ScalaUtils { self: ScalaGlobal =>
         val sb = new StringBuilder
         typeSimpleSig_(tpe, sb)
         sb.toString
-      } get match {
+      }.get match {
         case Left(x)   => x
         case Right(ex) => processGlobalException(ex, "<error>")
       }

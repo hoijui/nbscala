@@ -60,8 +60,9 @@ import org.netbeans.modules.scala.core.element.JavaElements
 import org.netbeans.modules.scala.core.interactive.Global
 import scala.collection.mutable
 import scala.tools.nsc.Settings
-import scala.tools.nsc.reporters.Reporter
+import reflect.internal.Reporter
 import scala.reflect.internal.util.{ Position, SourceFile }
+import scala.util.chaining._
 
 /**
  *
@@ -69,6 +70,8 @@ import scala.reflect.internal.util.{ Position, SourceFile }
  */
 case class ScalaError(pos: Position, msg: String, severity: org.netbeans.modules.csl.api.Severity, force: Boolean)
 case class ErrorReporter(var errors: List[ScalaError] = Nil) extends Reporter {
+
+  private val log1 = Logger.getLogger(this.getClass.getName)
 
   override def reset {
     super.reset
@@ -78,7 +81,7 @@ case class ErrorReporter(var errors: List[ScalaError] = Nil) extends Reporter {
   def info0(pos: Position, msg: String, severity: Severity, force: Boolean) {
     val sev = toCslSeverity(severity)
     if ((sev ne null) && msg != "this code must be compiled with the Scala continuations plugin enabled") {
-      errors ::= ScalaError(pos, msg, sev, force)
+      errors ::= ScalaError(pos, msg, sev, force).tap(s => log1.info(s.toString))
     }
   }
 
@@ -90,7 +93,7 @@ case class ErrorReporter(var errors: List[ScalaError] = Nil) extends Reporter {
   }
 }
 
-class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String = "") extends Global(_settings, _reporter, projectName)
+class ScalaGlobal(_settings: Settings, val errorReporter: ErrorReporter, projectName: String = "") extends Global(_settings, errorReporter, projectName)
     with ScalaAstVisitor
     with ScalaItems
     with ScalaDfns
@@ -98,9 +101,9 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
     with ScalaElements
     with JavaElements
     with ScalaUtils {
-  override def forInteractive = true
+  //  override def forInteractive = true
 
-  override def logError(msg: String, t: Throwable) {}
+  override def logError(msg: String, t: Throwable): Unit = log1.log(Level.WARNING, msg, t)
 
   private val log1 = Logger.getLogger(this.getClass.getName)
 
@@ -120,10 +123,7 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
   }
 
   private def resetReporter {
-    reporter match {
-      case x: ErrorReporter => x.reset
-      case _                =>
-    }
+    errorReporter.reset
   }
 
   def askForReload(srcFiles: List[SourceFile]) {
@@ -284,6 +284,8 @@ class ScalaGlobal(_settings: Settings, _reporter: Reporter, projectName: String 
 object ScalaGlobal {
   private val log = Logger.getLogger(this.getClass.getName)
 
+  val COMPILER_SETTINGS_FILE_NAME = ".nb_compiler_settings"
+
   /** index of globals */
   private val Global = 0
   private val GlobalForTest = 1
@@ -398,10 +400,18 @@ object ScalaGlobal {
 
     // ----- need to create a new global:
 
-    val settings = project.getLookup.lookup(classOf[CompilerSettings]) match {
-      case null => new Settings()
-      case s    => s.settings
-    }
+    val settingsFile = project.getProjectDirectory.getFileObject(COMPILER_SETTINGS_FILE_NAME)
+    val settings = if (settingsFile != null && settingsFile.isData) {
+      log.info("Loading compiler settings file")
+      val newSettings = new scala.tools.nsc.Settings()
+      newSettings processArgumentString settingsFile.asText("utf-8")
+      newSettings
+    } else new Settings()
+
+    //    val settings = project.getLookup.lookup(classOf[CompilerSettings]) match {
+    //      case null => new Settings()
+    //      case s    => s.settings
+    //    }
     if (debug) {
       settings.Yidedebug.value = true
       settings.debug.value = true

@@ -86,9 +86,9 @@ class MoveClassesUI(javaObjects: Set[FileObject], targetFolder: FileObject, past
   private var refactoring: MoveRefactoring = _
   private var targetPkgName = ""
   val isDisable = targetFolder ne null
-  private val resources = if (!isDisable) {
+  private val resources: Set[FileObject] = if (!isDisable) {
     javaObjects
-  } else Set()
+  } else Set.empty
 
   final def getString(key: String): String = {
     NbBundle.getMessage(classOf[MoveClassUI], key)

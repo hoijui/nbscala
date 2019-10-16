@@ -89,7 +89,7 @@ object SBTProjectType {
   }
 
   def isUnderSrcFolder(projectDir: FileObject) = {
-    projectDir.getPath.split("/") find (_ == "src") isDefined
+    projectDir.getPath.split("/").find(_ == "src").isDefined
   }
 
   def hasStdScalaSrcDir(projectDir: FileObject): Boolean = {

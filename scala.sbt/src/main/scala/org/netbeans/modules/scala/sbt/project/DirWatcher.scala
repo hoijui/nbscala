@@ -7,7 +7,7 @@ import javax.swing.event.ChangeListener
 import javax.swing.event.EventListenerList
 import org.openide.filesystems.FileObject
 import scala.collection.mutable
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 /**
  *

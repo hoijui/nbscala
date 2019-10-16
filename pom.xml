@@ -50,6 +50,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <bundle.namespace>${project.groupId}.${project.artifactId}</bundle.namespace>
         <brandingToken>nbscala</brandingToken>
         <deploy.version>snapshots</deploy.version>
@@ -60,28 +62,28 @@
         -->
         <netbeans.version>RELEASE82</netbeans.version>
 
-        <scala.version>2.12.4</scala.version>
+        <scala.version>2.13.0</scala.version>
         <!--<sbt.version>0.13.16</sbt.version>-->
         <scalariform.version>0.1.8</scalariform.version>
 
         <!-- module versions -->
         <!--<libs.sbt.version>0.13.16.1</libs.sbt.version>-->
-        <libs.scala.version>2.12.4.1</libs.scala.version>
+        <libs.scala.version>2.13.0.0</libs.scala.version>
         <libs.scalariform.version>0.1.8.2</libs.scalariform.version>
         <libs.xtc.version>1.15.2</libs.xtc.version>
-        <scala.console.version>1.8.2.0</scala.console.version>
-        <scala.core.version>1.8.2.0</scala.core.version>
-        <scala.debugger.version>1.8.2.0</scala.debugger.version>
-        <scala.debugger.projects.version>1.8.2.1</scala.debugger.projects.version>
-        <scala.editor.version>1.8.2.0</scala.editor.version>
-        <scala.fontscolors.version>1.8.2.0</scala.fontscolors.version>
-        <scala.maven.version>1.8.2.0</scala.maven.version>
-        <scala.platform.version>1.8.2.0</scala.platform.version>
-        <scala.project.version>1.8.2.0</scala.project.version>
-        <scala.refactoring.version>1.8.2.0</scala.refactoring.version>
-        <scala.sbt.version>1.8.2.1</scala.sbt.version>
-        <scala.sbt.project.version>1.8.2.0</scala.sbt.project.version>
-        <scala.stdplatform.version>1.8.2.0</scala.stdplatform.version>
+        <!--<scala.console.version>1.8.2.0</scala.console.version>-->
+        <scala.core.version>1.9.0.0</scala.core.version>
+        <scala.debugger.version>1.9.0.0</scala.debugger.version>
+        <scala.debugger.projects.version>1.9.0.0</scala.debugger.projects.version>
+        <scala.editor.version>1.9.0.0</scala.editor.version>
+        <scala.fontscolors.version>1.9.0.0</scala.fontscolors.version>
+        <scala.maven.version>1.9.0.0</scala.maven.version>
+        <scala.platform.version>1.9.0.0</scala.platform.version>
+        <scala.project.version>1.9.0.0</scala.project.version>
+        <scala.refactoring.version>1.9.0.0</scala.refactoring.version>
+        <scala.sbt.version>1.9.0.0</scala.sbt.version>
+        <scala.sbt.project.version>1.9.0.0</scala.sbt.project.version>
+        <scala.stdplatform.version>1.9.0.0</scala.stdplatform.version>
     </properties>
 
     <repositories>
@@ -180,7 +182,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.0</version>
+                    <version>3.7.0</version>
                     <configuration>
                         <!-- NetBeans 7.2+ requires JDK 7 -->
                         <source>1.8</source>
@@ -201,7 +203,7 @@
                 <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>4.0.2</version>
                     <executions>
                         <execution>
                             <phase>process-resources</phase> <!-- to support mix java/scala -->
@@ -214,7 +216,7 @@
                     </executions>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>
-                        <recompileMode>incremental</recompileMode>
+                        <recompileMode>all</recompileMode>
                         <useZincServer>true</useZincServer>
                         <compilerPlugins></compilerPlugins>
                         <jvmArgs>
@@ -224,13 +226,13 @@
                             <jvmArg>-Xss64m</jvmArg> <!-- to avoid StackOverFlowError -->
                         </jvmArgs>
                         <args>
-                            <arg>-target:jvm-1.8</arg>
-                            <arg>-opt:l:classpath</arg>
+                            <arg>-opt:l:inline</arg>
+                            <arg>-opt-inline-from:scala.**</arg>
                             <arg>-deprecation</arg>
 <!--                            <arg>-dependencyfile</arg>
                             <arg>${project.build.directory}/.scala_dependencies</arg>-->
-                            <arg>-Xmax-classfile-name</arg>
-                            <arg>143</arg> <!-- to avoid 'error: File name too long' in Linux/ecryptfs -->
+                            <!--<arg>-Xmax-classfile-name</arg>-->
+                            <!--<arg>143</arg>  to avoid 'error: File name too long' in Linux/ecryptfs -->
                         </args>
                     </configuration>
                 </plugin>
@@ -257,6 +259,17 @@
 
             </plugins>
         </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.3.2</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <profiles>

@@ -60,6 +60,7 @@ import org.netbeans.modules.refactoring.api.AbstractRefactoring
 import org.netbeans.modules.refactoring.api.Problem
 import org.netbeans.modules.refactoring.spi.{ RefactoringPlugin, ProgressProviderAdapter }
 import org.openide.filesystems.FileObject;
+import scala.collection.Seq
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet

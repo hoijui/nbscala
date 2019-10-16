@@ -289,7 +289,7 @@ class ScalaSemanticAnalyzer extends SemanticAnalyzer[ScalaParserResult] {
         }
       }
 
-    } get match {
+    }.get match {
       case Left(x)   =>
       case Right(ex) => global.processGlobalException(ex)
     }

@@ -41,6 +41,7 @@ package org.netbeans.api.language.util.ast
 import org.netbeans.api.lexer.{ Token, TokenId, TokenHierarchy }
 import org.netbeans.modules.csl.api.{ ElementKind, OffsetRange }
 
+import scala.collection.Seq
 import scala.collection.mutable.ArrayBuffer
 
 /**

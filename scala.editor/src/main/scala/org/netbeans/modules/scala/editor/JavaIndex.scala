@@ -64,7 +64,7 @@ import org.openide.filesystems.FileStateInvalidException;
 import org.openide.util.Exceptions;
 import org.netbeans.modules.csl.spi.ParserResult
 
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 /**
  *
@@ -77,7 +77,7 @@ class JavaIndex(index: ClassIndex, pResult: ScalaParserResult) {
 
   def getPackages(fqnPrefix: String): Set[String] = {
     val pkgNames = index.getPackageNames(fqnPrefix, true, java.util.EnumSet.allOf(classOf[SearchScope]))
-    pkgNames.map { x => x }.toSet
+    pkgNames.asScala.map { x => x }.toSet
   }
 
 }

@@ -353,8 +353,8 @@ trait ScalaAstVisitor { self: ScalaGlobal =>
           traverse(elemtpt); traverseTrees(trees)
         case Assign(lhs, rhs) =>
           traverse(lhs); traverse(rhs)
-        case AssignOrNamedArg(lhs, rhs) =>
-          traverse(lhs); traverse(rhs)
+        //        case AssignOrNamedArg(lhs, rhs) =>
+        //          traverse(lhs); traverse(rhs)
         case If(cond, thenp, elsep) =>
           traverse(cond); traverse(thenp); traverse(elsep)
         case Match(selector, cases) =>

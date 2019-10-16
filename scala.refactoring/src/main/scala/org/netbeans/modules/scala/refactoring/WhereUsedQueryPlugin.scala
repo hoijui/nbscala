@@ -72,9 +72,9 @@ import org.netbeans.modules.scala.core.ast.{ ScalaItems, ScalaRootScope }
 import org.netbeans.modules.scala.core.lexer.ScalaLexUtil
 import org.openide.filesystems.FileObject
 import org.openide.util.NbBundle;
-import scala.collection.mutable.MutableList
+import scala.collection.mutable.Buffer
 import scala.collection.mutable.HashSet
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 import scala.reflect.internal.Flags
 
 /**
@@ -261,7 +261,7 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
       val th = pr.getSnapshot.getTokenHierarchy
       val root = pr.rootScope
       val global = pr.global
-      val foundElements = new MutableList[WhereUsedElement]()
+      val foundElements = Buffer.empty[WhereUsedElement]
 
       if (root == ScalaRootScope.EMPTY) {
         val sourceText = pr.getSnapshot.getText.toString
@@ -372,7 +372,7 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
             logger.info(pr.getSnapshot.getSource.getFileObject + ": find where used element " + sym.fullName)
             foundElements += WhereUsedElement(pr, item.asInstanceOf[ScalaItem])
           }
-        } get match {
+        }.get match {
           case Left(_)   =>
           case Right(ex) => global.processGlobalException(ex)
         }
@@ -383,7 +383,8 @@ class WhereUsedQueryPlugin(refactoring: WhereUsedQuery) extends ScalaRefactoring
         // TODO
       }
 
-      elements.addAll(refactoring, foundElements.sortWith(_.compare(_) < 0))
+      foundElements.sortWith(_.compare(_) < 0) foreach (e => elements.add(refactoring, e))
+      //elements.addAll(refactoring, foundElements.sortWith(_.compare(_) < 0).asJava)
 
       Nil
     }

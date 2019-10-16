@@ -554,7 +554,7 @@ class ScalaCodeCompleter(val pr: ScalaParserResult) {
           case x    => Some(x)
         }
       }
-    } get match {
+    }.get match {
       case Left(x)   => x
       case Right(ex) => global.processGlobalException(ex, None)
     }

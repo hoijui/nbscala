@@ -43,6 +43,7 @@ import org.netbeans.editor.{ BaseDocument }
 import org.netbeans.modules.csl.api.{ ElementKind, Modifier, OffsetRange }
 import org.netbeans.modules.csl.spi.{ GsfUtilities, ParserResult }
 import org.openide.filesystems.FileObject
+import scala.collection.Seq
 
 /**
  * AST Definition

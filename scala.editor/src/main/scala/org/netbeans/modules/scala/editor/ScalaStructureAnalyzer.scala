@@ -59,6 +59,7 @@ import org.netbeans.modules.scala.core.ast.{ ScalaDfns }
 import org.netbeans.modules.scala.core.lexer.{ ScalaTokenId, ScalaLexUtil }
 import org.openide.util.Exceptions
 
+import scala.collection.Seq
 import scala.collection.mutable.{ Stack }
 
 /**

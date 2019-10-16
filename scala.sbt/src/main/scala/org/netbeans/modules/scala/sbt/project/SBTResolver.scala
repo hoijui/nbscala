@@ -92,21 +92,21 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
           _projectContext = parseClasspathXml(FileUtil.toFile(file))
       }
 
-      readCompilerSettingsFile()
+      //      readCompilerSettingsFile()
     }
 
     _projectContext
   }
 
-  def readCompilerSettingsFile(): Unit = {
-    val newSettings = new scala.tools.nsc.Settings()
-    val settingsFile = projectDir.getFileObject(COMPILER_SETTINGS_FILE_NAME)
-    if (settingsFile != null && settingsFile.isData) {
-      log.info("Loading compiler settings file")
-      newSettings processArgumentString settingsFile.asText("utf-8")
-      project.compilerSettings.settings = newSettings
-    }
-  }
+  //  def readCompilerSettingsFile(): Unit = {
+  //    val newSettings = new scala.tools.nsc.Settings()
+  //    val settingsFile = projectDir.getFileObject(COMPILER_SETTINGS_FILE_NAME)
+  //    if (settingsFile != null && settingsFile.isData) {
+  //      log.info("Loading compiler settings file")
+  //      newSettings processArgumentString settingsFile.asText("utf-8")
+  //      project.compilerSettings.settings = newSettings
+  //    }
+  //  }
 
   def stateChanged(evt: ChangeEvent) {
     evt match {
@@ -123,8 +123,8 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
         _projectContext = parseClasspathXml(FileUtil.toFile(file))
         pcs.firePropertyChange(DESCRIPTOR_CHANGE, oldContext, _projectContext)
 
-      case fce: FileChangeEvent if fce.file.getParent == projectDir && fce.file.getName == COMPILER_SETTINGS_FILE_NAME =>
-        readCompilerSettingsFile()
+      //      case fce: FileChangeEvent if fce.file.getParent == projectDir && fce.file.getName == COMPILER_SETTINGS_FILE_NAME =>
+      //        readCompilerSettingsFile()
 
       case _ =>
     }
@@ -346,7 +346,7 @@ class SBTResolver(project: SBTProject) extends ChangeListener {
 
 object SBTResolver {
   val DESCRIPTOR_FILE_NAME = ".classpath_nb"
-  val COMPILER_SETTINGS_FILE_NAME = ".nb_compiler_settings"
+  //  val COMPILER_SETTINGS_FILE_NAME = ".nb_compiler_settings"
 
   val DESCRIPTOR_CHANGE = "sbtDescriptorChange"
   val SBT_RESOLVED_STATE_CHANGE = "sbtResolvedStateChange"
@@ -369,7 +369,8 @@ object SBTResolver {
     Array[File]() /* ,
     FormattingPreferences() */ )
 
-  val dirWatcher = new DirWatcher(DESCRIPTOR_FILE_NAME, COMPILER_SETTINGS_FILE_NAME)
+  //  val dirWatcher = new DirWatcher(DESCRIPTOR_FILE_NAME, COMPILER_SETTINGS_FILE_NAME)
+  val dirWatcher = new DirWatcher(DESCRIPTOR_FILE_NAME)
 
   private val timer = new Timer
   timer.schedule(dirWatcher, 0, 1500)

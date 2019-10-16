@@ -40,8 +40,7 @@
 package org.netbeans.modules.scala.hints
 
 import org.netbeans.modules.scala.core.ast.ScalaRootScope
-import scala.collection.JavaConversions
-import scala.collection.JavaConversions._
+import scala.jdk.CollectionConverters._
 
 import java.{ lang => jl, util => ju }
 import org.netbeans.modules.csl.api.HintsProvider.HintsManager;
@@ -67,7 +66,7 @@ class ScalaHintsProvider() extends HintsProvider {
       if (!hintRules.isEmpty && !cancelled) {
         try {
           //context.doc.readLock();
-          hints.addAll(applyHintRules(manager, context.asInstanceOf[ScalaRuleContext], hintRules.get(ScalaAstRule.ROOT), rootScope))
+          hints.addAll(applyHintRules(manager, context.asInstanceOf[ScalaRuleContext], hintRules.get(ScalaAstRule.ROOT), rootScope).asJava)
         } finally {
           //context.doc.readUnlock();
         }
@@ -97,7 +96,7 @@ class ScalaHintsProvider() extends HintsProvider {
       if (!selHints.isEmpty && !cancelled) {
         try {
           //context.doc.readLock();
-          suggestions.addAll(applySelectionRules(manager, context.asInstanceOf[ScalaRuleContext], selHints, start, end))
+          suggestions.addAll(applySelectionRules(manager, context.asInstanceOf[ScalaRuleContext], selHints, start, end).asJava)
         } finally {
           //context.doc.readUnlock();
         }
@@ -115,17 +114,17 @@ class ScalaHintsProvider() extends HintsProvider {
     cancelled = false
     val parserResult = context.parserResult;
     if (parserResult ne null) {
-      val errors = JavaConversions.asScalaBuffer(parserResult.getDiagnostics).asInstanceOf[scala.collection.mutable.Buffer[Error]];
+      val errors = parserResult.getDiagnostics.asScala //.asInstanceOf[scala.collection.mutable.Buffer[Error]];
       if ((errors ne null) && !errors.isEmpty) {
         val errHints = manager.getErrors.asInstanceOf[ju.Map[String, ju.List[ScalaErrorRule]]]
 
         if (errHints.isEmpty || cancelled) {
-          unhandled.addAll(errors)
+          unhandled.addAll(errors.asJava)
         } else {
 
           try {
             //context.doc.readLock();
-            unhandled.addAll(errors.filter(x => !applyRules(x, manager, context.asInstanceOf[ScalaRuleContext], errHints, hints)))
+            unhandled.addAll(errors.filter(x => !applyRules(x, manager, context.asInstanceOf[ScalaRuleContext], errHints, hints)).asJava)
           } finally {
             //context.doc.readUnlock();
           }
@@ -141,13 +140,13 @@ class ScalaHintsProvider() extends HintsProvider {
     if (rules ne null) {
       var added = List[Hint]()
       val applicableRules = for {
-        rule <- JavaConversions.asScalaBuffer(rules.asInstanceOf[ju.List[ScalaErrorRule]])
+        rule <- rules.asInstanceOf[ju.List[ScalaErrorRule]].asScala
         if rule.appliesTo(context)
       } yield rule
       for (rule <- applicableRules) {
         added ++= rule.createHints(context, error)
       }
-      result.addAll(added)
+      result.addAll(added.asJava)
       added.size > 0
     } else {
       false
@@ -157,7 +156,7 @@ class ScalaHintsProvider() extends HintsProvider {
   def applySelectionRules(manager: HintsManager, context: ScalaRuleContext, selRules: ju.List[ScalaSelectionRule], start: Int, end: Int): List[Hint] = {
     val added = ListBuffer[Hint]()
     val applicableRules = for {
-      rule <- selRules
+      rule <- selRules.asScala
       if rule.appliesTo(context)
     } yield rule
     for (rule <- applicableRules) {
@@ -169,7 +168,7 @@ class ScalaHintsProvider() extends HintsProvider {
   def applyHintRules(manager: HintsManager, context: ScalaRuleContext, selRules: ju.List[ScalaAstRule], scope: ScalaRootScope): List[Hint] = {
     val added = ListBuffer[Hint]()
     val applicableRules = for {
-      rule <- selRules
+      rule <- selRules.asScala
       if rule.appliesTo(context)
     } yield rule
     for (rule <- applicableRules) {

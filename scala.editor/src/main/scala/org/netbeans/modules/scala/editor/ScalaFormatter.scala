@@ -566,7 +566,7 @@ class ScalaFormatter(codeStyle: CodeStyle, rightMarginOverride: Int) extends For
         openingBraces.top.token.id match {
           case ScalaTokenId.Eq | ScalaTokenId.Else | ScalaTokenId.If | ScalaTokenId.For | ScalaTokenId.Yield | ScalaTokenId.While =>
             // * close these braces here, now, since the indentation has been done in previous computation
-            openingBraces pop
+            openingBraces.pop
           case _ =>
         }
       }

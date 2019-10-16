@@ -47,7 +47,7 @@ import org.netbeans.modules.csl.spi.ParserResult
 import org.netbeans.modules.parsing.api.Snapshot
 import org.netbeans.modules.scala.core.ast.ScalaRootScope
 import scala.collection.mutable.WeakHashMap
-import scala.tools.nsc.reporters.Reporter
+import reflect.internal.Reporter
 
 /**
  *
@@ -116,7 +116,7 @@ class ScalaParserResult private (snapshot: Snapshot) extends ParserResult(snapsh
 
   private def toSemanticed() {
     _root = global.askForSemantic(srcFile)
-    _errors = collectErrors(global.reporter)
+    _errors = collectErrors(global.errorReporter)
   }
 
   /**
@@ -143,7 +143,7 @@ class ScalaParserResult private (snapshot: Snapshot) extends ParserResult(snapsh
     }
   }
 
-  private def collectErrors(reporter: Reporter) = {
+  private def collectErrors(reporter: ErrorReporter) = {
     reporter match {
       case ErrorReporter(Nil) => java.util.Collections.emptyList[Error]
       case ErrorReporter(scalaErrors) =>

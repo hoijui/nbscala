@@ -43,8 +43,8 @@ package org.netbeans.modules.scala.refactoring
 import java.io.IOException
 import org.netbeans.modules.csl.spi.support.ModificationResult
 import org.netbeans.modules.refactoring.spi.{ BackupFacility, Transaction }
+import scala.collection.Seq
 import scala.collection.mutable.ArrayBuffer
-
 /**
  *
  * @author Jan Becicka
